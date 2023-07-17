@@ -16,7 +16,7 @@ func main() {
 	storage.SaveMetric("gauge", "temperature", 25.0)
 	storage.SaveMetric("counter", "requests", int64(10))
 
-	mux.HandleFunc("/update/", internal.HandleUpdate(storage)) // Исправлено
+	mux.HandleFunc("/update/", internal.HandleUpdate(storage)) // Исправлено!!!
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
