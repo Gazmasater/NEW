@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
 
 	"strconv"
 	"strings"
@@ -48,19 +47,11 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
-		file, err1 := os.OpenFile("server1.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err1 != nil {
-			log.Fatal("Не удалось открыть файл логов:", err1)
-		}
-		defer file.Close()
-
-		// Настройка логирования для вывода в файл
-		log.SetOutput(file)
-
 		// Извлекаем параметры из формы запроса
 		metricType := r.FormValue("metricType")
 		metricName := r.FormValue("metricName")
 		metricValueStr := r.FormValue("metricValue")
+		//	newpath := r.URL.Path + metricType
 
 		// Преобразуем значение метрики в соответствующий тип
 		var metricValue interface{}
@@ -111,6 +102,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		// Отправляем ответ клиенту
 		recorder.Flush()
+
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Metric received")
 	}
