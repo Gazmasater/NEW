@@ -15,18 +15,18 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (s *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 
 	switch metricType {
 	case "gauge":
 		if v, ok := metricValue.(float64); ok {
-			s.gauges[metricName] = v
+			ms.gauges[metricName] = v
 		}
 	case "counter":
 		if v, ok := metricValue.(int64); ok {
-			s.counters[metricName] += v
+			ms.counters[metricName] += v
 		}
 	}
 }
