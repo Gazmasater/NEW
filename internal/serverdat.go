@@ -3,53 +3,50 @@ package internal
 import "sync"
 
 type MemStorage struct {
-	metrics map[string]interface{}
-	mu      sync.Mutex
+	mu       sync.RWMutex
+	counters map[string]int64
+	gauges   map[string]float64
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		metrics: make(map[string]interface{}),
+		counters: make(map[string]int64),
+		gauges:   make(map[string]float64),
 	}
 }
 
-func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
+func (s *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	// Проверяем, есть ли уже запись для данного типа метрики
-	key := metricType + ":" + metricName
-	prevValue, ok := ms.metrics[key]
-
-	switch metricValue.(type) {
-	case float64:
-		// Если тип метрики - gauge (float64), замещаем предыдущее значение
-		ms.metrics[key] = metricValue
-	case int64:
-		// Если тип метрики - counter (int64), добавляем новое значение к предыдущему
-		if ok {
-			if prevCounter, ok := prevValue.(int64); ok {
-				newCounter := prevCounter + metricValue.(int64)
-				ms.metrics[key] = newCounter
-			} else {
-				// Если предыдущее значение не является типом int64, замещаем его новым значением
-				ms.metrics[key] = metricValue
-			}
-		} else {
-			ms.metrics[key] = metricValue
+	switch metricType {
+	case "gauge":
+		if v, ok := metricValue.(float64); ok {
+			s.gauges[metricName] = v
+		}
+	case "counter":
+		if v, ok := metricValue.(int64); ok {
+			s.counters[metricName] += v
 		}
 	}
 }
 
 func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, bool) {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
 
-	// Проверяем, есть ли запись для данного типа метрики
-	key := metricType + ":" + metricName
-	value, ok := ms.metrics[key]
-	return value, ok
+	switch metricType {
+	case "gauge":
+		value, ok := ms.gauges[metricName]
+		return value, ok
+	case "counter":
+		value, ok := ms.counters[metricName]
+		return value, ok
+	default:
+		return nil, false
+	}
 }
+
 func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue interface{}) {
 	// Сохраняем метрику в хранилище
 	ms.SaveMetric(metricType, metricName, metricValue)
