@@ -18,7 +18,7 @@ Content-Type: application/x-www-form-urlencoded
 User-Agent: curl/7.81.0
 
 
-2023/07/19 01:40:32 Ответ:
+2023/07/19 01:40:32
 
 2023/07/19 01:42:34 Запрос:
 POST /update/ HTTP/1.1
