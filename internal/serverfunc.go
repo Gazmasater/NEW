@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,9 +15,14 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
-		// Разбиваем путь запроса на составл
-		parts := strings.Split(r.URL.Path, "/")
-		if len(parts) != 5 {
+		newPath := r.URL.Path + r.FormValue("metricType") + "/" + r.FormValue("metricName") + "/" + r.FormValue("metricValue")
+		log.Println("URL Path:", newPath)
+
+		// Разбиваем путь запроса на части
+		parts := strings.Split(newPath, "/")
+		length := len(parts)
+		log.Println("LENGTH PATH", length)
+		if length != 5 {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -25,34 +31,29 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		metricType := parts[2]
 		metricName := parts[3]
 		metricValue := parts[4]
+		log.Println("TYPE NAME VALUE", metricType, metricName, metricValue)
 
 		// Преобразуем значение метрики в соответствующий тип
 		var parsedValue interface{}
 		var err error
 
-		println("ТИП МЕТРИКИ", metricType)
-
 		if metricType == "gauge" {
 			parsedValue, err = strconv.ParseFloat(metricValue, 64)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value")
-				return
-			}
 		} else if metricType == "counter" {
 			parsedValue, err = strconv.ParseInt(metricValue, 10, 64)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value")
-				return
-			}
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Invalid metric type")
 			return
 		}
-		// Обрабатываем полученные метрики
 
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "Invalid metric value")
+			return
+		}
+
+		// Обрабатываем полученные метрики
 		storage.ProcessMetrics(metricType, metricName, parsedValue)
 
 		w.WriteHeader(http.StatusOK)
