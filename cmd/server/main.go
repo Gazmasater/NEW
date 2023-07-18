@@ -3,20 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"project.com/internal"
 )
 
 func main() {
-
-	file, err := os.Create("server.log")
-	if err != nil {
-		log.Fatal("Cannot create log file:", err)
-	}
-	defer file.Close()
-
-	log.SetOutput(file)
 
 	mux := http.NewServeMux()
 

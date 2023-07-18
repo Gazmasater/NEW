@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
 
 	"strconv"
 	"strings"
@@ -64,6 +63,12 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
+		if metricValue == "" {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Metric name not provided")
+			return
+		}
+
 		if metricType == "gauge" {
 			// Проверяем, является ли значение действительным числом (не целым)
 			if !strings.Contains(metricValueStr, ".") {
@@ -86,22 +91,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
-		// Логирование запроса
-		requestDump, err := httputil.DumpRequest(r, true)
-		if err != nil {
-			log.Printf("Ошибка при логировании запроса: %v", err)
-		} else {
-			log.Printf("Запрос:\n%s\n", requestDump)
-		}
-
-		// Создаем ResponseRecorder для записи ответа
-		recorder := NewResponseRecorderWithLog(w)
-
 		// Обрабатываем полученные метрики
 		storage.SaveMetric(metricType, metricName, metricValue)
-
-		// Отправляем ответ клиенту
-		recorder.Flush()
 
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Metric received")
