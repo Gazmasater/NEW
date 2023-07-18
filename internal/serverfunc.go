@@ -22,6 +22,12 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		var metricValue interface{}
 		var err error
 
+		if metricName == "" {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Metric name not provided")
+			return
+		}
+
 		if metricType == "gauge" {
 			metricValue, err = strconv.ParseFloat(metricValueStr, 64)
 		} else if metricType == "counter" {
