@@ -23,7 +23,7 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 
 	switch metricValue.(type) {
 	case float64:
-		// Если тип метрики - gauge (float64), замещаем предыдущее знач
+		// Если тип метрики - gauge (float64), замещаем предыдущее значение
 		ms.metrics[key] = metricValue
 	case int64:
 		// Если тип метрики - counter (int64), добавляем новое значение к предыдущему

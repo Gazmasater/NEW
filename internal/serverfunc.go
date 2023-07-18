@@ -2,10 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
@@ -15,32 +13,19 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
-		newPath := r.URL.Path + r.FormValue("metricType") + "/" + r.FormValue("metricName") + "/" + r.FormValue("metricValue")
-		log.Println("URL Path:", newPath)
-
-		// Разбиваем путь запроса на части
-		parts := strings.Split(newPath, "/")
-		length := len(parts)
-		log.Println("LENGTH PATH", length)
-		if length != 5 {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		// Извлекаем тип метрики, имя метрики и значение метрики из пути запроса
-		metricType := parts[2]
-		metricName := parts[3]
-		metricValue := parts[4]
-		log.Println("TYPE NAME VALUE", metricType, metricName, metricValue)
+		// Извлекаем параметры из формы запроса
+		metricType := r.FormValue("metricType")
+		metricName := r.FormValue("metricName")
+		metricValueStr := r.FormValue("metricValue")
 
 		// Преобразуем значение метрики в соответствующий тип
-		var parsedValue interface{}
+		var metricValue interface{}
 		var err error
 
 		if metricType == "gauge" {
-			parsedValue, err = strconv.ParseFloat(metricValue, 64)
+			metricValue, err = strconv.ParseFloat(metricValueStr, 64)
 		} else if metricType == "counter" {
-			parsedValue, err = strconv.ParseInt(metricValue, 10, 64)
+			metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Invalid metric type")
@@ -54,7 +39,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		}
 
 		// Обрабатываем полученные метрики
-		storage.ProcessMetrics(metricType, metricName, parsedValue)
+		storage.SaveMetric(metricType, metricName, metricValue)
 
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Metric received")
