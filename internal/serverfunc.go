@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
@@ -22,6 +23,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		var metricValue interface{}
 		var err error
 
+		// Проверяем, что имя метрики не пустое
 		if metricName == "" {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Metric name not provided")
@@ -29,6 +31,12 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		}
 
 		if metricType == "gauge" {
+			// Проверяем, является ли значение действительным числом (не целым)
+			if !strings.Contains(metricValueStr, ".") {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Invalid metric value for gauge, expected a floating-point number")
+				return
+			}
 			metricValue, err = strconv.ParseFloat(metricValueStr, 64)
 		} else if metricType == "counter" {
 			metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
