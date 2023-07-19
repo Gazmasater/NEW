@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func isInteger(s string) bool {
@@ -29,22 +30,27 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		// Преобразуем значение метрики в соответствующий тип
 		var metricValue interface{}
+		path := strings.Split(r.URL.Path, "/")
 
 		// Проверяем, что имя метрики не пустое
 		fmt.Println("PATH", r.URL.Path)
-		if r.URL.Path != "/update/" {
-			println("PATH LOG")
+		fmt.Println("LENGTH PATH", len(path))
+		for i := 0; i < len(path); i++ {
+			fmt.Println(path[i])
+		}
+		if path[0] != "/update/" {
+
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Metric name not provided")
 			return
 		}
 
-		if metricName == "" && metricValueStr == "" {
+		if path[2] == "" && path[3] == "" {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintln(w, "Metric name not provided")
+			fmt.Fprintln(w, "Metric name not provided", http.StatusNotFound)
 			return
 		}
-		if metricType != "gauge" && metricType != "counter" {
+		if path[1] != "gauge" && path[1] != "counter" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Invalid metric type")
 			return
@@ -54,9 +60,9 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 		}
 
-		if metricType == "counter" {
+		if path[1] == "counter" {
 
-			if isInteger(metricValueStr) {
+			if isInteger(path[3]) {
 				w.WriteHeader(http.StatusOK)
 
 			} else {
