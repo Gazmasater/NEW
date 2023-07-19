@@ -31,7 +31,9 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		var metricValue interface{}
 
 		// Проверяем, что имя метрики не пустое
+		fmt.Println("PATH", r.URL.Path)
 		if r.URL.Path != "/update/" {
+			println("PATH LOG")
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Metric name not provided")
 			return
