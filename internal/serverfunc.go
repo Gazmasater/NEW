@@ -12,6 +12,11 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
+func isNotInteger(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err != nil
+}
+
 // ResponseRecorderWithLog is a custom implementation of http.ResponseWriter
 // that records the response data and writes it to the log.
 
@@ -69,6 +74,11 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				w.WriteHeader(http.StatusBadRequest)
 
 			}
+		}
+
+		if isNotInteger(path[4]) {
+			w.WriteHeader(http.StatusBadRequest)
+
 		}
 
 		//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
