@@ -79,23 +79,30 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			}
 			metricValue, err = strconv.ParseFloat(metricValueStr, 64)
 		} else if metricType == "counter" {
-			metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Invalid metric type")
-			return
+			// Проверяем, что значение метрики не пустое
+			if metricValueStr == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Metric value not provided")
+				return
+
+				metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Invalid metric type")
+				return
+			}
+
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Invalid metric value")
+				return
+			}
+
+			// Обрабатываем полученные метрики
+			storage.SaveMetric(metricType, metricName, metricValue)
+
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintln(w, "Metric received")
 		}
-
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Invalid metric value")
-			return
-		}
-
-		// Обрабатываем полученные метрики
-		storage.SaveMetric(metricType, metricName, metricValue)
-
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Metric received")
 	}
 }
