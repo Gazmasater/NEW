@@ -63,6 +63,13 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 
+		// Проверяем, что имя метрики не пустое
+		if metricValueStr == "" {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Metric name not provided")
+			return
+		}
+
 		if metricType == "gauge" {
 			// Проверяем, является ли значение действительным числом (не целым)
 			if !strings.Contains(metricValueStr, ".") {
