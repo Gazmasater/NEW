@@ -6,17 +6,18 @@ import (
 	"strconv"
 )
 
+func isInteger(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
+}
+
+// ResponseRecorderWithLog is a custom implementation of http.ResponseWriter
+// that records the response data and writes it to the log.
+
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		println("METHOD PATH", r.Method, r.URL.Path)
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		if r.URL.Path != "/update/" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Invalid URL path")
 			return
 		}
 
@@ -24,55 +25,45 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		metricType := r.FormValue("metricType")
 		metricName := r.FormValue("metricName")
 		metricValueStr := r.FormValue("metricValue")
+		//	newpath := r.URL.Path + metricType
 
-		// Проверяем, что имя метрики и значение не пустые
-		if metricName == "" && metricValueStr == "" {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintln(w, "Metric name and value not provided")
-			return
-		}
+		// Преобразуем значение метрики в соответствующий тип
+		var metricValue interface{}
 
 		// Проверяем, что имя метрики не пустое
-		if metricName == "" {
+		if r.URL.Path != "/update/" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Metric name not provided")
 			return
 		}
 
-		// Проверяем, что значение метрики не пустое
-		if metricValueStr == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Metric value not provided")
+		if metricName == "" && metricValueStr == "" {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Metric name not provided")
 			return
 		}
-
-		var metricValue interface{}
-		var err error
-
-		if metricType == "gauge" {
-			// Проверяем, является ли значение действительным числом (int64 или float64)
-			if value, err := strconv.ParseInt(metricValueStr, 10, 64); err == nil {
-				metricValue = value
-			} else if valueFloat, err := strconv.ParseFloat(metricValueStr, 64); err == nil {
-				metricValue = valueFloat
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value for gauge, expected a floating-point or integer number")
-				return
-			}
-		} else if metricType == "counter" {
-			// Проверяем, является ли значение действительным числом (int64)
-			metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value for counter, expected an integer number")
-				return
-			}
-		} else {
+		if metricType != "gauge" && metricType != "counter" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Invalid metric type")
 			return
 		}
+
+		if (len(metricName) > 0) && (metricValueStr == "") {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		if metricType == "counter" {
+
+			if isInteger(metricValueStr) {
+				w.WriteHeader(http.StatusOK)
+
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+
+			}
+		}
+
+		//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
 
 		// Обрабатываем полученные метрики
 		storage.SaveMetric(metricType, metricName, metricValue)
