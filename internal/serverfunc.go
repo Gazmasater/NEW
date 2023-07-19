@@ -1,48 +1,22 @@
 package internal
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 	"net/http"
-
 	"strconv"
-	"strings"
 )
-
-// ResponseRecorderWithLog is a custom implementation of http.ResponseWriter
-// that records the response data and writes it to the log.
-type ResponseRecorderWithLog struct {
-	http.ResponseWriter
-	buffer *bytes.Buffer
-}
-
-func NewResponseRecorderWithLog(w http.ResponseWriter) *ResponseRecorderWithLog {
-	return &ResponseRecorderWithLog{
-		ResponseWriter: w,
-		buffer:         bytes.NewBuffer(nil),
-	}
-}
-
-func (rw *ResponseRecorderWithLog) Write(data []byte) (int, error) {
-	rw.buffer.Write(data)
-	return rw.ResponseWriter.Write(data)
-}
-
-func (rw *ResponseRecorderWithLog) WriteHeader(statusCode int) {
-	rw.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (rw *ResponseRecorderWithLog) Flush() {
-	// Log the response data here
-	responseDump := rw.buffer.String()
-	log.Printf("Ответ:\n%s\n", responseDump)
-}
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		println("METHOD PATH", r.Method, r.URL.Path)
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		if r.URL.Path != "/update/" {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "Invalid URL path")
 			return
 		}
 
@@ -50,59 +24,60 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		metricType := r.FormValue("metricType")
 		metricName := r.FormValue("metricName")
 		metricValueStr := r.FormValue("metricValue")
-		//	newpath := r.URL.Path + metricType
 
-		// Преобразуем значение метрики в соответствующий тип
-		var metricValue interface{}
-		var err error
+		// Проверяем, что имя метрики и значение не пустые
+		if metricName == "" && metricValueStr == "" {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "Metric name and value not provided")
+			return
+		}
 
 		// Проверяем, что имя метрики не пустое
 		if metricName == "" {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Metric name not provided")
 			return
 		}
 
-		// Проверяем, что имя метрики не пустое
+		// Проверяем, что значение метрики не пустое
 		if metricValueStr == "" {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintln(w, "Metric name not provided")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "Metric value not provided")
 			return
 		}
+
+		var metricValue interface{}
+		var err error
 
 		if metricType == "gauge" {
-			// Проверяем, является ли значение действительным числом (не целым)
-			if !strings.Contains(metricValueStr, ".") {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value for gauge, expected a floating-point number")
-				return
-			}
-			metricValue, err = strconv.ParseFloat(metricValueStr, 64)
-		} else if metricType == "counter" {
-			// Проверяем, что значение метрики не пустое
-			if metricValueStr == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Metric value not provided")
-				return
-
-				metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
+			// Проверяем, является ли значение действительным числом (int64 или float64)
+			if value, err := strconv.ParseInt(metricValueStr, 10, 64); err == nil {
+				metricValue = value
+			} else if valueFloat, err := strconv.ParseFloat(metricValueStr, 64); err == nil {
+				metricValue = valueFloat
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric type")
+				fmt.Fprintln(w, "Invalid metric value for gauge, expected a floating-point or integer number")
 				return
 			}
-
+		} else if metricType == "counter" {
+			// Проверяем, является ли значение действительным числом (int64)
+			metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric value")
+				fmt.Fprintln(w, "Invalid metric value for counter, expected an integer number")
 				return
 			}
-
-			// Обрабатываем полученные метрики
-			storage.SaveMetric(metricType, metricName, metricValue)
-
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "Metric received")
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "Invalid metric type")
+			return
 		}
+
+		// Обрабатываем полученные метрики
+		storage.SaveMetric(metricType, metricName, metricValue)
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "Metric received")
 	}
 }
