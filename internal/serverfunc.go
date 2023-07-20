@@ -34,12 +34,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		lengpath := len(path)
 		// Проверяем, что имя метрики не пустое
 
-		if metricName == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Metric name not provided")
-			return
-		}
-
 		fmt.Println("PATH", r.URL.Path)
 		fmt.Println("LENGTH PATH", lengpath)
 		for i := 0; i < len(path); i++ {
@@ -83,6 +77,11 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 				w.WriteHeader(http.StatusOK)
 
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+			if _, err := strconv.ParseFloat(path[4], 64); err == nil {
+				w.WriteHeader(http.StatusOK)
+	
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
