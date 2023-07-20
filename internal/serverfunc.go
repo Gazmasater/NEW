@@ -12,9 +12,6 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-// ResponseRecorderWithLog is a custom implementation of http.ResponseWriter
-// that records the response data and writes it to the log.
-
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -32,7 +29,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		var metricValue interface{}
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
-		// Проверяем, что имя метрики не пустое
 
 		fmt.Println("PATH", r.URL.Path)
 		fmt.Println("LENGTH PATH", lengpath)
@@ -83,7 +79,9 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
+
 			}
+
 			if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
 				w.WriteHeader(http.StatusOK)
 				return
