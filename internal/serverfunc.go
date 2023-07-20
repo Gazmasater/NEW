@@ -79,9 +79,10 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
-			if _, err := strconv.ParseFloat(path[4], 64); err == nil {
+			}
+			if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
 				w.WriteHeader(http.StatusOK)
-	
+
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
