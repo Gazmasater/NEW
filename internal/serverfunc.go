@@ -59,15 +59,18 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		if (len(path[3]) > 0) && (path[4] == "") {
 			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 
 		if path[2] == "counter" {
 
 			if isInteger(path[4]) {
 				w.WriteHeader(http.StatusOK)
+				return
 
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
+				return
 
 			}
 		}
@@ -76,15 +79,18 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 				w.WriteHeader(http.StatusOK)
+				return
 
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
 			if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
 				w.WriteHeader(http.StatusOK)
+				return
 
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
+				return
 			}
 
 		}
