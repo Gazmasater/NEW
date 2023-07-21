@@ -63,7 +63,7 @@ func collectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			// Добавляем метрику PollCount типа counter
 			metrics = append(metrics, &Metric{Type: "counter", Name: "PollCount", Value: pollCount})
 
-			// Увеличиваем счетчик обновлений метрик
+			// Увеличиваем счетчик обновлений метр
 			pollCount++
 
 			metricsChan <- metrics
