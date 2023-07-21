@@ -74,7 +74,7 @@ func collectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	return metricsChan
 }
 
-func sendDataToServer(serverURL string, metrics []*Metric) {
+func sendDataToServer(metrics []*Metric) {
 
 	for _, metric := range metrics {
 		serverURL := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", metric.Type, metric.Name, metric.Value)
@@ -94,14 +94,14 @@ func sendDataToServer(serverURL string, metrics []*Metric) {
 
 func main() {
 	pollInterval := 2 * time.Second
-	serverURL := "http://localhost:8080/update/collect_metrics"
+	serverURL := "http://localhost:8080/update/gauge/test1/100"
 
 	metricsChan := collectMetrics(pollInterval, serverURL)
 
 	for {
 		select {
 		case metrics := <-metricsChan:
-			sendDataToServer(serverURL, metrics)
+			sendDataToServer(metrics)
 		case <-time.After(pollInterval):
 			fmt.Println("Сбор метрик...")
 		}
