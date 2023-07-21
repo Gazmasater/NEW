@@ -23,6 +23,7 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 	case "gauge":
 		if v, ok := metricValue.(float64); ok {
 			ms.gauges[metricName] = v
+			//	println("Значение метрики ГАУГЕ в SAVEMETRIC ", v)
 		}
 	case "counter":
 		if v, ok := metricValue.(int64); ok {

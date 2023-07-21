@@ -22,11 +22,17 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		// Извлекаем параметры из формы запроса
 		metricType := r.FormValue("metricType")
 		metricName := r.FormValue("metricName")
-		//	metricValueStr := r.FormValue("metricValue")
-		//	newpath := r.URL.Path + metricType
+		metricValueStr := r.FormValue("metricValue")
+		metricValue, err := strconv.ParseFloat(metricValueStr, 64)
+		if err != nil {
+			// Обработка ошибки, если metricValueStr не может быть преобразовано в float64
+			// Или вернуть сообщение об ошибке клиенту.
+		}
+
+		println("metricValueStr", metricValueStr)
 
 		// Преобразуем значение метрики в соответствующий тип
-		var metricValue interface{}
+
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
 
@@ -96,6 +102,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
 
 		// Обрабатываем полученные метрики
+		println("VALUE перед SAVEMETRIC", metricValue)
 		storage.SaveMetric(metricType, metricName, metricValue)
 
 		w.WriteHeader(http.StatusOK)
