@@ -18,12 +18,13 @@ func NewMemStorage() *MemStorage {
 func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
+	println("ПЕРЕД switch metricType", metricType)
 
 	switch metricType {
 	case "gauge":
 		if v, ok := metricValue.(float64); ok {
 			ms.gauges[metricName] = v
-			//	println("Значение метрики ГАУГЕ в SAVEMETRIC ", v)
+			println("Значение метрики ГАУГЕ в SAVEMETRIC ", v)
 		}
 	case "counter":
 		if v, ok := metricValue.(int64); ok {
