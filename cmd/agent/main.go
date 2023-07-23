@@ -87,7 +87,7 @@ func sendDataToServer(metrics []*Metric) {
 		defer resp.Body.Close()
 
 		// Вывод ответа от сервера
-		fmt.Println("Статус код ответа:", resp.Status)
+		//fmt.Println("Статус код ответа:", resp.Status)
 
 	}
 }

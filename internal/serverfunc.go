@@ -14,91 +14,128 @@ func isInteger(s string) bool {
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		// Извлекаем параметры из формы запроса
-		metricType := r.FormValue("metricType")
-		metricName := r.FormValue("metricName")
-		//	metricValueStr := r.FormValue("metricValue")
-		//	newpath := r.URL.Path + metricType
 
 		// Преобразуем значение метрики в соответствующий тип
-		var metricValue interface{}
+		println("r.URL.Path", r.URL.Path)
+		println("METHOD", r.Method)
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
-
-		fmt.Println("PATH", r.URL.Path)
-		fmt.Println("LENGTH PATH", lengpath)
-		for i := 0; i < len(path); i++ {
-			fmt.Println(i, path[i])
-		}
-		if path[1] != "update" {
-
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Metric name not provided")
-			return
-		}
-
-		if lengpath == 4 && path[3] == "" {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintln(w, "Metric name not provided")
-			return
-		}
-		if path[2] != "gauge" && path[2] != "counter" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "Invalid metric type")
-			return
-		}
-
-		if (len(path[3]) > 0) && (path[4] == "") {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if path[2] == "counter" {
-
-			if isInteger(path[4]) {
-				w.WriteHeader(http.StatusOK)
-				return
-
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-
-			}
-		}
-
-		if path[2] == "gauge" {
-
-			if _, err := strconv.ParseFloat(path[4], 64); err == nil {
-				w.WriteHeader(http.StatusOK)
-				return
-
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-
-			}
-
-			if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
-				w.WriteHeader(http.StatusOK)
-				return
-
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-		}
-
-		//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
-
 		// Обрабатываем полученные метрики
-		storage.SaveMetric(metricType, metricName, metricValue)
+		// Преобразование строки во float64
+		num, err := strconv.ParseFloat(path[4], 64)
+		if err != nil {
+			fmt.Println("Ошибка при преобразовании строки во float64:", err)
+			return
+		}
+		num1, err := strconv.ParseFloat(path[4], 64)
+		if err != nil {
+			fmt.Println("Ошибка при преобразовании строки во float64:", err)
+			return
+		}
+		println("path[4] перед storage.SaveMetric", num)
 
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Metric received")
+		switch r.Method {
+		case http.MethodPost:
+
+			//	fmt.Println("PATH", r.URL.Path)
+			//	fmt.Println("LENGTH PATH", lengpath)
+			for i := 0; i < len(path); i++ {
+				//	fmt.Println(i, path[i])
+			}
+			if path[1] != "update" {
+
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Metric name not provided")
+				return
+			}
+
+			if lengpath == 4 && path[3] == "" {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintln(w, "Metric name not provided")
+				return
+			}
+			if path[2] != "gauge" && path[2] != "counter" {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Invalid metric type")
+				return
+			}
+
+			if (len(path[3]) > 0) && (path[4] == "") {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if path[2] == "counter" {
+
+				if isInteger(path[4]) {
+
+					w.WriteHeader(http.StatusOK)
+					storage.SaveMetric(path[2], path[3], num1)
+
+					return
+
+				} else {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+
+				}
+			}
+
+			if path[2] == "gauge" {
+
+				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
+
+					w.WriteHeader(http.StatusOK)
+					return
+
+				} else {
+					w.WriteHeader(http.StatusBadRequest)
+
+				}
+
+				if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
+					w.WriteHeader(http.StatusOK)
+					storage.SaveMetric(path[2], path[3], num)
+
+					return
+
+				} else {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+			}
+
+			//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
+
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintln(w, "Metric received")
+		case http.MethodGet:
+			if lengpath != 5 {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "Invalid request format")
+				return
+			}
+
+			metricType := path[2]
+			metricName := path[3]
+			storage.SaveMetric(path[2], path[3], num)
+
+			// Получаем метрику из хранилища
+			println("TYPE NAME ", metricType, metricName)
+			value, found := storage.GetMetric(metricType, metricName)
+			if !found {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintln(w, "Metric not found")
+				return
+			}
+
+			// Преобразуем значение метрики в текст и отправляем в ответ
+			responseValue := fmt.Sprintf("%v", value)
+
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintln(w, responseValue)
+		}
 	}
+
 }
