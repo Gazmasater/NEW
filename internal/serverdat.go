@@ -18,11 +18,18 @@ func NewMemStorage() *MemStorage {
 func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
+<<<<<<< HEAD
 	println("ПЕРЕД switch metricType", metricType)
 
+=======
+	println("перед switch metricValue", metricValue)
+	println("перед switch metricType ", metricType)
+>>>>>>> iter2
 	switch metricType {
+
 	case "gauge":
 		if v, ok := metricValue.(float64); ok {
+			println("v, ok := metricValue", v)
 			ms.gauges[metricName] = v
 			println("Значение метрики ГАУГЕ в SAVEMETRIC ", v)
 		}
@@ -36,10 +43,11 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, bool) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
-
+	println("metricType NAMEGETMETRIC ", metricType, metricName)
 	switch metricType {
 	case "gauge":
 		value, ok := ms.gauges[metricName]
+		println("value GetMetriC", value)
 		return value, ok
 	case "counter":
 		value, ok := ms.counters[metricName]
