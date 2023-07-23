@@ -14,13 +14,6 @@ func isInteger(s string) bool {
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-=======
->>>>>>> iter2
 
 		// Преобразуем значение метрики в соответствующий тип
 		println("r.URL.Path", r.URL.Path)
@@ -28,10 +21,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
 		// Обрабатываем полученные метрики
-<<<<<<< HEAD
-		println("VALUE перед SAVEMETRIC", metricValue)
-		storage.SaveMetric(path[2], path[3], path[4])
-=======
 		// Преобразование строки во float64
 		num, err := strconv.ParseFloat(path[4], 64)
 		if err != nil {
@@ -44,16 +33,10 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			return
 		}
 		println("path[4] перед storage.SaveMetric", num)
->>>>>>> iter2
 
 		switch r.Method {
 		case http.MethodPost:
 
-			//	fmt.Println("PATH", r.URL.Path)
-			//	fmt.Println("LENGTH PATH", lengpath)
-			for i := 0; i < len(path); i++ {
-				//	fmt.Println(i, path[i])
-			}
 			if path[1] != "update" {
 
 				w.WriteHeader(http.StatusBadRequest)
@@ -98,6 +81,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 
 					w.WriteHeader(http.StatusOK)
+					storage.SaveMetric(path[2], path[3], num)
+
 					return
 
 				} else {
@@ -124,7 +109,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			fmt.Fprintln(w, "Metric received")
 		case http.MethodGet:
 			if lengpath != 5 {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusNotFound)
 				fmt.Fprintln(w, "Invalid request format")
 				return
 			}
@@ -134,7 +119,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			storage.SaveMetric(path[2], path[3], num)
 
 			// Получаем метрику из хранилища
-			println("TYPE NAME ", metricType, metricName)
 			value, found := storage.GetMetric(metricType, metricName)
 			if !found {
 				w.WriteHeader(http.StatusNotFound)

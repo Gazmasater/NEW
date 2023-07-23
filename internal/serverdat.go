@@ -18,13 +18,9 @@ func NewMemStorage() *MemStorage {
 func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
-<<<<<<< HEAD
-	println("ПЕРЕД switch metricType", metricType)
 
-=======
 	println("перед switch metricValue", metricValue)
 	println("перед switch metricType ", metricType)
->>>>>>> iter2
 	switch metricType {
 
 	case "gauge":
