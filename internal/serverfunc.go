@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"github.com/gin-gonic/gin"
+
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,81 +14,77 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func HandleUpdate(storage *MemStorage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
 
 		// Преобразуем значение метрики в соответствующий тип
-		println("r.URL.Path", r.URL.Path)
-		println("METHOD", r.Method)
-		path := strings.Split(r.URL.Path, "/")
+		path := strings.Split(c.Request.URL.Path, "/")
 		lengpath := len(path)
 		println("LENGTH", lengpath)
 		// Обрабатываем полученные метрики
 		// Преобразование строки во float64
 
-		switch r.Method {
+		switch c.Request.Method {
 		case http.MethodPost:
 
 			if path[1] != "update" {
 
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Metric name not provided")
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Metric name not provided"})
+
 				return
 			}
 
 			if path[2] != "gauge" && path[2] != "counter" {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "StatusBadRequest")
+				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
+
 				return
 			}
 
 			if path[2] == "counter" {
 
 				if lengpath != 5 {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintln(w, "StatusNotFound")
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
 					return
 
 				}
 
 				if path[4] == "none" {
-					w.WriteHeader(http.StatusBadRequest)
-					fmt.Fprintln(w, "StatusBadRequest")
+					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
+
 					return
 
 				}
 
 				num1, err := strconv.ParseInt(path[4], 10, 64)
 				if err != nil {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintln(w, "StatusNotFound")
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
 					return
 				}
 
 				if isInteger(path[4]) {
 
-					w.WriteHeader(http.StatusOK)
-					fmt.Fprintln(w, "StatusOK")
+					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 
 					storage.SaveMetric(path[2], path[3], num1)
 
 					return
 
 				} else {
-					w.WriteHeader(http.StatusBadRequest)
+					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
 					return
 
 				}
 			}
 			if lengpath == 4 && path[3] == "" {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "Metric name not provided")
+				c.JSON(http.StatusNotFound, gin.H{"error": "Metric name not provided"})
+
 				return
 			}
 
 			if (len(path[3]) > 0) && (path[4] == "") {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "StatusBadRequest")
+				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
 
 				return
 			}
@@ -95,31 +93,31 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 				num, err := strconv.ParseFloat(path[4], 64)
 				if err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					fmt.Fprintln(w, "StatusBadRequest")
+					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
+
 					return
 				}
 
 				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 
-					w.WriteHeader(http.StatusOK)
+					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 					storage.SaveMetric(path[2], path[3], num)
 
 					return
 
 				} else {
-					w.WriteHeader(http.StatusBadRequest)
+					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
 
 				}
 
 				if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
-					w.WriteHeader(http.StatusOK)
+					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 					storage.SaveMetric(path[2], path[3], num)
 
 					return
 
 				} else {
-					w.WriteHeader(http.StatusBadRequest)
+					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
 					return
 				}
 
@@ -127,8 +125,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
 
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "Metric received")
+			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
+
 		case http.MethodGet:
 
 			num1, err := strconv.ParseFloat(path[1], 64)
@@ -144,27 +142,22 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				}
 				html += "</ul></body></html>"
 
-				// Set the Content-Type header to indicate that the response is HTML
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-				// Write the HTML page to the response
-				w.WriteHeader(http.StatusOK)
-				fmt.Fprintln(w, html)
+				c.Header("Content-Type", "text/html; charset=utf-8")
+				c.String(http.StatusOK, html)
 
 				return
 			}
 
 			if err != nil {
 
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "StatusNotFound")
+				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
 				//fmt.Println("Ошибка при преобразовании строки во float64:", err)
 				return
 			}
 			if (path[2] != "gauge") && (path[2] != "counter") {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "StatusNotFound")
+				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
 				return
 			}
 
@@ -172,22 +165,22 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 				num, err := strconv.ParseInt(path[1], 10, 64)
 				if err != nil {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintln(w, "StatusNotFound")
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
 					return
 				}
 				storage.SaveMetric(path[2], path[3], num)
 				return
 			}
 			if lengpath != 4 {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "StatusNotFound")
+				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
 				return
 
 			}
 
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "StatusOK")
+			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
+
 			storage.SaveMetric(path[2], path[3], num1)
 
 		}
