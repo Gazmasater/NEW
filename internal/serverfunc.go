@@ -58,6 +58,13 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			if path[2] == "counter" {
 
+				if path[3] != "PollCount" {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprintln(w, "Metric name not provided")
+					return
+
+				}
+
 				num1, err := strconv.ParseInt(path[4], 10, 64)
 				if err != nil {
 					fmt.Println("Ошибка при преобразовании строки в int64:", err)
@@ -67,6 +74,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				if isInteger(path[4]) {
 
 					w.WriteHeader(http.StatusOK)
+					fmt.Fprintln(w, "StatusOK")
+
 					storage.SaveMetric(path[2], path[3], num1)
 
 					return
