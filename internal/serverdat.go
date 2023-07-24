@@ -19,15 +19,11 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	println("перед switch metricValue", metricValue)
-	println("перед switch metricType ", metricType)
 	switch metricType {
 
 	case "gauge":
 		if v, ok := metricValue.(float64); ok {
-			println("v, ok := metricValue", v)
 			ms.gauges[metricName] = v
-			println("Значение метрики ГАУГЕ в SAVEMETRIC ", v)
 		}
 	case "counter":
 		if v, ok := metricValue.(int64); ok {
@@ -39,11 +35,9 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, bool) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
-	println("metricType NAMEGETMETRIC ", metricType, metricName)
 	switch metricType {
 	case "gauge":
 		value, ok := ms.gauges[metricName]
-		println("value GetMetriC", value)
 		return value, ok
 	case "counter":
 		value, ok := ms.counters[metricName]
@@ -56,4 +50,19 @@ func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, boo
 func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue interface{}) {
 	// Сохраняем метрику в хранилище
 	ms.SaveMetric(metricType, metricName, metricValue)
+}
+
+// GetAllMetrics retrieves all the metrics and their values from the storage.
+func (ms *MemStorage) GetAllMetrics() map[string]interface{} {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	allMetrics := make(map[string]interface{})
+	for name, value := range ms.gauges {
+		allMetrics[name] = value
+	}
+	for name, value := range ms.counters {
+		allMetrics[name] = value
+	}
+	return allMetrics
 }
