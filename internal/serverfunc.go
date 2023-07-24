@@ -95,7 +95,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 				num, err := strconv.ParseFloat(path[4], 64)
 				if err != nil {
-					fmt.Println("Ошибка при преобразовании строки во float64:", err)
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintln(w, "StatusBadRequest")
 					return
 				}
 
