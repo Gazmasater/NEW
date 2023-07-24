@@ -60,10 +60,10 @@ func collectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			randomValue := rand.Float64()
 			metrics = append(metrics, &Metric{Type: "gauge", Name: "RandomValue", Value: randomValue})
 
-			// Добавляем метрику PollCount типа counter
+			// Добавляем метрику PollCount типа counter!!
 			metrics = append(metrics, &Metric{Type: "counter", Name: "PollCount", Value: pollCount})
 
-			// Увеличиваем счетчик обновлений метр
+			// Увеличиваем счетчик обновлений метр!!!
 			pollCount++
 
 			metricsChan <- metrics
@@ -85,9 +85,6 @@ func sendDataToServer(metrics []*Metric) {
 			return
 		}
 		defer resp.Body.Close()
-
-		// Вывод ответа от сервера
-		//fmt.Println("Статус код ответа:", resp.Status)
 
 	}
 }
