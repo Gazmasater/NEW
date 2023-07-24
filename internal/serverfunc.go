@@ -26,12 +26,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
+			println("path[4]", path[4])
 			num, err := strconv.ParseFloat(path[4], 64)
-			if err != nil {
-				fmt.Println("Ошибка при преобразовании строки во float64:", err)
-				return
-			}
-			num1, err := strconv.ParseInt(path[4], 10, 64)
 			if err != nil {
 				fmt.Println("Ошибка при преобразовании строки во float64:", err)
 				return
@@ -61,6 +57,12 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			}
 
 			if path[2] == "counter" {
+
+				num1, err := strconv.ParseInt(path[4], 10, 64)
+				if err != nil {
+					fmt.Println("Ошибка при преобразовании строки в int64:", err)
+					return
+				}
 
 				if isInteger(path[4]) {
 
