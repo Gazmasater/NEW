@@ -50,8 +50,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				}
 
 				if path[4] == "none" {
-					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintln(w, "StatusNotFound")
+					w.WriteHeader(http.StatusBadRequest)
+					fmt.Fprintln(w, "StatusBadRequest")
 					return
 
 				}
