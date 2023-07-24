@@ -27,11 +27,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		switch r.Method {
 		case http.MethodPost:
 			println("path[4]", path[4])
-			num, err := strconv.ParseFloat(path[4], 64)
-			if err != nil {
-				fmt.Println("Ошибка при преобразовании строки во float64:", err)
-				return
-			}
 
 			if path[1] != "update" {
 
@@ -58,16 +53,17 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 			if path[2] == "counter" {
 
-				if path[3] != "PollCount" {
+				if path[4] == "none" {
 					w.WriteHeader(http.StatusNotFound)
-					fmt.Fprintln(w, "Metric name not provided")
+					fmt.Fprintln(w, "StatusNotFound")
 					return
 
 				}
 
 				num1, err := strconv.ParseInt(path[4], 10, 64)
 				if err != nil {
-					fmt.Println("Ошибка при преобразовании строки в int64:", err)
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprintln(w, "StatusNotFound")
 					return
 				}
 
@@ -88,6 +84,12 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			}
 
 			if path[2] == "gauge" {
+
+				num, err := strconv.ParseFloat(path[4], 64)
+				if err != nil {
+					fmt.Println("Ошибка при преобразовании строки во float64:", err)
+					return
+				}
 
 				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 
