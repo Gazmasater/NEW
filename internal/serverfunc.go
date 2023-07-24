@@ -26,7 +26,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
-			println("path[4]", path[4])
 
 			if path[1] != "update" {
 
@@ -35,23 +34,20 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				return
 			}
 
-			if lengpath == 4 && path[3] == "" {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprintln(w, "Metric name not provided")
-				return
-			}
 			if path[2] != "gauge" && path[2] != "counter" {
 				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "Invalid metric type")
-				return
-			}
-
-			if (len(path[3]) > 0) && (path[4] == "") {
-				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "StatusBadRequest")
 				return
 			}
 
 			if path[2] == "counter" {
+
+				if lengpath != 5 {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprintln(w, "StatusNotFound")
+					return
+
+				}
 
 				if path[4] == "none" {
 					w.WriteHeader(http.StatusNotFound)
@@ -81,6 +77,18 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 					return
 
 				}
+			}
+			if lengpath == 4 && path[3] == "" {
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintln(w, "Metric name not provided")
+				return
+			}
+
+			if (len(path[3]) > 0) && (path[4] == "") {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintln(w, "StatusBadRequest")
+
+				return
 			}
 
 			if path[2] == "gauge" {
