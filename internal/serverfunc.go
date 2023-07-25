@@ -24,6 +24,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 		// Преобразование строки во float64
 
 		switch c.Request.Method {
+		//==========================================================================================
 		case http.MethodPost:
 			println("http.MethodPost:=", http.MethodPost)
 
@@ -125,10 +126,8 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 			}
 
-			//metricValue, err = strconv.ParseInt(metricValueStr, 10, 64)
-
 			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-
+			//================================================================================
 		case http.MethodGet:
 
 			num1, err := strconv.ParseFloat(path[1], 64)
@@ -173,7 +172,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 					return
 				}
-
+				println("path3 counter strconv.ParseFloat(path[3], 64)", path[3])
 				_, err1 := strconv.ParseFloat(path[3], 64)
 				if err1 == nil {
 					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
