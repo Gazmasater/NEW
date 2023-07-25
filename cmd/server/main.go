@@ -12,8 +12,9 @@ func main() {
 	storage := internal.NewMemStorage()
 
 	// Пример сохранения метрик для демонстрации
-	//	storage.SaveMetric("gauge", "temperature", 25.0)
-	//	storage.SaveMetric("counter", "requests", int64(10))
+	storage.SaveMetric("gauge", "temperature", 25.0)
+	storage.SaveMetric("counter", "requests", int64(10))
+	r.GET("/metrics", internal.HandleMetrics(storage))
 
 	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 

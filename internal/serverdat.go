@@ -1,6 +1,11 @@
 package internal
 
-import "sync"
+import (
+	"net/http"
+	"sync"
+
+	"github.com/gin-gonic/gin"
+)
 
 type MemStorage struct {
 	mu       sync.RWMutex
@@ -53,16 +58,31 @@ func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue 
 }
 
 // GetAllMetrics retrieves all the metrics and their values from the storage.
-func (ms *MemStorage) GetAllMetrics() map[string]interface{} {
+func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	allMetrics := make(map[string]interface{})
+	allMetrics := make(map[string]map[string]interface{})
 	for name, value := range ms.gauges {
-		allMetrics[name] = value
+		allMetrics[name] = map[string]interface{}{
+			"type":  "gauge",
+			"value": value,
+		}
 	}
 	for name, value := range ms.counters {
-		allMetrics[name] = value
+		allMetrics[name] = map[string]interface{}{
+			"type":  "counter",
+			"value": value,
+		}
 	}
 	return allMetrics
+}
+
+func HandleMetrics(storage *MemStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		allMetrics := storage.GetAllMetrics()
+
+		// Формируем JSON с данными о метриках
+		c.JSON(http.StatusOK, allMetrics)
+	}
 }
