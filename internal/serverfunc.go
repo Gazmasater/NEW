@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 
 	"fmt"
@@ -18,8 +16,7 @@ func isInteger(s string) bool {
 
 func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("ОБРАБОТЧИК")
-
+		println("http.Method:=", c.Request.Method)
 		path := strings.Split(c.Request.URL.Path, "/")
 		lengpath := len(path)
 		println("LENGTH", lengpath)
@@ -167,21 +164,26 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 			}
 
 			if path[2] == "counter" {
+				println("path2==counter", path[2])
 
 				num, err := strconv.ParseInt(path[1], 10, 64)
+				println("NUM ERR", num, err)
 				if err != nil {
 					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
 					return
 				}
-				storage.SaveMetric(path[2], path[3], num)
-				return
-			}
-			if lengpath != 4 {
-				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				if lengpath != 4 {
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
+					return
+
+				}
+				c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
+
+				storage.SaveMetric(path[2], path[3], num1)
 
 				return
-
 			}
 
 			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})

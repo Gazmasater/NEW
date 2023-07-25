@@ -15,7 +15,6 @@ func main() {
 	//	storage.SaveMetric("gauge", "temperature", 25.0)
 	//	storage.SaveMetric("counter", "requests", int64(10))
 
-	// Обработчик для обновления и получения метрик
 	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 
 	// Обработчик для получения всех метрик
@@ -26,6 +25,8 @@ func main() {
 	// Формируем JSON-ответ с метриками
 	//			c.JSON(http.StatusOK, metrics)
 	//		})
+
+	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	r.Run(":8080")
 }
