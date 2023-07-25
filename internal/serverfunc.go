@@ -69,7 +69,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 				if isInteger(path[4]) {
 
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", path[4]))
 
 					storage.SaveMetric(path[2], path[3], num1)
 
@@ -105,7 +104,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
 
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", path[4]))
 
 					storage.SaveMetric(path[2], path[3], num)
 
@@ -118,7 +116,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 				if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", path[4]))
 
 					storage.SaveMetric(path[2], path[3], num)
 
@@ -132,7 +129,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 			}
 
 			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-			c.String(http.StatusOK, fmt.Sprintf("%v", path[4]))
 
 			//================================================================================
 		case http.MethodGet:
@@ -194,6 +190,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 				}
 
 				c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
+				c.String(http.StatusOK, fmt.Sprintf("%v", path[1]))
 
 				storage.SaveMetric(path[2], path[3], num1)
 
