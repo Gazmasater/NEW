@@ -1,25 +1,31 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"project.com/internal"
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 
-	r := gin.Default()
-
+	r := gin.New()
 	storage := internal.NewMemStorage()
 
-	// Пример сохранения метрик для демонстр
-	storage.SaveMetric("gauge", "temperature", 25.0)
-	storage.SaveMetric("counter", "requests", int64(10))
+	// Пример сохранения метрик для демонстрации
+	//	storage.SaveMetric("gauge", "temperature", 25.0)
+	//	storage.SaveMetric("counter", "requests", int64(10))
 
 	// Обработчик для обновления и получения метрик
-	r.Any("/", internal.HandleUpdate(storage))
+	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	// Обработчик для получения всех метрик
+	//r.GET("/metrics", func(c *gin.Context) {
+	//	// Получаем все известные метрики и их значения
+	//	metrics := storage.GetAllMetrics()
+
+	// Формируем JSON-ответ с метриками
+	//			c.JSON(http.StatusOK, metrics)
+	//		})
+
+	r.Run(":8080")
 }

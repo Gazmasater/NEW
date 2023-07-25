@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 
 	"fmt"
@@ -16,8 +18,8 @@ func isInteger(s string) bool {
 
 func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log.Println("ОБРАБОТЧИК")
 
-		// Преобразуем значение метрики в соответствующий тип
 		path := strings.Split(c.Request.URL.Path, "/")
 		lengpath := len(path)
 		println("LENGTH", lengpath)
@@ -26,10 +28,11 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 		switch c.Request.Method {
 		case http.MethodPost:
+			println("http.MethodPost:=", http.MethodPost)
 
 			if path[1] != "update" {
 
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Metric name not provided"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest no update"})
 
 				return
 			}
@@ -41,6 +44,8 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 			}
 
 			if path[2] == "counter" {
+				println("lengpath path2=counter", lengpath)
+				println("path[4]", path[4])
 
 				if lengpath != 5 {
 					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
