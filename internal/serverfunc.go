@@ -173,22 +173,26 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 					return
 				}
+
+				_, err1 := strconv.ParseFloat(path[3], 64)
+				if err1 == nil {
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
+				}
+
 				if lengpath != 4 {
 					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
 					return
 
 				}
+
 				c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 
 				storage.SaveMetric(path[2], path[3], num1)
 
 				return
 			}
-
-			c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-
-			storage.SaveMetric(path[2], path[3], num1)
 
 		}
 	}
