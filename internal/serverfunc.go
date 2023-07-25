@@ -134,32 +134,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 			//================================================================================
 		case http.MethodGet:
 
-			num1, err := strconv.ParseFloat(path[1], 64)
-
-			if (err != nil) && (lengpath == 2) {
-
-				allMetrics := storage.GetAllMetrics()
-
-				// Form an HTML page with the list of all metrics and their values
-				html := "<html><head><title>Metrics</title></head><body><h1>Metrics List</h1><ul>"
-				for name, value := range allMetrics {
-					html += fmt.Sprintf("<li>%s: %v</li>", name, value)
-				}
-				html += "</ul></body></html>"
-
-				c.Header("Content-Type", "text/html; charset=utf-8")
-				c.String(http.StatusOK, html)
-
-				return
-			}
-
-			if err != nil {
-
-				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
-
-				//fmt.Println("Ошибка при преобразовании строки во float64:", err)
-				return
-			}
 			if (path[2] != "gauge") && (path[2] != "counter") {
 				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
@@ -190,10 +164,12 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 				}
 
-				c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-				c.String(http.StatusOK, fmt.Sprintf("%v", path[1]))
+				c.JSON(http.StatusOK, gin.H{"message finish": "StatusOK"})
+				storage.SaveMetric(path[2], path[3], num)
 
-				storage.SaveMetric(path[2], path[3], num1)
+				v1 := storage.counters[path[3]]
+
+				c.String(http.StatusOK, fmt.Sprintf("%v", v1))
 
 				return
 			}
