@@ -166,7 +166,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 				c.JSON(http.StatusOK, gin.H{"message finish": "StatusOK"})
 				storage.SaveMetric(path[2], path[3], num)
-
+				println("path3 SaveMetric", path[3])
 				v1 := storage.counters[path[3]]
 
 				c.String(http.StatusOK, fmt.Sprintf("%v", v1))
