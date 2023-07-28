@@ -11,7 +11,7 @@ import (
 func sendDataToServer(metrics []*internal.Metric) {
 
 	for _, metric := range metrics {
-		serverURL := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", metric.Type, metric.Name, metric.Value)
+		serverURL := fmt.Sprintf("*Addr/update/%s/%s/%v", metric.Type, metric.Name, metric.Value)
 		// Отправка POST-запроса
 		resp, err := http.Post(serverURL, "text/plain", nil)
 		if err != nil {
@@ -26,7 +26,7 @@ func sendDataToServer(metrics []*internal.Metric) {
 func main() {
 	pollInterval := 2 * time.Second
 	reportInterval := 10 * time.Second
-	serverURL := "http://localhost:8080/update/gauge/test1/100"
+	serverURL := "*Addr/update/gauge/test1/100"
 
 	metricsChan := internal.CollectMetrics(pollInterval, serverURL)
 

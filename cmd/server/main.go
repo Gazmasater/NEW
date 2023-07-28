@@ -13,7 +13,6 @@ import (
 func main() {
 
 	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
-	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
 
 	gin.SetMode(gin.ReleaseMode)
@@ -43,8 +42,8 @@ func main() {
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *addr)
-	err := http.ListenAndServe(*addr, r)
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *internal.Addr)
+	err := http.ListenAndServe(*internal.Addr, r)
 	if err != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
