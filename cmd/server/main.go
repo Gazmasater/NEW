@@ -34,8 +34,11 @@ func main() {
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *internal.Addr)
-	err := http.ListenAndServe(*internal.Addr, r)
+	serverURL := internal.GetAddr()
+	println("serverURL  main server", serverURL)
+
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", serverURL)
+	err := http.ListenAndServe(serverURL, r)
 	if err != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}

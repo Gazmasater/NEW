@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"time"
@@ -25,20 +26,27 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 }
 
 func main() {
-	pollInterval := 2 * time.Second
-	reportInterval := 10 * time.Second
+	// Определение флагов -a, -r и -p с значениями по умолчанию
+	var (
+		Addr          = flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+		reportSeconds = flag.Int("r", 10, "Частота отправки метрик на сервер (в секундах)")
+		pollSeconds   = flag.Int("p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
+	)
+
+	flag.Parse()
+
+	pollInterval := time.Duration(*pollSeconds) * time.Second
+	reportInterval := time.Duration(*reportSeconds) * time.Second
 
 	// Получение адреса сервера с помощью функции GetAddr()
-	serverURL := internal.GetAddr()
-	println(" serverURL  main", serverURL)
 
-	metricsChan := internal.CollectMetrics(pollInterval, serverURL)
+	metricsChan := internal.CollectMetrics(pollInterval, *Addr)
 
-	// Горутина для отправки метрик на сервер с интервалом в 10 секунд
+	// Горутина для отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
-			sendDataToServer(metrics, serverURL)
+			sendDataToServer(metrics, *Addr)
 		}
 	}()
 
