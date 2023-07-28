@@ -26,7 +26,7 @@ func sendDataToServer(metrics []*internal.Metric) {
 func main() {
 	pollInterval := 2 * time.Second
 	reportInterval := 10 * time.Second
-	serverURL := "http://*internal.Addr/update/gauge/test1/100"
+	serverURL := "http://internal.Addr/update/gauge/test1/100"
 
 	metricsChan := internal.CollectMetrics(pollInterval, serverURL)
 
