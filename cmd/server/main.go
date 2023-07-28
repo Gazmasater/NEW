@@ -12,8 +12,10 @@ import (
 
 func main() {
 
-	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
+	var Addr = flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
+
+	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
 
 	gin.SetMode(gin.ReleaseMode)
 
