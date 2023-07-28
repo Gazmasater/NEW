@@ -214,13 +214,22 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 			}
 
 			if path[2] == "counter" {
-				num1 := storage.counters[path[3]]
+				num1, found := storage.counters[path[3]]
+				if !found {
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
+				}
 
 				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
 
 			}
 			if path[2] == "gauge" {
-				num1 := storage.gauges[path[3]]
+
+				num1, found := storage.gauges[path[3]]
+				if !found {
+					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+
+				}
 
 				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
 
