@@ -66,7 +66,7 @@ func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, boo
 }
 
 func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue interface{}) {
-	// Сохраняем метрику в хранилище
+	// Сохраняем метрику в хранил.
 	ms.SaveMetric(metricType, metricName, metricValue)
 }
 
