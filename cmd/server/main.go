@@ -23,7 +23,7 @@ func main() {
 
 	storage := internal.NewMemStorage()
 
-	// Пример сохранения метрик для демонстрации
+	// Пример сохранения метрик для демонстр
 	storage.SaveMetric("gauge", "temperature", 25.0)
 	storage.SaveMetric("counter", "requests", int64(10))
 	storage.SaveMetric("counter", "", int64(10))
@@ -44,8 +44,8 @@ func main() {
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *internal.Addr)
-	err := http.ListenAndServe(*internal.Addr, r)
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *Addr)
+	err := http.ListenAndServe(*Addr, r)
 	if err != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
