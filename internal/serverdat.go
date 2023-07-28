@@ -7,6 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Metric struct {
+	Type  string      `json:"type"`
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
+}
+
 type MemStorage struct {
 	mu       sync.RWMutex
 	counters map[string]int64

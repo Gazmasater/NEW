@@ -1,13 +1,75 @@
 package internal
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"fmt"
+	"math/rand"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
+
+func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
+	metricsChan := make(chan []*Metric)
+
+	// Переменная для счетчика обновлений метрик
+	pollCount := 0
+
+	var metrics []*Metric
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	go func() {
+		for {
+
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "Alloc", Value: float64(memStats.Alloc)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "BuckHashSys", Value: float64(memStats.BuckHashSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "Frees", Value: float64(memStats.Frees)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "GCCPUFraction", Value: float64(memStats.GCCPUFraction)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "GCSys", Value: float64(memStats.GCSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapAlloc", Value: float64(memStats.HeapAlloc)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapIdle", Value: float64(memStats.HeapIdle)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapInuse", Value: float64(memStats.HeapInuse)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapObjects", Value: float64(memStats.HeapObjects)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapReleased", Value: float64(memStats.HeapReleased)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "HeapSys", Value: float64(memStats.HeapSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "LastGC", Value: float64(memStats.LastGC)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "Lookups", Value: float64(memStats.Lookups)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "MCacheInuse", Value: float64(memStats.MCacheInuse)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "MCacheSys", Value: float64(memStats.MCacheSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "MSpanInuse", Value: float64(memStats.MSpanInuse)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "MSpanSys", Value: float64(memStats.MSpanSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "Mallocs", Value: float64(memStats.Mallocs)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "NextGC", Value: float64(memStats.NextGC)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "NumForcedGC", Value: float64(memStats.NumForcedGC)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "NumGC", Value: float64(memStats.NumGC)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "OtherSys", Value: float64(memStats.OtherSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "PauseTotalNs", Value: float64(memStats.PauseTotalNs)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "StackInuse", Value: float64(memStats.StackInuse)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "StackSys", Value: float64(memStats.StackSys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "Sys", Value: float64(memStats.Sys)})
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "TotalAlloc", Value: float64(memStats.TotalAlloc)})
+
+			// Добавляем метрику RandomValue типа gauge с произвольным значением
+			randomValue := rand.Float64()
+			metrics = append(metrics, &Metric{Type: "gauge", Name: "RandomValue", Value: randomValue})
+
+			// Добавляем метрику PollCount типа counter!!
+			metrics = append(metrics, &Metric{Type: "counter", Name: "PollCount", Value: pollCount})
+
+			// Увеличиваем счетчик обновлений метр!!!
+			pollCount++
+
+			metricsChan <- metrics
+			time.Sleep(pollInterval)
+		}
+	}()
+
+	return metricsChan
+}
 
 func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
@@ -67,6 +129,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 				}
 
 				if isInteger(path[4]) {
+					fmt.Println("Num1 в ветке POST ", num1)
 
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 					c.String(http.StatusOK, fmt.Sprintf("%v", num1)) // Возвращаем текущее значение метрики в текстовом виде
@@ -102,7 +165,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 					return
 				}
 
-				if _, err := strconv.ParseFloat(path[4], 64); err == nil {
+				if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
 
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 					c.String(http.StatusOK, fmt.Sprintf("%v", num)) // Возвращаем текущее значение метрики в текстовом виде
@@ -116,7 +179,7 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 				}
 
-				if _, err := strconv.ParseInt(path[4], 10, 64); err == nil {
+				if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
 					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
 					c.String(http.StatusOK, fmt.Sprintf("%v", num)) // Возвращаем текущее значение метрики в текстовом виде
 
@@ -133,45 +196,34 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 
 			//================================================================================
 		case http.MethodGet:
+			println("http.MethodGet", http.MethodGet)
 
-			if (path[2] != "gauge") && (path[2] != "counter") {
+			if lengpath != 4 {
+				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				return
+			}
+
+			if path[1] != "value" {
+				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				return
+			}
+			if path[2] != "gauge" && path[2] != "counter" {
 				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
 				return
 			}
 
 			if path[2] == "counter" {
-				println("path2==counter", path[2])
+				num1 := storage.counters[path[3]]
 
-				num, err := strconv.ParseInt(path[1], 10, 64)
-				println("NUM ERR", num, err)
-				if err != nil {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
 
-					return
-				}
-				println("path3 counter strconv.ParseFloat(path[3], 64)", path[3])
-				_, err1 := strconv.ParseFloat(path[3], 64)
-				if err1 == nil {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+			}
+			if path[2] == "gauge" {
+				num1 := storage.gauges[path[3]]
 
-				}
-				println("lengpath finish", lengpath)
-				if lengpath != 4 {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
 
-					return
-
-				}
-
-				c.JSON(http.StatusOK, gin.H{"message finish": "StatusOK"})
-				storage.SaveMetric(path[2], path[3], num)
-				println("path3 SaveMetric", path[3])
-				v1 := storage.counters[path[3]]
-
-				c.String(http.StatusOK, fmt.Sprintf("%v", v1))
-
-				return
 			}
 
 		}
