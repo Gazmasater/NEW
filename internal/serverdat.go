@@ -1,11 +1,18 @@
 package internal
 
 import (
+	"flag"
 	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 )
+
+var Addr = flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+
+func GetAddr() string {
+	return *Addr
+}
 
 type Metric struct {
 	Type  string      `json:"type"`

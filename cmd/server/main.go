@@ -12,7 +12,6 @@ import (
 
 func main() {
 
-	var Addr = flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
 
 	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
@@ -32,20 +31,11 @@ func main() {
 
 	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 
-	// Обработчик для получения всех метрик
-	//r.GET("/metrics", func(c *gin.Context) {
-	//	// Получаем все известные метрики и их значения
-	//	metrics := storage.GetAllMetrics()
-
-	// Формируем JSON-ответ с метриками
-	//			c.JSON(http.StatusOK, metrics)
-	//		})
-
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *Addr)
-	err := http.ListenAndServe(*Addr, r)
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *internal.Addr)
+	err := http.ListenAndServe(*internal.Addr, r)
 	if err != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
