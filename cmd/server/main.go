@@ -1,14 +1,25 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"project.com/internal"
 )
 
 func main() {
+
+	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.Parse()
+
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
+
 	storage := internal.NewMemStorage()
 
 	// Пример сохранения метрик для демонстрации
@@ -31,5 +42,10 @@ func main() {
 
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
-	r.Run(":8080")
+	// Запуск HTTP-сервера на указанном адресе
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *addr)
+	err := http.ListenAndServe(*addr, r)
+	if err != nil {
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+	}
 }
