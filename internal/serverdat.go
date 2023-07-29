@@ -10,13 +10,13 @@ import (
 
 func ParseAddr() (*string, error) {
 	// Определение и парсинг флага
-	Addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
 
 	// В этом примере у нас нет какой-либо сложной логики парсинга, но
 	// в реальном приложении вы можете добавить дополнительную проверку или обработку значения.
 
-	return Addr, nil
+	return addr, nil
 }
 
 type Metric struct {

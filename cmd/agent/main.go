@@ -28,7 +28,7 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 func main() {
 	// Определение флагов -a, -r и -p с значениями по умолчанию
 	// Вызываем новую функцию для парсинга флага и получения адреса сервера
-	Addr, err := internal.ParseAddr()
+	addr, err := internal.ParseAddr() //   internal/serverdat.go
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
@@ -43,13 +43,13 @@ func main() {
 	pollInterval := time.Duration(*pollSeconds) * time.Second
 	reportInterval := time.Duration(*reportSeconds) * time.Second
 
-	metricsChan := internal.CollectMetrics(pollInterval, *Addr)
+	metricsChan := internal.CollectMetrics(pollInterval, *addr)
 
 	// Горутина для отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
-			sendDataToServer(metrics, *Addr)
+			sendDataToServer(metrics, *addr)
 		}
 	}()
 
