@@ -70,7 +70,7 @@ func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue 
 	ms.SaveMetric(metricType, metricName, metricValue)
 }
 
-// GetAllMetrics retrieves all the metrics and their values from the storage.
+// GetAllMetrics retrieves all the metr and their values from the storage.
 func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
