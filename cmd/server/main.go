@@ -33,7 +33,7 @@ func main() {
 
 	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 
-	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
+	r.GET("/value/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
 
