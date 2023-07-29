@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,9 +11,12 @@ import (
 
 func main() {
 
-	flag.Parse()
-
-	// Определение и инициализация флага -a с значением по умолчанию "localhost:8080"
+	// Вызываем новую функцию для парсинга флага и получения адреса сервера
+	Addr, err := internal.ParseAddr()
+	if err != nil {
+		fmt.Println("Ошибка парсинга адреса сервера:", err)
+		return
+	}
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -34,12 +36,12 @@ func main() {
 	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
 
 	// Запуск HTTP-сервера на указанном адресе
-	serverURL := internal.GetAddr()
-	println("serverURL  main server", serverURL)
 
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", serverURL)
-	err := http.ListenAndServe(serverURL, r)
-	if err != nil {
+	println("serverURL  main server", Addr)
+
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *Addr)
+	err1 := http.ListenAndServe(*Addr, r)
+	if err1 != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
 }

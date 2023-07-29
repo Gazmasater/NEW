@@ -8,10 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var Addr = flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+func ParseAddr() (*string, error) {
+	// Определение и парсинг флага
+	Addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.Parse()
 
-func GetAddr() string {
-	return *Addr
+	// В этом примере у нас нет какой-либо сложной логики парсинга, но
+	// в реальном приложении вы можете добавить дополнительную проверку или обработку значения.
+
+	return Addr, nil
 }
 
 type Metric struct {
