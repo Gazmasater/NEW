@@ -43,13 +43,13 @@ func main() {
 	pollInterval := time.Duration(*pollSeconds) * time.Second
 	reportInterval := time.Duration(*reportSeconds) * time.Second
 
-	metricsChan := internal.CollectMetrics(pollInterval, *addr)
+	metricsChan := internal.CollectMetrics(pollInterval, addr)
 
 	// Горутинa для отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
-			sendDataToServer(metrics, *addr)
+			sendDataToServer(metrics, addr)
 		}
 	}()
 

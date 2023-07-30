@@ -8,12 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ParseAddr() (*string, error) {
+func ParseAddr() (string, error) {
 	// Определение и парсинг флага
-	addr := flag.String("a", "127.0.0.1:8080", "Адрес HTTP-сервера")
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
 
-	return addr, nil
+	return *addr, nil
 }
 
 type Metric struct {

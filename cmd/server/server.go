@@ -12,7 +12,8 @@ import (
 func main() {
 
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	addr, err := internal.ParseAddr() //   internal/serverdat.go
+	// Вызыв новую функцию для парсинга флага и получения адреса сервера
+	addr, err := internal.ParseAddr() // internal/serverdat.go
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
@@ -38,11 +39,12 @@ func main() {
 
 	// Запуск HTTP-сервера на указанном адресе
 
-	println("serverURL  main server", *addr)
+	println("serverURL  main server", addr)
 
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", *addr)
-	err1 := http.ListenAndServe(*addr, r)
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", addr)
+	err1 := http.ListenAndServe(addr, r)
 	if err1 != nil {
-		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err1)
 	}
+
 }
