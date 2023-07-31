@@ -29,6 +29,7 @@ func parseAddr() (string, error) {
 	// Определение и парсинг флага
 	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
+	fmt.Println("here is address agent", *addr)
 
 	return *addr, nil
 }
@@ -36,7 +37,7 @@ func parseAddr() (string, error) {
 func main() {
 	// Определение флагов -a, -r и -p с значениями по умолчанию
 	// Вызываем новую функцию для парсинга флага и получения адреса сервера
-	addr, err := parseAddr() //   internal/serverdat.go
+	addr, err := parseAddr()
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return

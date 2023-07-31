@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"project.com/internal"
@@ -14,6 +13,7 @@ func parseAddr() (string, error) {
 	// Определение и парсинг флага
 	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
+	fmt.Println("here is address server", *addr)
 
 	return *addr, nil
 }
@@ -22,7 +22,7 @@ func main() {
 
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	addr, err := parseAddr() // internal/serverdat.go
+	addr, err := parseAddr()
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
@@ -51,9 +51,9 @@ func main() {
 	println("serverURL  main server", addr)
 
 	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", addr)
-	err1 := http.ListenAndServe(addr, r)
-	if err1 != nil {
-		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err1)
+	if err := r.Run(addr); err != nil {
+
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
 
 }
