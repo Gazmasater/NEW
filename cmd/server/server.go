@@ -12,7 +12,7 @@ import (
 func parseAddr() (string, error) {
 	// Определение и парсинг флага
 	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
-	flag.Parse()
+
 	fmt.Println("here is address server", *addr)
 
 	return *addr, nil
@@ -27,6 +27,7 @@ func main() {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
 	}
+	flag.Parse()
 
 	gin.SetMode(gin.ReleaseMode)
 
