@@ -14,7 +14,7 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 	for _, metric := range metrics {
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.Type, metric.Name, metric.Value)
 		println("serverURL sendDataToServer  ", serverURL)
-		// Отправка POST-запроса
+		//Отправка POST-запроса
 		resp, err := http.Post(serverURL, "text/plain", nil)
 		if err != nil {
 			fmt.Println("Ошибка при отправке запроса:", err)
@@ -25,10 +25,18 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 	}
 }
 
+func parseAddr() (string, error) {
+	// Определение и парсинг флага
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.Parse()
+
+	return *addr, nil
+}
+
 func main() {
 	// Определение флагов -a, -r и -p с значениями по умолчанию
 	// Вызываем новую функцию для парсинга флага и получения адреса сервера
-	addr, err := internal.ParseAddr() //   internal/serverdat.go
+	addr, err := parseAddr() //   internal/serverdat.go
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,11 +10,19 @@ import (
 	"project.com/internal"
 )
 
+func parseAddr() (string, error) {
+	// Определение и парсинг флага
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.Parse()
+
+	return *addr, nil
+}
+
 func main() {
 
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	addr, err := internal.ParseAddr() // internal/serverdat.go
+	addr, err := parseAddr() // internal/serverdat.go
 	if err != nil {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
