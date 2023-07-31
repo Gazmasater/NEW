@@ -25,30 +25,35 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 	}
 }
 
-func parseAddr() (string, error) {
-	// Определение и парсинг флага
-	var addr string
+//func parseAddr() (string, error) {
+// Определение и парсинг флага
+//	var addr string
 
-	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+//	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 
-	fmt.Println("here is address server", addr)
+//	fmt.Println("here is address server", addr)
 
-	return addr, nil
-}
+//	return addr, nil
+//}
 
 func main() {
 	// Определение флагов -a, -r и -p с значениями по умолчанию
 	// Вызываем новую функцию для парсинга флага и получения адреса сервера
-	addr, err := parseAddr()
-	if err != nil {
-		fmt.Println("Ошибка парсинга адреса сервера:", err)
-		return
-	}
+	//addr, err := parseAddr()
+	//if err != nil {
+	//	fmt.Println("Ошибка парсинга адреса сервера:", err)
+	//	return
+	//}
 
 	var (
 		reportSeconds int
 		pollSeconds   int
+		addr          string
 	)
+
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+
+	fmt.Println("here is address agent", addr)
 
 	flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
 	flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")

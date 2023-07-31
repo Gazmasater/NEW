@@ -9,26 +9,30 @@ import (
 	"project.com/internal"
 )
 
-func parseAddr() (string, error) {
-	// Определение и парсинг флага
-	var addr string
+//func parseAddr() (string, error) {
+// Определение и парсинг флага
+//	var addr string
 
-	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+//	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 
-	fmt.Println("here is address server", addr)
+//	fmt.Println("here is address server", addr)
 
-	return addr, nil
-}
+//	return addr, nil
+//}
 
 func main() {
 
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
 	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	addr, err := parseAddr()
-	if err != nil {
-		fmt.Println("Ошибка парсинга адреса сервера:", err)
-		return
-	}
+	//addr, err := parseAddr()
+	//if err != nil {
+	//	fmt.Println("Ошибка парсинга адреса сервера:", err)
+	//	return
+	//}
+	var addr string
+
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+
 	flag.Parse()
 
 	gin.SetMode(gin.ReleaseMode)
