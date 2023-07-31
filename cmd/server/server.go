@@ -11,11 +11,13 @@ import (
 
 func parseAddr() (string, error) {
 	// Определение и парсинг флага
-	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	var addr string
 
-	fmt.Println("here is address server", *addr)
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 
-	return *addr, nil
+	fmt.Println("here is address server", addr)
+
+	return addr, nil
 }
 
 func main() {

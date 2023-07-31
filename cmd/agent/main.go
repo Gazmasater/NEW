@@ -27,11 +27,13 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 
 func parseAddr() (string, error) {
 	// Определение и парсинг флага
-	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	var addr string
 
-	fmt.Println("here is address agent", *addr)
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 
-	return *addr, nil
+	fmt.Println("here is address server", addr)
+
+	return addr, nil
 }
 
 func main() {
@@ -42,14 +44,19 @@ func main() {
 		fmt.Println("Ошибка парсинга адреса сервера:", err)
 		return
 	}
+
 	var (
-		reportSeconds = flag.Int("r", 10, "Частота отправки метрик на сервер (в секундах)")
-		pollSeconds   = flag.Int("p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
+		reportSeconds int
+		pollSeconds   int
 	)
+
+	flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
+	flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
+
 	flag.Parse()
 
-	pollInterval := time.Duration(*pollSeconds) * time.Second
-	reportInterval := time.Duration(*reportSeconds) * time.Second
+	pollInterval := time.Duration(pollSeconds) * time.Second
+	reportInterval := time.Duration(reportSeconds) * time.Second
 
 	metricsChan := internal.CollectMetrics(pollInterval, addr)
 
