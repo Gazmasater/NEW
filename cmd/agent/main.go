@@ -46,8 +46,6 @@ func main() {
 		pollSeconds   = flag.Int("p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
 	)
 
-	flag.Parse()
-
 	pollInterval := time.Duration(*pollSeconds) * time.Second
 	reportInterval := time.Duration(*reportSeconds) * time.Second
 
