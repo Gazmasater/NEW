@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"project.com/internal"
@@ -22,16 +24,24 @@ import (
 
 func main() {
 
-	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	//addr, err := parseAddr()
-	//if err != nil {
-	//	fmt.Println("Ошибка парсинга адреса сервера:", err)
-	//	return
-	//}
 	var addr string
 
-	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+	// Чтение переменной окружения или установка значения по умолчанию
+	addrEnv := os.Getenv("SERVER_ADDRESS")
+	println("addr = addrEnv", addrEnv)
+
+	if addrEnv != "" {
+		addr = addrEnv
+	} else {
+		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+
+		if _, err := url.Parse(addr); err != nil {
+			fmt.Printf("Ошибка: неверный формат адреса сервера: %s\n", addr)
+			flag.Usage()
+			os.Exit(1)
+		}
+
+	}
 
 	flag.Parse()
 

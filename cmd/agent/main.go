@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 	"time"
 
 	"project.com/internal"
@@ -25,25 +28,7 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 	}
 }
 
-//func parseAddr() (string, error) {
-// Определение и парсинг флага
-//	var addr string
-
-//	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
-
-//	fmt.Println("here is address server", addr)
-
-//	return addr, nil
-//}
-
 func main() {
-	// Определение флагов -a, -r и -p с значениями по умолчанию
-	// Вызываем новую функцию для парсинга флага и получения адреса сервера
-	//addr, err := parseAddr()
-	//if err != nil {
-	//	fmt.Println("Ошибка парсинга адреса сервера:", err)
-	//	return
-	//}
 
 	var (
 		reportSeconds int
@@ -51,12 +36,44 @@ func main() {
 		addr          string
 	)
 
-	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+	// Чтение переменных окружения или установка значений по умолчанию
+	addrEnv := os.Getenv("SERVER_ADDRESS")
+	println("addrEnv:= os.GetenvSERVER_ADDRESS АГЕНТ", addrEnv)
+	if addrEnv != "" {
+		addr = addrEnv
+	} else {
+		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+		if _, err := url.Parse(addr); err != nil {
+			fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
+			return
+		}
+	}
+	// Проверка валидности адреса
 
-	fmt.Println("here is address agent", addr)
+	reportSecondsEnv := os.Getenv("REPORT_INTERVAL")
+	if reportSecondsEnv != "" {
+		reportSeconds, _ = strconv.Atoi(reportSecondsEnv)
+	} else {
+		flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
+		if reportSeconds <= 0 {
+			fmt.Println("Частота отправки метрик должна быть положительным числом.")
+			flag.Usage()
+			os.Exit(1)
+		}
 
-	flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
-	flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
+	}
+
+	pollSecondsEnv := os.Getenv("POLL_INTERVAL")
+	if pollSecondsEnv != "" {
+		pollSeconds, _ = strconv.Atoi(pollSecondsEnv)
+	} else {
+		flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
+		if pollSeconds <= 0 {
+			fmt.Println("Частота опроса метрик должна быть положительным числом.")
+			flag.Usage()
+			os.Exit(1)
+		}
+	}
 
 	flag.Parse()
 
