@@ -22,13 +22,6 @@ import (
 
 func main() {
 
-	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	// Вызыв новую функцию для парсинга флага и получения адреса сервера
-	//addr, err := parseAddr()
-	//if err != nil {
-	//	fmt.Println("Ошибка парсинга адреса сервера:", err)
-	//	return
-	//}
 	var addr string
 
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
