@@ -37,8 +37,7 @@ func main() {
 	)
 
 	// Чтение переменных окружения или установка значений по умолчанию
-	addrEnv := os.Getenv("SERVER_ADDRESS")
-	println("addrEnv:= os.GetenvSERVER_ADDRESS АГЕНТ", addrEnv)
+	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
 		addr = addrEnv
 	} else {

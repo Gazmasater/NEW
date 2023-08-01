@@ -27,7 +27,7 @@ func main() {
 	var addr string
 
 	// Чтение переменной окружения или установка значения по умолчанию
-	addrEnv := os.Getenv("SERVER_ADDRESS")
+	addrEnv := os.Getenv("ADDRESS")
 	println("addr = addrEnv", addrEnv)
 
 	if addrEnv != "" {
