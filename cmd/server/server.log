@@ -1,0 +1,55 @@
+2023/07/19 01:40:14 Запрос:
+POST /update/ HTTP/1.1
+Host: localhost:8080
+Accept: */*
+Content-Length: 50
+Content-Type: application/x-www-form-urlencoded
+User-Agent: curl/7.81.0
+
+
+2023/07/19 01:40:14 Ответ:
+
+2023/07/19 01:40:32 Запрос:
+POST /update/ HTTP/1.1
+Host: localhost:8080
+Accept: */*
+Content-Length: 50
+Content-Type: application/x-www-form-urlencoded
+User-Agent: curl/7.81.0
+
+
+2023/07/19 01:40:32
+
+2023/07/19 01:42:34 Запрос:
+POST /update/ HTTP/1.1
+Host: localhost:8080
+Accept: */*
+Content-Length: 52
+Content-Type: application/x-www-form-urlencoded
+User-Agent: curl/7.81.0
+
+
+2023/07/19 01:42:34 Ответ:
+
+2023/07/19 09:11:59 Запрос:
+POST /update/ HTTP/1.1
+Host: localhost:8080
+Accept: */*
+Content-Length: 51
+Content-Type: application/x-www-form-urlencoded
+User-Agent: curl/7.81.0
+
+
+2023/07/19 09:11:59 Ответ:
+
+2023/07/19 09:17:25 Запрос:
+POST /update/ HTTP/1.1
+Host: localhost:8080
+Accept: */*
+Content-Length: 51
+Content-Type: application/x-www-form-urlencoded
+User-Agent: curl/7.81.0
+
+
+2023/07/19 09:17:25 Ответ:
+
