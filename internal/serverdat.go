@@ -1,11 +1,20 @@
 package internal
 
 import (
+	"flag"
 	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 )
+
+func ParseAddr() (string, error) {
+	// Определение и парсинг флага
+	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.Parse()
+
+	return *addr, nil
+}
 
 type Metric struct {
 	Type  string      `json:"type"`
@@ -58,12 +67,12 @@ func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, boo
 	}
 }
 
-func (ms *MemStorage) ProcessMetrics(metricType, metricName string, metricValue interface{}) {
-	// Сохраняем метрику в хранилище
+func (ms *MemStorage) PrbocessMetrics(metricType, metricName string, metricValue interface{}) {
+	// Сохраняем метрики в хранил.
 	ms.SaveMetric(metricType, metricName, metricValue)
 }
 
-// GetAllMetrics retrieves all the metrics and their values from the storage.
+// GetAllMetrics retrieves all the metr and their values from the storage.
 func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
