@@ -12,7 +12,7 @@ type ServerConfig struct {
 	Address string
 }
 
-// InitServerConfig - функция для инициализации конфигурации сервера.
+// InitServerConfig - функция для инициализации конфигурации server
 func InitServerConfig() *ServerConfig {
 	var addr string
 
