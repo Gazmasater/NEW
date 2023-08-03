@@ -1,11 +1,10 @@
 package internal
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
 	"sync"
-
-	"github.com/gin-gonic/gin"
 )
 
 func ParseAddr() (string, error) {
@@ -93,11 +92,14 @@ func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 	return allMetrics
 }
 
-func HandleMetrics(storage *MemStorage) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func HandleMetrics(storage *MemStorage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		allMetrics := storage.GetAllMetrics()
 
 		// Формируем JSON с данными о метриках
-		c.JSON(http.StatusOK, allMetrics)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Используем пакет encoding/json для преобразования данных в JSON и записи их в ResponseWriter.
+		json.NewEncoder(w).Encode(allMetrics)
 	}
 }

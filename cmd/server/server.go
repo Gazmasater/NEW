@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi"
 	"project.com/internal"
 )
 
@@ -12,9 +13,7 @@ func main() {
 	// Инициализируем конфигурацию сервера
 	serverCfg := internal.InitServerConfig()
 
-	gin.SetMode(gin.ReleaseMode)
-
-	r := gin.New()
+	r := chi.NewRouter()
 
 	storage := internal.NewMemStorage()
 
@@ -23,13 +22,20 @@ func main() {
 	storage.SaveMetric("counter", "requests", int64(10))
 	storage.SaveMetric("counter", "", int64(10))
 
-	r.GET("/metrics", internal.HandleMetrics(storage))
-	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
-	r.GET("/value/:metricType/:metricName", internal.HandleUpdate(storage))
+	r.Get("/metrics", internal.HandleMetrics(storage))
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", internal.HandleUpdate(storage))
+	r.Get("/value/{metricType}/{metricName}", internal.HandleUpdate(storage))
 
-	// Запуск HTTP-сервера на указанном адресе
+	// Создаем HTTP-сервер с настройками
+	server := &http.Server{
+		Addr:    serverCfg.Address,
+		Handler: r,
+	}
+
+	// Запуск HTTP-сервера через http.ListenAndServe()
 	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", serverCfg.Address)
-	if err := r.Run(serverCfg.Address); err != nil {
+	err := server.ListenAndServe()
+	if err != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
 }

@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
@@ -76,165 +74,136 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		println("http.Method:=", c.Request.Method)
-		path := strings.Split(c.Request.URL.Path, "/")
+func HandleUpdate(storage *MemStorage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("http.Method:=", r.Method)
+		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
-		println("LENGTH", lengpath)
-		// Обрабатываем полученные метрики
-		// Преобразование строки во float64
+		fmt.Println("LENGTH", lengpath)
 
-		switch c.Request.Method {
+		switch r.Method {
 		//==========================================================================================
 		case http.MethodPost:
-			println("http.MethodPost:=", http.MethodPost)
+			fmt.Println("http.MethodPost:=", http.MethodPost)
 
 			if path[1] != "update" {
-
-				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest no update"})
-
+				http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
 				return
 			}
 
 			if path[2] != "gauge" && path[2] != "counter" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
-
+				http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 				return
 			}
 
 			if path[2] == "counter" {
-				println("lengpath path2=counter", lengpath)
-				println("path[4]", path[4])
+				fmt.Println("lengpath path2=counter", lengpath)
+				fmt.Println("path[4]", path[4])
 
 				if lengpath != 5 {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
-
+					http.Error(w, "StatusNotFound", http.StatusNotFound)
 					return
-
 				}
 
 				if path[4] == "none" {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
-
+					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
-
 				}
 
 				num1, err := strconv.ParseInt(path[4], 10, 64)
 				if err != nil {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
-
+					http.Error(w, "StatusNotFound", http.StatusNotFound)
 					return
 				}
 
 				if isInteger(path[4]) {
 					fmt.Println("Num1 в ветке POST ", num1)
 
-					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", num1)) // Возвращаем текущее значение метрики в текстовом виде
+					fmt.Fprintf(w, "%v", num1) // Возвращаем текущее значение метрики в текстовом виде
 
 					storage.SaveMetric(path[2], path[3], num1)
 
 					return
-
 				} else {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
+					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
-
 				}
 			}
-			if lengpath == 4 && path[3] == "" {
-				c.JSON(http.StatusNotFound, gin.H{"error": "Metric name not provided"})
 
+			if lengpath == 4 && path[3] == "" {
+				http.Error(w, "Metric name not provided", http.StatusBadRequest)
 				return
 			}
 
 			if (len(path[3]) > 0) && (path[4] == "") {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
-
+				http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 				return
 			}
 
 			if path[2] == "gauge" {
-
 				num, err := strconv.ParseFloat(path[4], 64)
 				if err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
-
+					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
 				}
 
 				if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
-
-					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", num)) // Возвращаем текущее значение метрики в текстовом виде
-
+					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 					storage.SaveMetric(path[2], path[3], num)
-
 					return
-
 				} else {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
-
+					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+					return
 				}
 
 				if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
-					c.JSON(http.StatusOK, gin.H{"message": "StatusOK"})
-					c.String(http.StatusOK, fmt.Sprintf("%v", num)) // Возвращаем текущее значение метрики в текстовом виде
-
+					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 					storage.SaveMetric(path[2], path[3], num)
-
 					return
-
 				} else {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "StatusBadRequest"})
+					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
 				}
-
 			}
 
-			//================================================================================
+		//================================================================================
 		case http.MethodGet:
-			println("http.MethodGet", http.MethodGet)
+			fmt.Println("http.MethodGet", http.MethodGet)
 
 			if lengpath != 4 {
-				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				http.Error(w, "StatusNotFound", http.StatusNotFound)
 				return
 			}
 
 			if path[1] != "value" {
-				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
+				http.Error(w, "StatusNotFound", http.StatusNotFound)
 				return
 			}
-			if path[2] != "gauge" && path[2] != "counter" {
-				c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
 
+			if path[2] != "gauge" && path[2] != "counter" {
+				http.Error(w, "StatusNotFound", http.StatusNotFound)
 				return
 			}
 
 			if path[2] == "counter" {
 				num1, found := storage.counters[path[3]]
 				if !found {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
-
+					http.Error(w, "StatusNotFound", http.StatusNotFound)
+					return
 				}
 
-				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
-
+				fmt.Fprintf(w, "%v", num1)
 			}
-			if path[2] == "gauge" {
 
+			if path[2] == "gauge" {
 				num1, found := storage.gauges[path[3]]
 				if !found {
-					c.JSON(http.StatusNotFound, gin.H{"error": "StatusNotFound"})
-
+					http.Error(w, "StatusNotFound", http.StatusNotFound)
+					return
 				}
 
-				c.String(http.StatusOK, fmt.Sprintf("%v", num1))
-
+				fmt.Fprintf(w, "%v", num1)
 			}
-
 		}
 	}
 }
