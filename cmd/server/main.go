@@ -1,17 +1,58 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"log"
+	"net/url"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"project.com/internal"
 )
 
+//func parseAddr() (string, error) {
+// Определение и парсинг флага
+//	var addr string
+
+//	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+
+//	fmt.Println("here is address server", addr)
+
+//	return addr, nil
+//}
+
 func main() {
+
+	var addr string
+
+	// Чтение переменной окружения или установка значения по умолчанию
+	addrEnv := os.Getenv("ADDRESS")
+	println("addr = addrEnv", addrEnv)
+
+	if addrEnv != "" {
+		addr = addrEnv
+	} else {
+		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+
+		if _, err := url.Parse(addr); err != nil {
+			fmt.Printf("Ошибка: неверный формат адреса сервера: %s\n", addr)
+			flag.Usage()
+			os.Exit(1)
+		}
+
+	}
+
+	flag.Parse()
+
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
+
 	storage := internal.NewMemStorage()
 
-	// Пример сохранения метрик для демонстрации
+	// Пример сохранения метрик для демонстр
+	// Пример сохранения метрик для демонстр
 	storage.SaveMetric("gauge", "temperature", 25.0)
 	storage.SaveMetric("counter", "requests", int64(10))
 	storage.SaveMetric("counter", "", int64(10))
@@ -20,16 +61,16 @@ func main() {
 
 	r.POST("/update/:metricType/:metricName/:metricValue", internal.HandleUpdate(storage))
 
-	// Обработчик для получения всех метрик
-	//r.GET("/metrics", func(c *gin.Context) {
-	//	// Получаем все известные метрики и их значения
-	//	metrics := storage.GetAllMetrics()
+	r.GET("/value/:metricType/:metricName", internal.HandleUpdate(storage))
 
-	// Формируем JSON-ответ с метриками
-	//			c.JSON(http.StatusOK, metrics)
-	//		})
+	// Запуск HTTP-сервера на указанном адресе
 
-	r.GET("/:metricValue/:metricType/:metricName", internal.HandleUpdate(storage))
+	println("serverURL  main server", addr)
 
-	r.Run(":8080")
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", addr)
+	if err := r.Run(addr); err != nil {
+
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+	}
+
 }
