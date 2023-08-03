@@ -18,7 +18,7 @@ func main() {
 
 	storage := internal.NewMemStorage()
 
-	// Пример сохранения метрик для демонстрации
+	// Пример сохранения метрик
 	storage.SaveMetric("gauge", "temperature", 25.0)
 	storage.SaveMetric("counter", "requests", int64(10))
 	storage.SaveMetric("counter", "", int64(10))
