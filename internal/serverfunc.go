@@ -80,6 +80,8 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
 		fmt.Println("LENGTH", lengpath)
+		// Обрабатываем полученные метрики
+		// Преобразование строки во float64
 
 		switch r.Method {
 		//==========================================================================================
@@ -87,6 +89,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			fmt.Println("http.MethodPost:=", http.MethodPost)
 
 			if path[1] != "update" {
+
 				http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
 				return
 			}
@@ -103,11 +106,13 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				if lengpath != 5 {
 					http.Error(w, "StatusNotFound", http.StatusNotFound)
 					return
+
 				}
 
 				if path[4] == "none" {
 					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
+
 				}
 
 				num1, err := strconv.ParseInt(path[4], 10, 64)
@@ -124,12 +129,13 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 					storage.SaveMetric(path[2], path[3], num1)
 
 					return
+
 				} else {
 					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
+
 				}
 			}
-
 			if lengpath == 4 && path[3] == "" {
 				http.Error(w, "Metric name not provided", http.StatusBadRequest)
 				return
@@ -141,6 +147,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 			}
 
 			if path[2] == "gauge" {
+
 				num, err := strconv.ParseFloat(path[4], 64)
 				if err != nil {
 					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -151,22 +158,25 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 					storage.SaveMetric(path[2], path[3], num)
 					return
+
 				} else {
 					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-					return
+
 				}
 
 				if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
 					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 					storage.SaveMetric(path[2], path[3], num)
 					return
+
 				} else {
 					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 					return
 				}
+
 			}
 
-		//================================================================================
+			//================================================================================
 		case http.MethodGet:
 			fmt.Println("http.MethodGet", http.MethodGet)
 
@@ -179,7 +189,6 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				http.Error(w, "StatusNotFound", http.StatusNotFound)
 				return
 			}
-
 			if path[2] != "gauge" && path[2] != "counter" {
 				http.Error(w, "StatusNotFound", http.StatusNotFound)
 				return
@@ -189,21 +198,24 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 				num1, found := storage.counters[path[3]]
 				if !found {
 					http.Error(w, "StatusNotFound", http.StatusNotFound)
-					return
+
 				}
 
 				fmt.Fprintf(w, "%v", num1)
-			}
 
+			}
 			if path[2] == "gauge" {
+
 				num1, found := storage.gauges[path[3]]
 				if !found {
 					http.Error(w, "StatusNotFound", http.StatusNotFound)
-					return
+
 				}
 
 				fmt.Fprintf(w, "%v", num1)
+
 			}
+
 		}
 	}
 }
