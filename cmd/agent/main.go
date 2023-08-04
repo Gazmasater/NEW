@@ -13,7 +13,6 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 
 	for _, metric := range metrics {
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.Type, metric.Name, metric.Value)
-		println("serverURL sendDataToServer  ", serverURL)
 		//Отправка POST-запроса
 		resp, err := http.Post(serverURL, "text/plain", nil)
 		if err != nil {
