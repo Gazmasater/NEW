@@ -15,7 +15,6 @@ import (
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
 	metricsChan := make(chan []*Metric)
 
-	// Переменная для счетчика обновлений метрик
 	pollCount := 0
 
 	var metrics []*Metric
@@ -82,8 +81,6 @@ func HandleUpdate(storage *MemStorage) gin.HandlerFunc {
 		path := strings.Split(c.Request.URL.Path, "/")
 		lengpath := len(path)
 		println("LENGTH", lengpath)
-		// Обрабатываем полученные метрики
-		// Преобразование строки во float64
 
 		switch c.Request.Method {
 		//==========================================================================================
