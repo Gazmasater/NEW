@@ -76,146 +76,154 @@ func isInteger(s string) bool {
 
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		fmt.Println("http.Method:=", r.Method)
 		path := strings.Split(r.URL.Path, "/")
 		lengpath := len(path)
 		fmt.Println("LENGTH", lengpath)
-		// Обрабатываем полученные метрики
-		// Преобразование строки во float64
 
 		switch r.Method {
-		//==========================================================================================
 		case http.MethodPost:
-			fmt.Println("http.MethodPost:=", http.MethodPost)
-
-			if path[1] != "update" {
-
-				http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
-				return
-			}
-
-			if path[2] != "gauge" && path[2] != "counter" {
-				http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-				return
-			}
-
-			if path[2] == "counter" {
-				fmt.Println("lengpath path2=counter", lengpath)
-				fmt.Println("path[4]", path[4])
-
-				if lengpath != 5 {
-					http.Error(w, "StatusNotFound", http.StatusNotFound)
-					return
-
-				}
-
-				if path[4] == "none" {
-					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-					return
-
-				}
-
-				num1, err := strconv.ParseInt(path[4], 10, 64)
-				if err != nil {
-					http.Error(w, "StatusNotFound", http.StatusNotFound)
-					return
-				}
-
-				if isInteger(path[4]) {
-					fmt.Println("Num1 в ветке POST ", num1)
-
-					fmt.Fprintf(w, "%v", num1) // Возвращаем текущее значение метрики в текстовом виде
-
-					storage.SaveMetric(path[2], path[3], num1)
-
-					return
-
-				} else {
-					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-					return
-
-				}
-			}
-			if lengpath == 4 && path[3] == "" {
-				http.Error(w, "Metric name not provided", http.StatusBadRequest)
-				return
-			}
-
-			if (len(path[3]) > 0) && (path[4] == "") {
-				http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-				return
-			}
-
-			if path[2] == "gauge" {
-
-				num, err := strconv.ParseFloat(path[4], 64)
-				if err != nil {
-					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-					return
-				}
-
-				if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
-					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-					storage.SaveMetric(path[2], path[3], num)
-					return
-
-				} else {
-					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-
-				}
-
-				if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
-					fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-					storage.SaveMetric(path[2], path[3], num)
-					return
-
-				} else {
-					http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-					return
-				}
-
-			}
-
-			//================================================================================
+			handlePostRequest(w, r, storage, path, lengpath)
 		case http.MethodGet:
-			fmt.Println("http.MethodGet", http.MethodGet)
+			handleGetRequest(w, r, storage, path, lengpath)
+		}
+	}
+}
 
-			if lengpath != 4 {
-				http.Error(w, "StatusNotFound", http.StatusNotFound)
-				return
-			}
+func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage, path []string, lengpath int) {
+	// Обработка POST-запроса
 
-			if path[1] != "value" {
-				http.Error(w, "StatusNotFound", http.StatusNotFound)
-				return
-			}
-			if path[2] != "gauge" && path[2] != "counter" {
-				http.Error(w, "StatusNotFound", http.StatusNotFound)
-				return
-			}
+	fmt.Println("http.MethodPost:=", http.MethodPost)
 
-			if path[2] == "counter" {
-				num1, found := storage.counters[path[3]]
-				if !found {
-					http.Error(w, "StatusNotFound", http.StatusNotFound)
+	if path[1] != "update" {
 
-				}
+		http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+		return
+	}
 
-				fmt.Fprintf(w, "%v", num1)
+	if path[2] != "gauge" && path[2] != "counter" {
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return
+	}
 
-			}
-			if path[2] == "gauge" {
+	if path[2] == "counter" {
+		fmt.Println("lengpath path2=counter", lengpath)
+		fmt.Println("path[4]", path[4])
 
-				num1, found := storage.gauges[path[3]]
-				if !found {
-					http.Error(w, "StatusNotFound", http.StatusNotFound)
+		if lengpath != 5 {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return
 
-				}
+		}
 
-				fmt.Fprintf(w, "%v", num1)
+		if path[4] == "none" {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
 
-			}
+		}
+
+		num1, err := strconv.ParseInt(path[4], 10, 64)
+		if err != nil {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return
+		}
+
+		if isInteger(path[4]) {
+			fmt.Println("Num1 в ветке POST ", num1)
+
+			fmt.Fprintf(w, "%v", num1) // Возвращаем текущее значение метрики в текстовом виде
+
+			storage.SaveMetric(path[2], path[3], num1)
+
+			return
+
+		} else {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
 
 		}
 	}
+	if lengpath == 4 && path[3] == "" {
+		http.Error(w, "Metric name not provided", http.StatusBadRequest)
+		return
+	}
+
+	if (len(path[3]) > 0) && (path[4] == "") {
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return
+	}
+
+	if path[2] == "gauge" {
+
+		num, err := strconv.ParseFloat(path[4], 64)
+		if err != nil {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
+		}
+
+		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
+			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			storage.SaveMetric(path[2], path[3], num)
+			return
+
+		} else {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+
+		}
+
+		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
+			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			storage.SaveMetric(path[2], path[3], num)
+			return
+
+		} else {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
+		}
+
+	}
+
+}
+
+func handleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage, path []string, lengpath int) {
+	// Обработка GET-запроса
+	fmt.Println("http.MethodGet", http.MethodGet)
+
+	if lengpath != 4 {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+
+	if path[1] != "value" {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+	if path[2] != "gauge" && path[2] != "counter" {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+
+	if path[2] == "counter" {
+		num1, found := storage.counters[path[3]]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+
+		}
+
+		fmt.Fprintf(w, "%v", num1)
+
+	}
+	if path[2] == "gauge" {
+
+		num1, found := storage.gauges[path[3]]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+
+		}
+
+		fmt.Fprintf(w, "%v", num1)
+
+	}
+
 }
