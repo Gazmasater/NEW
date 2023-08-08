@@ -116,7 +116,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 		if isInteger(path[4]) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
-			fmt.Fprintf(w, "%v", num1) // Возвращаем текущее значение метрики в текстовом виде
+			fmt.Fprintf(w, "%v", num1)
 
 			storage.SaveMetric(path[2], path[3], num1)
 
