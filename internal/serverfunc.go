@@ -17,7 +17,7 @@ func NewRouter(deps *HandlerDependencies) http.Handler {
 
 	r := chi.NewRouter()
 
-	r.Get("/metrics", HandleMetrics(deps.Storage))
+	r.Get("/metrics", HandleMetrics(deps))
 
 	r.Route("/update", func(r chi.Router) {
 		r.Use(func(next http.Handler) http.Handler {
