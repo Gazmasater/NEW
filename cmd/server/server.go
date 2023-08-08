@@ -9,13 +9,8 @@ import (
 	"project.com/internal"
 )
 
-func main() {
-	// Инициализируем конфигурацию сервера
-	serverCfg := internal.InitServerConfig()
-
+func NewRouter(storage *internal.MemStorage) http.Handler {
 	r := chi.NewRouter()
-
-	storage := internal.NewMemStorage()
 
 	r.Get("/metrics", internal.HandleMetrics(storage))
 
@@ -26,6 +21,17 @@ func main() {
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
 		internal.HandleGetRequest(w, r, storage)
 	})
+
+	return r
+}
+
+func main() {
+	// Инициализируем конфигурацию сервера
+	serverCfg := internal.InitServerConfig()
+
+	storage := internal.NewMemStorage()
+
+	r := NewRouter(storage)
 
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
