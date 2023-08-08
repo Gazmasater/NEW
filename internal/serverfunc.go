@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -11,6 +12,37 @@ import (
 
 	"github.com/go-chi/chi"
 )
+
+func NewRouter(storage *MemStorage) http.Handler {
+	r := chi.NewRouter()
+
+	r.Get("/metrics", HandleMetrics(storage))
+
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		HandlePostRequest(w, r, storage)
+	})
+
+	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		HandleGetRequest(w, r, storage)
+	})
+
+	return r
+}
+
+func StartServer(address string, handler http.Handler) {
+	// Создаем HTTP-сервер с настройками
+	server := &http.Server{
+		Addr:    address,
+		Handler: handler,
+	}
+
+	// Запуск HTTP-сервера через http.ListenAndServe()
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", address)
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+	}
+}
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
 	metricsChan := make(chan []*Metric)
