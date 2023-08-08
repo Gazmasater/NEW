@@ -159,7 +159,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 		}
 
-		if path[4] == "none" {
+		if metricValue == "none" {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 
@@ -198,7 +198,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 	if metricType == "gauge" {
 
-		num, err := strconv.ParseFloat(path[4], 64)
+		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
