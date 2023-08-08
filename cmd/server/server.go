@@ -18,7 +18,9 @@ func main() {
 	storage := internal.NewMemStorage()
 
 	r.Get("/metrics", internal.HandleMetrics(storage))
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", internal.HandleUpdate(storage))
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		internal.HandlePostRequest(w, r, storage)
+	})
 	r.Get("/value/{metricType}/{metricName}", internal.HandleUpdate(storage))
 
 	// Создаем HTTP-сервер с настройками

@@ -79,14 +79,14 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodPost:
-			handlePostRequest(w, r, storage)
+			HandlePostRequest(w, r, storage)
 		case http.MethodGet:
-			handleGetRequest(storage)
+			HandleGetRequest(w, r, storage)
 		}
 	}
 }
 
-func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка POST-запроса
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -182,43 +182,46 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 }
 
-func handleGetRequest(storage *MemStorage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		path := strings.Split(r.URL.Path, "/")
-		lengpath := len(path)
+func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+	// Обработка GET-запроса
+	path := strings.Split(r.URL.Path, "/")
+	lengpath := len(path)
+	fmt.Println("http.MethodGet", http.MethodGet)
 
-		fmt.Println("http.MethodGet", http.MethodGet)
-
-		if lengpath != 4 {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
-		}
-
-		if path[1] != "value" {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
-		}
-		if path[2] != "gauge" && path[2] != "counter" {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
-		}
-
-		if path[2] == "counter" {
-			num1, found := storage.counters[path[3]]
-			if !found {
-				http.Error(w, "StatusNotFound", http.StatusNotFound)
-			}
-
-			fmt.Fprintf(w, "%v", num1)
-		}
-
-		if path[2] == "gauge" {
-			num1, found := storage.gauges[path[3]]
-			if !found {
-				http.Error(w, "StatusNotFound", http.StatusNotFound)
-			}
-
-			fmt.Fprintf(w, "%v", num1)
-		}
+	if lengpath != 4 {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
 	}
+
+	if path[1] != "value" {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+	if path[2] != "gauge" && path[2] != "counter" {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+
+	if path[2] == "counter" {
+		num1, found := storage.counters[path[3]]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+
+		}
+
+		fmt.Fprintf(w, "%v", num1)
+
+	}
+	if path[2] == "gauge" {
+
+		num1, found := storage.gauges[path[3]]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+
+		}
+
+		fmt.Fprintf(w, "%v", num1)
+
+	}
+
 }
