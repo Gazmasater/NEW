@@ -34,8 +34,20 @@ func NewRouter(storage *MemStorage) http.Handler {
 		})
 	})
 
-	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		HandleGetRequest(w, r, storage)
+	r.Route("/value", func(r chi.Router) {
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if !strings.HasPrefix(r.URL.Path, "/value/") {
+					http.Error(w, "StatusNotFound", http.StatusNotFound)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
+		})
+
+		r.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+			HandleGetRequest(w, r, storage)
+		})
 	})
 
 	return r
@@ -225,10 +237,6 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 		return
 	}
 
-	if path[1] != "value" {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
 	if path[2] != "gauge" && path[2] != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
