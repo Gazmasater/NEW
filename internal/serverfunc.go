@@ -2,15 +2,12 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-chi/chi"
 )
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
@@ -175,10 +172,6 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка GET-запроса
-
-	metricType := chi.URLParam(r, "metricType")
-	//metricName := chi.URLParam(r, "metricName")
-
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 	fmt.Println("http.MethodGet", http.MethodGet)
@@ -192,23 +185,22 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
-
-	if metricType != "gauge" && metricType != "counter" {
+	if path[2] != "gauge" && path[2] != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
 
-	if metricType == "counter" {
+	if path[2] == "counter" {
 		num1, found := storage.counters[path[3]]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
-		log.Printf("Gauge Value: %v", num1)
+		fmt.Fprintf(w, "%v", num1)
 
 	}
-	if metricType == "gauge" {
+	if path[2] == "gauge" {
 
 		num1, found := storage.gauges[path[3]]
 		if !found {
