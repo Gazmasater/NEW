@@ -46,7 +46,7 @@ func NewRouter(deps *HandlerDependencies) http.Handler {
 		})
 
 		r.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-			HandleGetRequest(w, r, deps.Storage)
+			HandleGetRequest(w, r, deps)
 		})
 	})
 
@@ -225,13 +225,13 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 }
 
-func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDependencies) {
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
-	fmt.Println("http.MethodGet", http.MethodGet)
+	deps.Logger.Println("http.MethodGet:", http.MethodGet)
 
 	if lengpath != 4 {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -244,7 +244,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 	}
 
 	if metricType == "counter" {
-		num1, found := storage.counters[metricName]
+		num1, found := deps.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -255,7 +255,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 	}
 	if metricType == "gauge" {
 
-		num1, found := storage.gauges[metricName]
+		num1, found := deps.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
