@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
-
 	"time"
 
 	"project.com/internal"
@@ -27,7 +28,8 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 func main() {
 	config := internal.InitAgentConfig()
 	if config == nil {
-		return // Если возникли ошибки при инициализации конфигурации, выходим
+		log.Println("Ошибка при инициализации конфигурации")
+		return
 	}
 
 	// Используем параметры из конфигурации
@@ -37,12 +39,23 @@ func main() {
 	metricsChan := internal.CollectMetrics(pollInterval, config.Address)
 
 	// Горутина отправки метрик на сервер с интервалом в reportInterval секунд
-	go func() {
-		for range time.Tick(reportInterval) {
-			metrics := <-metricsChan
-			sendDataToServer(metrics, config.Address)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func(ctx context.Context) {
+		ticker := time.NewTicker(reportInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return // Завершаем горутину при протухании контекста
+			case <-ticker.C:
+				metrics := <-metricsChan
+				sendDataToServer(metrics, config.Address)
+			}
 		}
-	}()
+	}(ctx)
 
 	for range time.Tick(pollInterval) {
 		fmt.Println("Сбор метрик...")

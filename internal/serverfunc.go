@@ -151,7 +151,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 	if metricType == "counter" {
 		fmt.Println("lengpath path2=counter", lengpath)
-		fmt.Println("path[4]", path[4])
+		fmt.Println("metricValue", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
