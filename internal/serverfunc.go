@@ -13,8 +13,22 @@ import (
 	"github.com/go-chi/chi"
 )
 
+type Server struct {
+	router *chi.Mux
+	deps   *HandlerDependencies
+}
+
 func NewRouter(deps *HandlerDependencies) http.Handler {
+
+	logger := NewLogger()
+
 	r := chi.NewRouter()
+
+	server := &Server{
+		router: r,
+		deps:   deps,
+	}
+	logger.Printf("server: %+v", server)
 
 	r.Get("/metrics", HandleMetrics(deps.Storage))
 
@@ -50,8 +64,11 @@ func NewRouter(deps *HandlerDependencies) http.Handler {
 		})
 	})
 
+	// Добавьте здесь настройку маршрутов (r.Get, r.Route и т. д.)
+
 	return r
 }
+
 func StartServer(address string, handler http.Handler) {
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
