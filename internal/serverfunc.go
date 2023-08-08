@@ -18,8 +18,20 @@ func NewRouter(storage *MemStorage) http.Handler {
 
 	r.Get("/metrics", HandleMetrics(storage))
 
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		HandlePostRequest(w, r, storage)
+	r.Route("/update", func(r chi.Router) {
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if !strings.HasPrefix(r.URL.Path, "/update/") {
+					http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
+		})
+
+		r.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+			HandlePostRequest(w, r, storage)
+		})
 	})
 
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
@@ -118,11 +130,11 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 	lengpath := len(path)
 	fmt.Println("http.MethodPost:=", http.MethodPost)
 
-	if path[1] != "update" {
+	//if path[1] != "update" {
 
-		http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
-		return
-	}
+	//	http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+	//	return
+	//}
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
