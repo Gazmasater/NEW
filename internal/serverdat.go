@@ -3,9 +3,27 @@ package internal
 import (
 	"encoding/json"
 	"flag"
+	"log"
 	"net/http"
+	"os"
 	"sync"
 )
+
+func NewLogger() *log.Logger {
+	return log.New(os.Stdout, "[MyApp] ", log.Ldate|log.Ltime)
+}
+
+type HandlerDependencies struct {
+	Storage *MemStorage
+	Logger  *log.Logger
+}
+
+func NewHandlerDependencies(storage *MemStorage, logger *log.Logger) *HandlerDependencies {
+	return &HandlerDependencies{
+		Storage: storage,
+		Logger:  logger,
+	}
+}
 
 func ParseAddr() (string, error) {
 	// Определение и парсинг флага

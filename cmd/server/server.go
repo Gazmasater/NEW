@@ -9,8 +9,11 @@ func main() {
 	serverCfg := internal.InitServerConfig()
 
 	storage := internal.NewMemStorage()
+	logger := internal.NewLogger() // Инициализируйте логгер, если он есть
 
-	r := internal.NewRouter(storage)
+	deps := internal.NewHandlerDependencies(storage, logger)
+
+	r := internal.NewRouter(deps)
 
 	// Запуск HTTP-сервера
 	internal.StartServer(serverCfg.Address, r)

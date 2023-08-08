@@ -13,10 +13,10 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func NewRouter(storage *MemStorage) http.Handler {
+func NewRouter(deps *HandlerDependencies) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/metrics", HandleMetrics(storage))
+	r.Get("/metrics", HandleMetrics(deps.Storage))
 
 	r.Route("/update", func(r chi.Router) {
 		r.Use(func(next http.Handler) http.Handler {
@@ -30,7 +30,7 @@ func NewRouter(storage *MemStorage) http.Handler {
 		})
 
 		r.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-			HandlePostRequest(w, r, storage)
+			HandlePostRequest(w, r, deps.Storage)
 		})
 	})
 
@@ -46,13 +46,12 @@ func NewRouter(storage *MemStorage) http.Handler {
 		})
 
 		r.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-			HandleGetRequest(w, r, storage)
+			HandleGetRequest(w, r, deps.Storage)
 		})
 	})
 
 	return r
 }
-
 func StartServer(address string, handler http.Handler) {
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
