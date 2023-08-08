@@ -30,7 +30,7 @@ func NewRouter(deps *HandlerDependencies) http.Handler {
 		})
 
 		r.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-			HandlePostRequest(w, r, deps.Storage)
+			HandlePostRequest(w, r, deps)
 		})
 	})
 
@@ -131,7 +131,7 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDependencies) {
 	// Обработка POST-запроса
 
 	metricType := chi.URLParam(r, "metricType")
@@ -173,7 +173,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 			fmt.Fprintf(w, "%v", num1)
 
-			storage.SaveMetric(metricType, metricName, num1)
+			deps.Storage.SaveMetric(metricType, metricName, num1)
 
 			return
 
@@ -203,7 +203,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			storage.SaveMetric(path[2], metricName, num)
+			deps.Storage.SaveMetric(path[2], metricName, num)
 			return
 
 		} else {
@@ -213,7 +213,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			storage.SaveMetric(path[2], path[3], num)
+			deps.Storage.SaveMetric(metricType, metricName, num)
 			return
 
 		} else {
@@ -262,6 +262,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepen
 		}
 
 		fmt.Fprintf(w, "%v", num1)
+		deps.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
 
 	}
 
