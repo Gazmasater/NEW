@@ -13,22 +13,9 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type Server struct {
-	router *chi.Mux
-	deps   *HandlerDependencies
-}
-
 func NewRouter(deps *HandlerDependencies) http.Handler {
 
-	logger := NewLogger()
-
 	r := chi.NewRouter()
-
-	server := &Server{
-		router: r,
-		deps:   deps,
-	}
-	logger.Printf("server: %+v", server)
 
 	r.Get("/metrics", HandleMetrics(deps.Storage))
 
@@ -63,8 +50,6 @@ func NewRouter(deps *HandlerDependencies) http.Handler {
 			HandleGetRequest(w, r, deps)
 		})
 	})
-
-	// Добавьте здесь настройку маршрутов (r.Get, r.Route и т. д.)
 
 	return r
 }
@@ -153,6 +138,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
+	metricValue := chi.URLParam(r, "metricValue")
 
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -179,13 +165,13 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 		}
 
-		num1, err := strconv.ParseInt(path[4], 10, 64)
+		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 			return
 		}
 
-		if isInteger(path[4]) {
+		if isInteger(metricValue) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
 			fmt.Fprintf(w, "%v", num1)
@@ -205,7 +191,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 		return
 	}
 
-	if (len(metricName) > 0) && (path[4] == "") {
+	if (len(metricName) > 0) && (metricValue == "") {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
@@ -218,7 +204,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 			return
 		}
 
-		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
+		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			deps.Storage.SaveMetric(path[2], metricName, num)
 			return
@@ -228,7 +214,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 		}
 
-		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
+		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			deps.Storage.SaveMetric(metricType, metricName, num)
 			return
