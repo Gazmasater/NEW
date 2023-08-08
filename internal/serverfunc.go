@@ -81,7 +81,7 @@ func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 		case http.MethodPost:
 			handlePostRequest(w, r, storage)
 		case http.MethodGet:
-			handleGetRequest(w, r, storage)
+			handleGetRequest(storage)
 		}
 	}
 }
@@ -182,46 +182,43 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 }
 
-func handleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
-	// Обработка GET-запроса
-	path := strings.Split(r.URL.Path, "/")
-	lengpath := len(path)
-	fmt.Println("http.MethodGet", http.MethodGet)
+func handleGetRequest(storage *MemStorage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := strings.Split(r.URL.Path, "/")
+		lengpath := len(path)
 
-	if lengpath != 4 {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
+		fmt.Println("http.MethodGet", http.MethodGet)
 
-	if path[1] != "value" {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
-	if path[2] != "gauge" && path[2] != "counter" {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
-
-	if path[2] == "counter" {
-		num1, found := storage.counters[path[3]]
-		if !found {
+		if lengpath != 4 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
-
+			return
 		}
 
-		fmt.Fprintf(w, "%v", num1)
-
-	}
-	if path[2] == "gauge" {
-
-		num1, found := storage.gauges[path[3]]
-		if !found {
+		if path[1] != "value" {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
-
+			return
+		}
+		if path[2] != "gauge" && path[2] != "counter" {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return
 		}
 
-		fmt.Fprintf(w, "%v", num1)
+		if path[2] == "counter" {
+			num1, found := storage.counters[path[3]]
+			if !found {
+				http.Error(w, "StatusNotFound", http.StatusNotFound)
+			}
 
+			fmt.Fprintf(w, "%v", num1)
+		}
+
+		if path[2] == "gauge" {
+			num1, found := storage.gauges[path[3]]
+			if !found {
+				http.Error(w, "StatusNotFound", http.StatusNotFound)
+			}
+
+			fmt.Fprintf(w, "%v", num1)
+		}
 	}
-
 }
