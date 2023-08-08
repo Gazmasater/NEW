@@ -80,7 +80,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 	// Обработка POST-запроса
 
 	metricType := chi.URLParam(r, "metricType")
-	//metricName := chi.URLParam(r, "metricName")
+	metricName := chi.URLParam(r, "metricName")
 
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -124,7 +124,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 			fmt.Fprintf(w, "%v", num1)
 
-			storage.SaveMetric(path[2], path[3], num1)
+			storage.SaveMetric(metricType, metricName, num1)
 
 			return
 
@@ -134,12 +134,12 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 		}
 	}
-	if lengpath == 4 && path[3] == "" {
+	if lengpath == 4 && metricName == "" {
 		http.Error(w, "Metric name not provided", http.StatusBadRequest)
 		return
 	}
 
-	if (len(path[3]) > 0) && (path[4] == "") {
+	if (len(metricName) > 0) && (path[4] == "") {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
@@ -154,7 +154,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			storage.SaveMetric(path[2], path[3], num)
+			storage.SaveMetric(path[2], metricName, num)
 			return
 
 		} else {
