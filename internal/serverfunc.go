@@ -19,8 +19,14 @@ func NewRouter(storage *MemStorage) http.Handler {
 	r.Get("/metrics", HandleMetrics(storage))
 
 	r.Route("/update", func(r chi.Router) {
-		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if !strings.HasPrefix(r.URL.Path, "/update/") {
+					http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+					return
+				}
+				next.ServeHTTP(w, r)
+			})
 		})
 
 		r.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
