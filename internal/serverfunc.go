@@ -77,23 +77,19 @@ func isInteger(s string) bool {
 func HandleUpdate(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		fmt.Println("http.Method:=", r.Method)
-		path := strings.Split(r.URL.Path, "/")
-		lengpath := len(path)
-		fmt.Println("LENGTH", lengpath)
-
 		switch r.Method {
 		case http.MethodPost:
-			handlePostRequest(w, r, storage, path, lengpath)
+			handlePostRequest(w, r, storage)
 		case http.MethodGet:
-			handleGetRequest(w, r, storage, path, lengpath)
+			handleGetRequest(w, r, storage)
 		}
 	}
 }
 
-func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage, path []string, lengpath int) {
+func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка POST-запроса
-
+	path := strings.Split(r.URL.Path, "/")
+	lengpath := len(path)
 	fmt.Println("http.MethodPost:=", http.MethodPost)
 
 	if path[1] != "update" {
@@ -186,8 +182,10 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 
 }
 
-func handleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage, path []string, lengpath int) {
+func handleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка GET-запроса
+	path := strings.Split(r.URL.Path, "/")
+	lengpath := len(path)
 	fmt.Println("http.MethodGet", http.MethodGet)
 
 	if lengpath != 4 {
