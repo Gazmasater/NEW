@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi"
 )
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
@@ -76,6 +78,10 @@ func isInteger(s string) bool {
 
 func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка POST-запроса
+
+	metricType := chi.URLParam(r, "metricType")
+	//metricName := chi.URLParam(r, "metricName")
+
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 	fmt.Println("http.MethodPost:=", http.MethodPost)
@@ -86,12 +92,12 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 		return
 	}
 
-	if path[2] != "gauge" && path[2] != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
-	if path[2] == "counter" {
+	if metricType == "counter" {
 		fmt.Println("lengpath path2=counter", lengpath)
 		fmt.Println("path[4]", path[4])
 
@@ -138,7 +144,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStora
 		return
 	}
 
-	if path[2] == "gauge" {
+	if metricType == "gauge" {
 
 		num, err := strconv.ParseFloat(path[4], 64)
 		if err != nil {
