@@ -74,18 +74,6 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func HandleUpdate(storage *MemStorage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		switch r.Method {
-		case http.MethodPost:
-			HandlePostRequest(w, r, storage)
-		case http.MethodGet:
-			HandleGetRequest(w, r, storage)
-		}
-	}
-}
-
 func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	// Обработка POST-запроса
 	path := strings.Split(r.URL.Path, "/")
