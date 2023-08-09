@@ -128,7 +128,7 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	return metricsChan
 }
 
-func isInteger(s string) bool {
+func IsInteger(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
 }
@@ -171,7 +171,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 			return
 		}
 
-		if isInteger(metricValue) {
+		if IsInteger(metricValue) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
 			fmt.Fprintf(w, "%v", num1)

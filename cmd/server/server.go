@@ -1,8 +1,10 @@
 package main
 
 import (
-	//"github.com/go-chi/chi"
+	"net/http"
+	"strings"
 
+	"github.com/go-chi/chi"
 	"project.com/internal"
 )
 
@@ -11,12 +13,56 @@ func main() {
 	serverCfg := internal.InitServerConfig()
 
 	storage := internal.NewMemStorage()
-	logger := internal.NewLogger() // Инициализируйте логгер, если он есть
+	logger := internal.NewLogger()
 
 	deps := internal.NewHandlerDependencies(storage, logger)
 
-	r := internal.NewRouter(deps)
+	r := newRouter(deps)
 
-	// Запуск HTTP-сервера
 	internal.StartServer(serverCfg.Address, r)
+}
+
+func UpdateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/update/") {
+			http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func ValueMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/value/") {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func newRouter(deps *internal.HandlerDependencies) http.Handler {
+	r := chi.NewRouter()
+
+	// Middleware для маршрута /metrics
+	r.Get("/metrics", internal.HandleMetrics(deps))
+
+	// Монтирование подмаршрута /update
+	updateRouter := chi.NewRouter()
+	updateRouter.Use(UpdateMiddleware)
+	updateRouter.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		internal.HandlePostRequest(w, r, deps)
+	})
+	r.Mount("/update", updateRouter)
+
+	// Монтирование подмаршрута /value
+	valueRouter := chi.NewRouter()
+	valueRouter.Use(ValueMiddleware)
+	valueRouter.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		internal.HandleGetRequest(w, r, deps)
+	})
+	r.Mount("/value", valueRouter)
+
+	return r
 }
