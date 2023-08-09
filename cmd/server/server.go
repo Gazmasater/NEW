@@ -45,7 +45,6 @@ func ValueMiddleware(next http.Handler) http.Handler {
 func newRouter(deps *internal.HandlerDependencies) http.Handler {
 	r := chi.NewRouter()
 
-	// Middleware для маршрута /metrics
 	r.Get("/metrics", internal.HandleMetrics(deps))
 
 	// Монтирование подмаршрута /update
