@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"project.com/internal/agentin"
+
 	"project.com/internal"
 )
 
@@ -26,7 +28,7 @@ func sendDataToServer(metrics []*internal.Metric, serverURL string) {
 }
 
 func main() {
-	config := internal.InitAgentConfig()
+	config := agentin.InitAgentConfig()
 	if config == nil {
 		log.Println("Ошибка при инициализации конфигурации")
 		return
