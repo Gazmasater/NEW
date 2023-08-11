@@ -1,4 +1,4 @@
-package internal
+package serverin
 
 import (
 	"encoding/json"
@@ -31,12 +31,6 @@ func ParseAddr() (string, error) {
 	flag.Parse()
 
 	return *addr, nil
-}
-
-type Metric struct {
-	Type  string      `json:"type"`
-	Name  string      `json:"name"`
-	Value interface{} `json:"value"`
 }
 
 type MemStorage struct {

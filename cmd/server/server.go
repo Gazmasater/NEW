@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"project.com/internal"
+
 	"project.com/internal/serverin"
 )
 
@@ -13,14 +13,14 @@ func main() {
 	// Инициализируем конфигурацию сервера
 	serverCfg := serverin.InitServerConfig()
 
-	storage := internal.NewMemStorage()
-	logger := internal.NewLogger()
+	storage := serverin.NewMemStorage()
+	logger := serverin.NewLogger()
 
-	deps := internal.NewHandlerDependencies(storage, logger)
+	deps := serverin.NewHandlerDependencies(storage, logger)
 
 	r := newRouter(deps)
 
-	internal.StartServer(serverCfg.Address, r)
+	serverin.StartServer(serverCfg.Address, r)
 }
 
 func UpdateMiddleware(next http.Handler) http.Handler {
@@ -43,16 +43,16 @@ func ValueMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newRouter(deps *internal.HandlerDependencies) http.Handler {
+func newRouter(deps *serverin.HandlerDependencies) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/metrics", internal.HandleMetrics(deps))
+	r.Get("/metrics", serverin.HandleMetrics(deps))
 
 	// Монтирование подмаршрута /update
 	updateRouter := chi.NewRouter()
 	updateRouter.Use(UpdateMiddleware)
 	updateRouter.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandlePostRequest(w, r, deps)
+		serverin.HandlePostRequest(w, r, deps)
 	})
 	r.Mount("/update", updateRouter)
 
@@ -60,7 +60,7 @@ func newRouter(deps *internal.HandlerDependencies) http.Handler {
 	valueRouter := chi.NewRouter()
 	valueRouter.Use(ValueMiddleware)
 	valueRouter.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandleGetRequest(w, r, deps)
+		serverin.HandleGetRequest(w, r, deps)
 	})
 	r.Mount("/value", valueRouter)
 

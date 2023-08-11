@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"project.com/internal"
+	"project.com/internal/agentin"
 )
 
 func TestCollectMetrics(t *testing.T) {
 	// Создаем канал для получения метрик
-	metricsChan := internal.CollectMetrics(1*time.Second, "http://internal.Addr/update/gauge/test1/100")
+	metricsChan := agentin.CollectMetrics(1*time.Second, "http://internal.Addr/update/gauge/test1/100")
 
 	// Ждем 2 секунды, чтобы метрики собрались
 	time.Sleep(2 * time.Second)
