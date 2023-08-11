@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func NewRouter(deps *HandlerDependencies) http.Handler {
+func NewRouter(deps *HandlerDependencies) *chi.Mux {
 
 	r := chi.NewRouter()
 
