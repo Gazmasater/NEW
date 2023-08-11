@@ -104,7 +104,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 			return
 		}
 
-		if IsInteger(metricValue) {
+		if isInteger(metricValue) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
 			fmt.Fprintf(w, "%v", num1)
@@ -204,7 +204,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepen
 
 }
 
-func IsInteger(s string) bool {
+func isInteger(s string) bool {
 	_, err := strconv.Atoi(s) // Преобразуем строку в целое число, игнорируя результат
 	return err == nil         // Если ошибки нет, то строка является целым числом
 }
