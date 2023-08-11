@@ -1,4 +1,4 @@
-package internal
+package serverin
 
 import (
 	"flag"
@@ -36,4 +36,3 @@ func InitServerConfig() *ServerConfig {
 		Address: addr,
 	}
 }
-  

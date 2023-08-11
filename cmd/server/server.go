@@ -6,11 +6,12 @@ import (
 
 	"github.com/go-chi/chi"
 	"project.com/internal"
+	"project.com/internal/serverin"
 )
 
 func main() {
 	// Инициализируем конфигурацию сервера
-	serverCfg := internal.InitServerConfig()
+	serverCfg := serverin.InitServerConfig()
 
 	storage := internal.NewMemStorage()
 	logger := internal.NewLogger()
