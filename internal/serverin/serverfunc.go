@@ -10,65 +10,19 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func NewRouter(deps *HandlerDependencies) *chi.Mux {
-
-	r := chi.NewRouter()
-
-	r.Get("/metrics", HandleMetrics(deps))
-
-	r.Route("/update", func(r chi.Router) {
-		r.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if !strings.HasPrefix(r.URL.Path, "/update/") {
-					http.Error(w, "StatusBadRequest no update", http.StatusBadRequest)
-					return
-				}
-				next.ServeHTTP(w, r)
-			})
-		})
-
-		r.Post("/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-			HandlePostRequest(w, r, deps)
-		})
-	})
-
-	r.Route("/value", func(r chi.Router) {
-		r.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if !strings.HasPrefix(r.URL.Path, "/value/") {
-					http.Error(w, "StatusNotFound", http.StatusNotFound)
-					return
-				}
-				next.ServeHTTP(w, r)
-			})
-		})
-
-		r.Get("/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-			HandleGetRequest(w, r, deps)
-		})
-	})
-
-	return r
+type MyController struct {
+	deps *HandlerDependencies
 }
 
-func StartServer(address string, handler http.Handler) {
-	// Создаем HTTP-сервер с настройками
-	server := &http.Server{
-		Addr:    address,
-		Handler: handler,
-	}
-
-	// Запуск HTTP-сервера через http.ListenAndServe()
-	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", address)
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+func NewMyController(deps *HandlerDependencies) *MyController {
+	return &MyController{
+		deps: deps,
 	}
 }
 
-func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDependencies) {
+func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
-
+	// Используйте mc.deps для доступа к зависимостям
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
@@ -109,7 +63,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 			fmt.Fprintf(w, "%v", num1)
 
-			deps.Storage.SaveMetric(metricType, metricName, num1)
+			mc.deps.Storage.SaveMetric(metricType, metricName, num1)
 
 			return
 
@@ -139,7 +93,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			deps.Storage.SaveMetric(path[2], metricName, num)
+			mc.deps.Storage.SaveMetric(path[2], metricName, num)
 			return
 
 		} else {
@@ -149,7 +103,7 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			deps.Storage.SaveMetric(metricType, metricName, num)
+			mc.deps.Storage.SaveMetric(metricType, metricName, num)
 			return
 
 		} else {
@@ -161,13 +115,14 @@ func HandlePostRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepe
 
 }
 
-func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDependencies) {
+func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
+	// Используйте mc.deps для доступа к зависимостям
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
-	deps.Logger.Println("http.MethodGet:", http.MethodGet)
+	mc.deps.Logger.Println("http.MethodGet:", http.MethodGet)
 
 	if lengpath != 4 {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -180,7 +135,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepen
 	}
 
 	if metricType == "counter" {
-		num1, found := deps.Storage.counters[metricName]
+		num1, found := mc.deps.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -191,17 +146,43 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, deps *HandlerDepen
 	}
 	if metricType == "gauge" {
 
-		num1, found := deps.Storage.gauges[metricName]
+		num1, found := mc.deps.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
 		fmt.Fprintf(w, "%v", num1)
-		deps.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
+		mc.deps.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
 
 	}
 
+}
+
+func (mc *MyController) Route() *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Post("/update", mc.handlePostRequest)
+	r.Get("/value", mc.handleGetRequest)
+
+	// Добавьте другие обработчики URL здесь
+
+	return r
+}
+
+func StartServer(address string, handler http.Handler) {
+	// Создаем HTTP-сервер с настройками
+	server := &http.Server{
+		Addr:    address,
+		Handler: handler,
+	}
+
+	// Запуск HTTP-сервера через http.ListenAndServe()
+	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", address)
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
+	}
 }
 
 func isInteger(s string) bool {
