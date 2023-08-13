@@ -13,12 +13,10 @@ func main() {
 
 	storage := serverin.NewMemStorage()
 	logger := serverin.NewLogger()
-	log.Println("main storage logger ", storage, logger)
 
-	deps := &serverin.HandlerDependencies{} // Создайте свои зависимости
-	controller := serverin.NewMyController(deps)
-	router := controller.Route()
+	deps := serverin.NewHandlerDependencies(storage, logger)
+	controller := serverin.NewMyController(deps) // Создаем новый контроллер
 
-	serverin.StartServer("localhost:8080", router)
-
+	rootRouter := controller.Route() // Получаем роутер из контроллера
+	serverin.StartServer("localhost:8080", rootRouter)
 }
