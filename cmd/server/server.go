@@ -1,24 +1,20 @@
 package main
 
 import (
-	"log"
-
 	"github.com/go-chi/chi"
 	"project.com/internal/serverin"
 )
 
 func main() {
-	// Инициализируем конфигурацию сервера
-	serverCfg := serverin.InitServerConfig()
-	log.Println("main serverCfg", serverCfg)
+	storage := serverin.NewMemStorage() // Создание объекта MemStorage
+	logger := serverin.NewLogger()      // Создание объекта *log.Logger
 
-	storage := serverin.NewMemStorage()
-	logger := serverin.NewLogger()
+	deps := serverin.NewHandlerDependencies(storage, logger) // Создание объекта HandlerDependencies с передачей зависимостей
 
-	deps := serverin.NewHandlerDependencies(storage, logger)
-	controller := serverin.NewMyController(deps) // Создаем новый контроллер
+	controller := serverin.NewMyController(deps) // Создание контроллера с переданными зависимостями
 
-	rootRouter := chi.NewRouter()                      // Создаем корневой роутер
-	rootRouter.Mount("/", controller.Route())          // Подключаем роутер из контроллера к корневому роутеру
-	serverin.StartServer("localhost:8080", rootRouter) // Запускаем сервер
+	r := chi.NewRouter()
+	r.Mount("/", controller.Route()) // Монтирование главного роутера
+
+	serverin.StartServer("localhost:8080", r) // Запуск сервера
 }

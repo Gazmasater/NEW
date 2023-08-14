@@ -26,6 +26,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
+	log.Println("POST metricType metricName metricValue ", metricType, metricName, metricValue)
 
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -118,6 +119,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
 	// Используйте mc.deps для доступа к зависимостям
+	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	path := strings.Split(r.URL.Path, "/")
@@ -159,13 +161,30 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 
 }
 
+func (mc *MyController) Route1() *chi.Mux {
+
+	log.Println("GET Route1-0")
+	r := chi.NewRouter()
+
+	r.Get("/{metricType}/{metricName}", mc.handleGetRequest) // GET-запрос для /value/type/name
+	log.Println("GET Route1-1")
+
+	return r
+}
+
+func (mc *MyController) Route2() *chi.Mux {
+	log.Println(" Post Route2")
+
+	r := chi.NewRouter()
+	r.Post("/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest) // POST-запрос для /update/type/name/value
+	return r
+}
+
 func (mc *MyController) Route() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Post("/update", mc.handlePostRequest)
-	r.Get("/value", mc.handleGetRequest)
-
-	// Добавьте другие обработчики URL здесь
+	r.Mount("/value", mc.Route1())  // Монтирование роутера для GET-запросов
+	r.Mount("/update", mc.Route2()) // Монтирование роутера для POST-запросов
 
 	return r
 }
