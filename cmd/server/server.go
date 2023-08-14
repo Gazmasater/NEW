@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	serverin.InitServerConfig()
+	config := serverin.InitServerConfig()
 	storage := serverin.NewMemStorage() // Создание объекта MemStorage
 	logger := serverin.NewLogger()      // Создание объекта *log.Logger
 
@@ -17,5 +17,5 @@ func main() {
 	r := chi.NewRouter()
 	r.Mount("/", controller.Route()) // Монтирование главного роутера
 
-	serverin.StartServer("localhost:8080", r) // Запуск сервера
+	serverin.StartServer(config.Address, r) // Запуск сервера с использованием адреса из конфигурации
 }
