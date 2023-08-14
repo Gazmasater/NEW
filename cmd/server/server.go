@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	serverin.InitServerConfig()
 	storage := serverin.NewMemStorage() // Создание объекта MemStorage
 	logger := serverin.NewLogger()      // Создание объекта *log.Logger
 
