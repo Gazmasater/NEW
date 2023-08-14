@@ -180,11 +180,22 @@ func (mc *MyController) Route2() *chi.Mux {
 	return r
 }
 
+func (mc *MyController) handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
+	HandleMetrics(mc.deps)(w, r)
+}
+
+func (mc *MyController) Route3() *chi.Mux {
+	r := chi.NewRouter()
+	r.Get("/", mc.handleMetricsRequest) // GET-запрос для /metrics
+	return r
+}
+
 func (mc *MyController) Route() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Mount("/value", mc.Route1())  // Монтирование роутера для GET-запросов
-	r.Mount("/update", mc.Route2()) // Монтирование роутера для POST-запросов
+	r.Mount("/value", mc.Route1())   // Монтирование роутера для GET-запросов
+	r.Mount("/update", mc.Route2())  // Монтирование роутера для POST-запросов
+	r.Mount("/metrics", mc.Route3()) // Монтирование роутера для /metrics
 
 	return r
 }
