@@ -114,6 +114,7 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 		}
 
 		mc.Logger.Printf("Значение num1: %v", num1)
+		fmt.Fprintf(w, "%v", num1)
 
 	}
 	if metricType == "gauge" {
