@@ -37,9 +37,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if isInteger(metricValue) {
-			fmt.Println("Num1 в ветке POST ", num1)
-
-			fmt.Fprintf(w, "%v", num1)
+			mc.Logger.Printf("Num1 в ветке POST: %v", num1)
 
 			mc.Storage.SaveMetric(metricType, metricName, num1)
 
