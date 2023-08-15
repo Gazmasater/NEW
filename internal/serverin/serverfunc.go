@@ -1,6 +1,7 @@
 package serverin
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -163,31 +164,43 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 
 func (mc *MyController) Route1() *chi.Mux {
 
-	log.Println("GET Route1-0")
 	r := chi.NewRouter()
 
 	r.Get("/{metricType}/{metricName}", mc.handleGetRequest) // GET-запрос для /value/type/name
-	log.Println("GET Route1-1")
 
 	return r
 }
 
 func (mc *MyController) Route2() *chi.Mux {
-	log.Println(" Post Route2")
 
 	r := chi.NewRouter()
 	r.Post("/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest) // POST-запрос для /update/type/name/value
 	return r
 }
 
-func (mc *MyController) handleMetricsRequest(w http.ResponseWriter, r *http.Request) {
-	HandleMetrics(mc.deps)(w, r)
+func (mc *MyController) Route3() *chi.Mux {
+
+	r := chi.NewRouter()
+
+	r.Get("/", mc.handleMetrics) // GET-запрос для /metrics
+
+	return r
 }
 
-func (mc *MyController) Route3() *chi.Mux {
-	r := chi.NewRouter()
-	r.Get("/", mc.handleMetricsRequest) // GET-запрос для /metrics
-	return r
+func handleMetrics(deps *HandlerDependencies) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		allMetrics := deps.Storage.GetAllMetrics()
+
+		// Формируем JSON с данными о метриках
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Используем пакет encoding/json для преобразования данных в JSON и записи их в ResponseWriter.
+		json.NewEncoder(w).Encode(allMetrics)
+	}
+}
+
+func (mc *MyController) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	handleMetrics(mc.deps)(w, r)
 }
 
 func (mc *MyController) Route() *chi.Mux {

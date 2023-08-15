@@ -1,10 +1,9 @@
 package serverin
 
 import (
-	"encoding/json"
 	"flag"
 	"log"
-	"net/http"
+
 	"os"
 	"sync"
 )
@@ -102,16 +101,4 @@ func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 		}
 	}
 	return allMetrics
-}
-
-func HandleMetrics(deps *HandlerDependencies) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		allMetrics := deps.Storage.GetAllMetrics()
-
-		// Формируем JSON с данными о метриках
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		// Используем пакет encoding/json для преобразования данных в JSON и записи их в ResponseWriter.
-		json.NewEncoder(w).Encode(allMetrics)
-	}
 }
