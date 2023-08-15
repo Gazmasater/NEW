@@ -22,12 +22,10 @@ func NewMyController(deps *HandlerDependencies) *MyController {
 
 func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
-	// Используйте mc.deps для доступа к зависимостям
+
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
-
-	fmt.Println("http.MethodPost:=", http.MethodPost)
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -107,7 +105,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
-	// Используйте mc.deps для доступа к зависимостям
+
 	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
@@ -143,40 +141,6 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (mc *MyController) Route1() *chi.Mux {
-
-	r := chi.NewRouter()
-
-	r.Get("/{metricType}/{metricName}", mc.handleGetRequest) // GET-запрос для /value/type/name
-	// Обработчик для случая, когда путь не соответствует заданному шаблону
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
-
-	return r
-}
-
-func (mc *MyController) Route2() *chi.Mux {
-
-	r := chi.NewRouter()
-	r.Post("/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest) // POST-запрос для /update/type/name/value
-	// Обработчик для случая, когда путь не соответствует заданному шаблону
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
-
-	return r
-}
-
-func (mc *MyController) Route3() *chi.Mux {
-
-	r := chi.NewRouter()
-
-	r.Get("/", mc.handleMetrics) // GET-запрос для /metrics
-
-	return r
-}
-
 func handleMetrics(deps *HandlerDependencies) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allMetrics := deps.Storage.GetAllMetrics()
@@ -196,9 +160,14 @@ func (mc *MyController) handleMetrics(w http.ResponseWriter, r *http.Request) {
 func (mc *MyController) Route() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Mount("/value", mc.Route1())   // Монтирование роутера для GET-запросов
-	r.Mount("/update", mc.Route2())  // Монтирование роутера для POST-запросов
-	r.Mount("/metrics", mc.Route3()) // Монтирование роутера для /metrics
+	// Обработчик для GET-запросов
+	r.Get("/value/{metricType}/{metricName}", mc.handleGetRequest)
+
+	// Обработчик для POST-запросов
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
+
+	// Обработчик для GET-запроса /metrics
+	r.Get("/metrics", mc.handleMetrics)
 
 	return r
 }
