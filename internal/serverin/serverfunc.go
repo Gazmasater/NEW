@@ -10,17 +10,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type MyController struct {
-	deps *HandlerDependencies
-}
-
-func NewMyController(deps *HandlerDependencies) *MyController {
-	return &MyController{
-		deps: deps,
-	}
-}
-
-func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request) {
+func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
 
 	metricType := chi.URLParam(r, "metricType")
@@ -51,7 +41,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 			fmt.Fprintf(w, "%v", num1)
 
-			mc.deps.Storage.SaveMetric(metricType, metricName, num1)
+			mc.Storage.SaveMetric(metricType, metricName, num1)
 
 			return
 
@@ -81,7 +71,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			mc.deps.Storage.SaveMetric(metricType, metricName, num)
+			mc.Storage.SaveMetric(metricType, metricName, num)
 			return
 
 		} else {
@@ -91,7 +81,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			mc.deps.Storage.SaveMetric(metricType, metricName, num)
+			mc.Storage.SaveMetric(metricType, metricName, num)
 			return
 
 		} else {
@@ -103,13 +93,13 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 }
 
-func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request) {
+func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
 
 	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-	mc.deps.Logger.Println("http.MethodGet:", http.MethodGet)
+	mc.Logger.Println("http.MethodGet:", http.MethodGet)
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -117,7 +107,7 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 	}
 
 	if metricType == "counter" {
-		num1, found := mc.deps.Storage.counters[metricName]
+		num1, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -128,14 +118,14 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 	}
 	if metricType == "gauge" {
 
-		num1, found := mc.deps.Storage.gauges[metricName]
+		num1, found := mc.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
 		fmt.Fprintf(w, "%v", num1)
-		mc.deps.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
+		mc.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
 
 	}
 
@@ -153,11 +143,11 @@ func handleMetrics(deps *HandlerDependencies) http.HandlerFunc {
 	}
 }
 
-func (mc *MyController) handleMetrics(w http.ResponseWriter, r *http.Request) {
-	handleMetrics(mc.deps)(w, r)
+func (mc *HandlerDependencies) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	handleMetrics(mc)(w, r)
 }
 
-func (mc *MyController) Route() *chi.Mux {
+func (mc *HandlerDependencies) Route() *chi.Mux {
 
 	r := chi.NewRouter()
 
