@@ -131,9 +131,9 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 
 }
 
-func handleMetrics(deps *HandlerDependencies) http.HandlerFunc {
+func handleMetrics(mc *HandlerDependencies) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		allMetrics := deps.Storage.GetAllMetrics()
+		allMetrics := mc.Storage.GetAllMetrics()
 
 		// Формируем JSON с данными о метриках
 		w.Header().Set("Content-Type", "application/json")
