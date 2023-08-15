@@ -27,7 +27,6 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
-	log.Println("POST metricType metricName metricValue ", metricType, metricName, metricValue)
 
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -39,8 +38,6 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 	}
 
 	if metricType == "counter" {
-		fmt.Println("lengpath path2=counter", lengpath)
-		fmt.Println("metricValue", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -95,7 +92,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			mc.deps.Storage.SaveMetric(path[2], metricName, num)
+			mc.deps.Storage.SaveMetric(metricType, metricName, num)
 			return
 
 		} else {
