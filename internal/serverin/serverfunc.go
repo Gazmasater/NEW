@@ -75,7 +75,7 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 
 		}
 	}
-	if lengpath == 4 && metricName == "" {
+	if metricName == "" {
 		http.Error(w, "Metric name not provided", http.StatusBadRequest)
 		return
 	}
