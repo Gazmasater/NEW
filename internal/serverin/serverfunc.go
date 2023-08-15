@@ -113,7 +113,7 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 
-		fmt.Fprintf(w, "%v", num1)
+		mc.Logger.Printf("Возвращаем текущее значение метрики counter : %v", num1)
 
 	}
 	if metricType == "gauge" {
