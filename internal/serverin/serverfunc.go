@@ -68,7 +68,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
-			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			mc.Logger.Printf("Текущее значение метрики: %v", num)
 			mc.Storage.SaveMetric(metricType, metricName, num)
 			return
 
