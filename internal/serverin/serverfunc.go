@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi"
 )
@@ -28,8 +27,6 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
 
-	path := strings.Split(r.URL.Path, "/")
-	lengpath := len(path)
 	fmt.Println("http.MethodPost:=", http.MethodPost)
 
 	if metricType != "gauge" && metricType != "counter" {
@@ -38,12 +35,6 @@ func (mc *MyController) handlePostRequest(w http.ResponseWriter, r *http.Request
 	}
 
 	if metricType == "counter" {
-
-		if lengpath != 5 {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
-
-		}
 
 		if metricValue == "none" {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
