@@ -167,6 +167,10 @@ func (mc *MyController) Route1() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/{metricType}/{metricName}", mc.handleGetRequest) // GET-запрос для /value/type/name
+	// Обработчик для случая, когда путь не соответствует заданному шаблону
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
 
 	return r
 }
@@ -175,6 +179,11 @@ func (mc *MyController) Route2() *chi.Mux {
 
 	r := chi.NewRouter()
 	r.Post("/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest) // POST-запрос для /update/type/name/value
+	// Обработчик для случая, когда путь не соответствует заданному шаблону
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+
 	return r
 }
 
