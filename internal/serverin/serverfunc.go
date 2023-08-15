@@ -120,14 +120,7 @@ func (mc *MyController) handleGetRequest(w http.ResponseWriter, r *http.Request)
 	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-	path := strings.Split(r.URL.Path, "/")
-	lengpath := len(path)
 	mc.deps.Logger.Println("http.MethodGet:", http.MethodGet)
-
-	if lengpath != 4 {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
