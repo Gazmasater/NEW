@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 // AgentConfig - структура для хранения параметров конфигурации агента.
@@ -16,12 +18,17 @@ type AgentConfig struct {
 }
 
 // InitAgentConfig - функция для инициализации конфигурации агента.
-func InitAgentConfig() *AgentConfig {
+func InitAgentConfig(logger *zap.Logger) *AgentConfig {
 	var (
 		reportSeconds int
 		pollSeconds   int
 		addr          string
 	)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
 
 	// Чтение переменных окружения или установка значений по умолчанию
 	addrEnv := os.Getenv("ADDRESS")
@@ -30,6 +37,8 @@ func InitAgentConfig() *AgentConfig {
 	} else {
 		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 		if _, err := url.Parse(addr); err != nil {
+			logger.Error("Ошибка: неверный формат адреса сервера в модуле агента", zap.String("address", addr))
+
 			fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
 			return nil
 		}

@@ -3,16 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"go.uber.org/zap"
 	"project.com/internal/agentin"
 )
 
 func main() {
-	config := agentin.InitAgentConfig()
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	config := agentin.InitAgentConfig(logger)
 	if config == nil {
-		log.Println("Ошибка при инициализации конфигурации")
+		logger.Error("Ошибка при инициализации конфигурации")
 		return
 	}
 
