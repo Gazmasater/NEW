@@ -24,11 +24,7 @@ func InitAgentConfig(logger *zap.Logger) *AgentConfig {
 		pollSeconds   int
 		addr          string
 	)
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
+	var aLogger = logger // Создаем новую переменную для логгера
 
 	// Чтение переменных окружения или установка значений по умолчанию
 	addrEnv := os.Getenv("ADDRESS")
@@ -37,9 +33,8 @@ func InitAgentConfig(logger *zap.Logger) *AgentConfig {
 	} else {
 		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 		if _, err := url.Parse(addr); err != nil {
-			logger.Error("Ошибка: неверный формат адреса сервера в модуле агента", zap.String("address", addr))
+			aLogger.Error("Ошибка: неверный формат адреса сервера в модуле агента", zap.String("address", addr))
 
-			fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
 			return nil
 		}
 	}
