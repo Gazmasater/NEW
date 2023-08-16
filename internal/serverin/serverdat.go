@@ -2,22 +2,32 @@ package serverin
 
 import (
 	"flag"
-	"log"
 
-	"os"
 	"sync"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func NewLogger() *log.Logger {
-	return log.New(os.Stdout, "[MyApp] ", log.Ldate|log.Ltime)
+func NewLogger() *zap.Logger {
+	// Конфигурируем настройки логгера
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	logger, err := config.Build()
+	if err != nil {
+		panic(err)
+	}
+	return logger
 }
 
 type HandlerDependencies struct {
 	Storage *MemStorage
-	Logger  *log.Logger
+	Logger  *zap.Logger
 }
 
-func NewHandlerDependencies(storage *MemStorage, logger *log.Logger) *HandlerDependencies {
+func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger) *HandlerDependencies {
 	return &HandlerDependencies{
 		Storage: storage,
 		Logger:  logger,

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if isInteger(metricValue) {
-			mc.Logger.Printf("Num1 в ветке POST: %v", num1)
+			mc.Logger.Info("Num1 в ветке POST:", zap.Int64("value", num1))
 
 			mc.Storage.SaveMetric(metricType, metricName, num1)
 
@@ -68,7 +69,9 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
-			mc.Logger.Printf("Текущее значение метрики: %v", num)
+
+			mc.Logger.Info("Текущее значение метрики num:", zap.Float64("value", num))
+
 			mc.Storage.SaveMetric(metricType, metricName, num)
 			return
 
@@ -79,7 +82,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 
-			mc.Logger.Printf("Возвращаем текущее значение метрики в текстовом виде: %v", num)
+			mc.Logger.Info("Возвращаем текущее значение метрики в текстовом виде:", zap.String("value", fmt.Sprintf("%f", num)))
 
 			mc.Storage.SaveMetric(metricType, metricName, num)
 			return
@@ -99,7 +102,7 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-	mc.Logger.Println("http.MethodGet:", http.MethodGet)
+	mc.Logger.Info("HTTP Method Get:", zap.String("method", http.MethodGet))
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -113,7 +116,8 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 
-		mc.Logger.Printf("Значение num1: %v", num1)
+		mc.Logger.Info("Значение num1:", zap.Int64("value", num1))
+
 		fmt.Fprintf(w, "%v", num1)
 
 	}
@@ -126,7 +130,7 @@ func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.R
 		}
 
 		fmt.Fprintf(w, "%v", num1)
-		mc.Logger.Printf("Значение измерителя %s: %v", metricName, num1)
+		mc.Logger.Info("Значение измерителя", zap.String("metricName", metricName), zap.Float64("value", num1))
 
 	}
 

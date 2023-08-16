@@ -8,7 +8,7 @@ import (
 func main() {
 	config := serverin.InitServerConfig()
 	storage := serverin.NewMemStorage() // Создание объекта MemStorage
-	logger := serverin.NewLogger()      // Создание объекта *log.Logger
+	logger := serverin.NewLogger()
 
 	controller := serverin.NewHandlerDependencies(storage, logger)
 
