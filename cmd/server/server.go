@@ -2,13 +2,19 @@ package main
 
 import (
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 	"project.com/internal/serverin"
 )
 
 func main() {
-	config := serverin.InitServerConfig()
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	config := serverin.InitServerConfig(logger)
 	storage := serverin.NewMemStorage() // Создание объекта MemStorage
-	logger := serverin.NewLogger()
 
 	controller := serverin.NewHandlerDependencies(storage, logger)
 

@@ -3,6 +3,9 @@ package serverin
 import (
 	"flag"
 	"fmt"
+
+	"go.uber.org/zap"
+
 	"net/url"
 	"os"
 )
@@ -13,7 +16,7 @@ type ServerConfig struct {
 }
 
 // InitServerConfig - функция для инициализации конфигурации server
-func InitServerConfig() *ServerConfig {
+func InitServerConfig(logger *zap.Logger) *ServerConfig {
 	var addr string
 
 	// Чтение переменной окружения или установка значения по умолчанию
@@ -25,6 +28,8 @@ func InitServerConfig() *ServerConfig {
 
 		if _, err := url.Parse(addr); err != nil {
 			fmt.Printf("Ошибка: неверный формат адреса сервера: %s\n", addr)
+			logger.Error("Ошибка: неверный формат адреса сервера", zap.String("address", addr))
+
 			flag.Usage()
 			os.Exit(1)
 		}
