@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"time"
 
@@ -12,10 +13,17 @@ import (
 	"go.uber.org/zap"
 )
 
-var sugar zap.SugaredLogger
+var sugar *zap.SugaredLogger
 
-// WithLogging добавляет дополнительный код для регистрации сведений о запросе
-// и возвращает новый http.Handler.
+// InitLogger инициализирует логгер для использования в WithLogging.
+func InitLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	sugar = logger.Sugar()
+}
+
 func WithLogging(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		// функция Now() возвращает текущее время
@@ -26,8 +34,15 @@ func WithLogging(h http.Handler) http.Handler {
 		// метод запроса
 		method := r.Method
 
-		// точка, где выполняется хендлер pingHandler
-		h.ServeHTTP(w, r) // обслуживание оригинального запроса
+		// создаем ResponseRecorder, чтобы получить доступ к коду статуса и размеру ответа
+		rr := httptest.NewRecorder()
+
+		// вызываем оригинальный хендлер
+		h.ServeHTTP(rr, r)
+
+		// получаем код статуса и размер ответа
+		statusCode := rr.Code
+		responseSize := rr.Body.Len()
 
 		// Since возвращает разницу во времени между start
 		// и моментом вызова Since. Таким образом можно посчитать
@@ -35,12 +50,30 @@ func WithLogging(h http.Handler) http.Handler {
 		duration := time.Since(start)
 
 		// отправляем сведения о запросе в zap
-		sugar.Infoln(
+		logger, err := zap.NewDevelopment()
+		if err != nil {
+			// Обработка ошибки
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		sugar.Infow(
 			"uri", uri,
 			"method", method,
 			"duration", duration,
+			"statusCode", strconv.Itoa(statusCode), // Преобразование числового значения в строку
+			"responseSize", strconv.Itoa(responseSize), // Преобразование числового значения в строку
 		)
 
+		// Закрываем логгер после использования
+		defer logger.Sync()
+
+		// копируем данные из ResponseRecorder в http.ResponseWriter
+		for k, v := range rr.Header() {
+			w.Header()[k] = v
+		}
+		w.WriteHeader(statusCode)
+		w.Write(rr.Body.Bytes())
 	}
 	// возвращаем функционально расширенный хендлер
 	return http.HandlerFunc(logFn)
@@ -188,17 +221,16 @@ func (mc *HandlerDependencies) handleMetrics(w http.ResponseWriter, r *http.Requ
 }
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
-
+	InitLogger()
 	r := chi.NewRouter()
 	r.Use(WithLogging)
 
-	r.Get("value/{metricType}/{metricName}", mc.handleGetRequest)
+	r.Get("/value/{metricType}/{metricName}", mc.handleGetRequest)
 
-	r.Post("update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
 
-	r.Get("metrics/", mc.handleMetrics)
+	r.Get("/metrics/", mc.handleMetrics)
 
-	// Обработчик для случая, когда путь не соответствует заданному шаблону
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	})
