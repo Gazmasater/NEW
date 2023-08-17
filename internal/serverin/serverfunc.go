@@ -188,8 +188,6 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 
 	r := chi.NewRouter()
 
-	// Создаем отдельные роутеры для каждого типа запросов
-
 	r.Get("value/{metricType}/{metricName}", mc.handleGetRequest)
 
 	r.Post("update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
