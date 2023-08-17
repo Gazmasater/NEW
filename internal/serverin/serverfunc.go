@@ -6,10 +6,42 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 )
+
+var sugar *zap.SugaredLogger
+
+func WithLogging(h http.Handler) http.Handler {
+	logFn := func(w http.ResponseWriter, r *http.Request) {
+		// функция Now() возвращает текущее время
+		start := time.Now()
+
+		// эндпоинт /ping
+		uri := r.RequestURI
+		// метод запроса
+		method := r.Method
+
+		// точка, где выполняется хендлер pingHandler
+		h.ServeHTTP(w, r) // обслуживание оригинального запроса
+
+		// Since возвращает разницу во времени между start
+		// и моментом вызова Since. Таким образом можно посчитать
+		// время выполнения запроса.
+		duration := time.Since(start)
+
+		// отправляем сведения о запросе в zap
+		sugar.Infow(
+			"uri", uri,
+			"method", method,
+			"duration", duration,
+		)
+	}
+	// возвращаем функционально расширенный хендлер
+	return http.HandlerFunc(logFn)
+}
 
 func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
@@ -157,19 +189,12 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 	r := chi.NewRouter()
 
 	// Создаем отдельные роутеры для каждого типа запросов
-	getRouter := chi.NewRouter()
-	getRouter.Get("/{metricType}/{metricName}", mc.handleGetRequest)
 
-	postRouter := chi.NewRouter()
-	postRouter.Post("/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
+	r.Get("value/{metricType}/{metricName}", mc.handleGetRequest)
 
-	metricsRouter := chi.NewRouter()
-	metricsRouter.Get("/", mc.handleMetrics)
+	r.Post("update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
 
-	// Монтируем роутеры
-	r.Mount("/value", getRouter)       // Монтирование роутера для GET-запросов
-	r.Mount("/update", postRouter)     // Монтирование роутера для POST-запросов
-	r.Mount("/metrics", metricsRouter) // Монтирование роутера для /metrics
+	r.Get("metrics/", mc.handleMetrics)
 
 	// Обработчик для случая, когда путь не соответствует заданному шаблону
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
