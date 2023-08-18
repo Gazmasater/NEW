@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	println("ATTENTION!!!")
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)

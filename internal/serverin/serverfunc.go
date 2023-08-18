@@ -85,6 +85,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
+	println("metricType....", metricType, metricName, metricValue)
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
