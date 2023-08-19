@@ -7,20 +7,39 @@ import (
 )
 
 func main() {
-	println("ATTENTION!!!")
+	// Инициализация логгера
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
+	serverin.InitLogger()
+
 	defer logger.Sync()
 
-	config := serverin.InitServerConfig(logger)
-	storage := serverin.NewMemStorage() // Создание объекта MemStorage
+	serverin.Sugar.Info("Initializing logger...") // Используем sugar для логирования
 
+	// Инициализация конфигурации и хранилища
+	config := serverin.InitServerConfig(logger)
+	storage := serverin.NewMemStorage()
+
+	serverin.Sugar.Info("Initializing configuration and storage...")
+	// Создание контроллера
 	controller := serverin.NewHandlerDependencies(storage, logger)
 
+	// Создание маршрутизатора
 	r := chi.NewRouter()
-	r.Mount("/", controller.Route()) // Монтирование главного роутера
+	r.Use(serverin.WithLogging)
 
-	serverin.StartServer(config.Address, r) // Запуск сервера с использованием адреса из конфигурации
+	serverin.Sugar.Info("Initializing router...")
+
+	// Монтирование главного роутера
+	// Монтирование главного роутера с использованием анонимной функции
+	r.Mount("/", serverin.WithLogging(controller.Route()))
+
+	serverin.Sugar.Info("Mounting main router...")
+
+	// Запуск сервера
+	serverin.StartServer(config.Address, r)
+
+	serverin.Sugar.Info("Server started on address:", config.Address)
 }
