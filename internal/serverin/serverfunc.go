@@ -164,6 +164,7 @@ func (mc *HandlerDependencies) handlePostRequest(w http.ResponseWriter, r *http.
 
 func (mc *HandlerDependencies) handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
+	println("handleGetRequest r.Method", r.Method)
 
 	log.Println("handleGetRequest")
 	metricType := chi.URLParam(r, "metricType")

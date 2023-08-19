@@ -19,7 +19,6 @@ func main() {
 	defer logger.Sync()
 
 	serverin.Sugar.Info("Initializing logger...") // Используем sugar для логирования
-
 	// Инициализация конфигурации и хранилища
 	config := serverin.InitServerConfig(logger)
 	storage := serverin.NewMemStorage()
