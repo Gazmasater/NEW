@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 	"project.com/internal/serverin"
@@ -28,15 +30,23 @@ func main() {
 
 	// Создание маршрутизатора
 	r := chi.NewRouter()
-	r.Use(serverin.WithLogging)
 
-	serverin.Sugar.Info("Initializing router...")
+	// Middleware для логирования
+	loggingMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info("HTTP Method:", zap.String("method", r.Method))
+			next.ServeHTTP(w, r)
+		})
+	}
 
-	// Монтирование главного роутера
-	// Монтирование главного роутера с использованием анонимной функции
-	r.Mount("/", serverin.WithLogging(controller.Route()))
-
-	serverin.Sugar.Info("Mounting main router...")
+	// Добавляем middleware к маршруту
+	r.Route("/", func(r chi.Router) {
+		r.Use(func(next http.Handler) http.Handler {
+			return serverin.WithLogging(next, serverin.Sugar)
+		})
+		r.Use(loggingMiddleware) // Middleware для логирования
+		r.Mount("/", controller.Route())
+	})
 
 	// Запуск сервера
 	serverin.StartServer(config.Address, r)

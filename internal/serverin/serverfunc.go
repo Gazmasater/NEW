@@ -24,7 +24,7 @@ func InitLogger() {
 	Sugar = logger.Sugar()
 }
 
-func WithLogging(h http.Handler) http.Handler {
+func WithLogging(h http.Handler, logger *zap.SugaredLogger) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		// функция Now() возвращает текущее время
 		start := time.Now()
@@ -32,7 +32,7 @@ func WithLogging(h http.Handler) http.Handler {
 		uri := r.RequestURI
 
 		method := r.Method
-		Sugar.Debugw("WithLogging method", zap.String("method", method))
+		logger.Debugw("WithLogging method", zap.String("method", method))
 
 		// создаем ResponseRecorder, чтобы получить доступ к коду статуса и размеру ответа
 		rr := httptest.NewRecorder()
