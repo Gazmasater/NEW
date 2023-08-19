@@ -13,7 +13,12 @@ import (
 	"go.uber.org/zap"
 )
 
-var sugar *zap.SugaredLogger
+var Sugar *zap.SugaredLogger
+
+func logFn(w http.ResponseWriter, r *http.Request) {
+	Sugar.Info("logFn is called")
+	// Ваш код для логирования здесь
+}
 
 // InitLogger инициализирует логгер для использования в WithLogging.
 func InitLogger() {
@@ -21,18 +26,27 @@ func InitLogger() {
 	if err != nil {
 		panic(err)
 	}
-	sugar = logger.Sugar()
+	Sugar = logger.Sugar()
 }
 
 func WithLogging(h http.Handler) http.Handler {
-	logFn := func(w http.ResponseWriter, r *http.Request) {
+	// Объявление переменной logger
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Sugar.Info("WithLogging!!!!")
+
 		// функция Now() возвращает текущее время
 		start := time.Now()
 
-		// эндпоинт /ping
 		uri := r.RequestURI
 		// метод запроса
 		method := r.Method
+		Sugar.Debug("WithLogging method", zap.String("method", method))
 
 		// создаем ResponseRecorder, чтобы получить доступ к коду статуса и размеру ответа
 		rr := httptest.NewRecorder()
@@ -49,24 +63,18 @@ func WithLogging(h http.Handler) http.Handler {
 		// время выполнения запроса.
 		duration := time.Since(start)
 
-		// отправляем сведения о запросе в zap
-		logger, err := zap.NewDevelopment()
-		if err != nil {
-			// Обработка ошибки
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		// Инициализация логгера Zap
+
+		// Используем logger.Sugar() для удобной работы с логгером
+		sugar := logger.Sugar()
 
 		sugar.Infow(
 			"uri", uri,
 			"method", method,
 			"duration", duration,
-			"statusCode", strconv.Itoa(statusCode), // Преобразование числового значения в строку
-			"responseSize", strconv.Itoa(responseSize), // Преобразование числового значения в строку
+			"statusCode", strconv.Itoa(statusCode),
+			"responseSize", strconv.Itoa(responseSize),
 		)
-
-		// Закрываем логгер после использования
-		defer logger.Sync()
 
 		// копируем данные из ResponseRecorder в http.ResponseWriter
 		for k, v := range rr.Header() {
@@ -74,7 +82,8 @@ func WithLogging(h http.Handler) http.Handler {
 		}
 		w.WriteHeader(statusCode)
 		w.Write(rr.Body.Bytes())
-	}
+	})
+
 	// возвращаем функционально расширенный хендлер
 	return http.HandlerFunc(logFn)
 }
@@ -224,7 +233,7 @@ func (mc *HandlerDependencies) handleMetrics(w http.ResponseWriter, r *http.Requ
 func (mc *HandlerDependencies) Route() *chi.Mux {
 	InitLogger()
 	r := chi.NewRouter()
-	r.Use(WithLogging)
+	// Монтирование главного роутера с использованием анонимной функции
 
 	r.Get("/value/{metricType}/{metricName}", mc.handleGetRequest)
 
