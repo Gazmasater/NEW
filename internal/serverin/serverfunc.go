@@ -65,7 +65,6 @@ func WithLogging(h http.Handler, logger *zap.SugaredLogger) http.Handler {
 		// Закрываем логгер после использования
 		defer logger.Sync()
 
-		// копируем данные из ResponseRecorder в http.ResponseWriter
 		for k, v := range rr.Header() {
 			w.Header()[k] = v
 		}
@@ -220,16 +219,31 @@ func (mc *HandlerDependencies) handleMetrics(w http.ResponseWriter, r *http.Requ
 }
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
-	InitLogger()
 	r := chi.NewRouter()
-	// Монтирование главного роутера с использованием анонимной функции
+	println("ROUTE!!!")
 
-	r.Get("/value/{metricType}/{metricName}", mc.handleGetRequest)
+	// GET-запрос для /value/type/name
+	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Received a GET request for /value")
+		time.Sleep(1 * time.Second) // Добавляем задержку на 1 секунду
+		mc.handleGetRequest(w, r)
+	})
 
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.handlePostRequest)
+	// POST-запрос для /update/type/name/value
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Received a POST request for /update")
+		time.Sleep(10 * time.Second) // Добавляем задержку на 1 секунду
+		mc.handlePostRequest(w, r)
+	})
 
-	r.Get("/metrics/", mc.handleMetrics)
+	// GET-запрос для /metrics
+	r.Get("/metrics/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Received a GET request for /metrics")
+		time.Sleep(1 * time.Second) // Добавляем задержку на 1 секунду
+		mc.handleMetrics(w, r)
+	})
 
+	// Обработка ненайденного маршрута
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	})
