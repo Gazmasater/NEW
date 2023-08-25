@@ -19,7 +19,7 @@ func NewRouter(storage *internal.MemStorage) http.Handler {
 	})
 
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandleGetRequest(w, r, storage)
+		internal.HandleGetRequest(w, r)
 	})
 
 	return r

@@ -124,7 +124,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 			fmt.Fprintf(w, "%v", num1)
 
-			storage.SaveMetric(metricType, metricName, num1)
+			mc.Storage.SaveMetric(metricType, metricName, num1)
 
 			return
 
@@ -154,7 +154,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			storage.SaveMetric(path[2], metricName, num)
+			mc.Storage.SaveMetric(path[2], metricName, num)
 			return
 
 		} else {
@@ -164,7 +164,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			storage.SaveMetric(path[2], path[3], num)
+			mc.Storage.SaveMetric(path[2], path[3], num)
 			return
 
 		} else {
@@ -176,7 +176,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 }
 
-func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
@@ -197,7 +197,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 	}
 
 	if path[2] == "counter" {
-		num1, found := storage.counters[path[3]]
+		num1, found := mc.Storage.counters[path[3]]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -208,7 +208,7 @@ func HandleGetRequest(w http.ResponseWriter, r *http.Request, storage *MemStorag
 	}
 	if path[2] == "gauge" {
 
-		num1, found := storage.gauges[path[3]]
+		num1, found := mc.Storage.gauges[path[3]]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
