@@ -50,7 +50,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 	if metricType == "counter" {
 		fmt.Println("lengpath path2=counter", lengpath)
-		fmt.Println("path[4]", path[4])
+		fmt.Println("metricValue", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -58,19 +58,19 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		}
 
-		if path[4] == "none" {
+		if metricValue == "none" {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 
 		}
 
-		num1, err := strconv.ParseInt(path[4], 10, 64)
+		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 			return
 		}
 
-		if isInteger(path[4]) {
+		if isInteger(metricValue) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
 			fmt.Fprintf(w, "%v", num1)
@@ -90,20 +90,20 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if (len(metricName) > 0) && (path[4] == "") {
+	if (len(metricName) > 0) && (metricValue == "") {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
 	if metricType == "gauge" {
 
-		num, err := strconv.ParseFloat(path[4], 64)
+		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
 
-		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
+		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			mc.Storage.SaveMetric(path[2], metricName, num)
 			return
@@ -113,7 +113,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		}
 
-		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
+		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			mc.Storage.SaveMetric(path[2], path[3], num)
 			return
@@ -129,6 +129,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
+	metricType := chi.URLParam(r, "metricType")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 	fmt.Println("http.MethodGet", http.MethodGet)
@@ -138,16 +139,12 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if path[1] != "value" {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
-	if path[2] != "gauge" && path[2] != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
 
-	if path[2] == "counter" {
+	if metricType == "counter" {
 		num1, found := mc.Storage.counters[path[3]]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -157,7 +154,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 		fmt.Fprintf(w, "%v", num1)
 
 	}
-	if path[2] == "gauge" {
+	if metricType == "gauge" {
 
 		num1, found := mc.Storage.gauges[path[3]]
 		if !found {
