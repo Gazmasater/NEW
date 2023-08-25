@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi"
+
 	"project.com/internal"
 )
 
@@ -12,9 +14,17 @@ func main() {
 	// Инициализируем конфигурацию сервера
 	serverCfg := internal.InitServerConfig()
 
+	r := chi.NewRouter()
+
 	storage := internal.NewMemStorage()
 
-	r := NewRouter(storage)
+	r.Get("/metrics", internal.HandleMetrics(storage))
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		internal.HandlePostRequest(w, r)
+	})
+	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		internal.HandleGetRequest(w, r, storage)
+	})
 
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
