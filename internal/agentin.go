@@ -1,10 +1,11 @@
 package internal
 
 import (
+	"fmt"
 	"math/rand"
-	"time"
-
+	"net/http"
 	"runtime"
+	"time"
 )
 
 type Metrics struct {
@@ -71,4 +72,19 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	}()
 
 	return metricsChan
+}
+
+func SendDataToServer(metrics []*Metric, serverURL string) {
+
+	for _, metric := range metrics {
+		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.Type, metric.Name, metric.Value)
+		//Отправка POST-запроса
+		resp, err := http.Post(serverURL, "text/plain", nil)
+		if err != nil {
+			fmt.Println("Ошибка при отправке запроса:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+	}
 }
