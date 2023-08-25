@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 
 	"project.com/internal"
 )
@@ -13,11 +14,12 @@ import (
 func main() {
 	// Инициализируем конфигурацию сервера
 	serverCfg := internal.InitServerConfig()
+	logger, err := zap.NewDevelopment()
 
 	r := chi.NewRouter()
 
 	storage := internal.NewMemStorage()
-	controller := serverin.NewHandlerDependencies(storage, logger)
+	controller := internal.NewHandlerDependencies(storage, logger)
 
 	r.Route("/", func(r chi.Router) {
 
@@ -32,8 +34,8 @@ func main() {
 
 	// Запуск HTTP-сервера через http.ListenAndServe()
 	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", serverCfg.Address)
-	err := server.ListenAndServe()
-	if err != nil {
+	err1 := server.ListenAndServe()
+	if err1 != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err)
 	}
 }
