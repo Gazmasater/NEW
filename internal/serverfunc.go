@@ -12,6 +12,22 @@ import (
 	"github.com/go-chi/chi"
 )
 
+func (mc *HandlerDependencies) Route() *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Get("/metrics", HandleMetrics(storage))
+
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
+		HandlePostRequest(w, r)
+	})
+
+	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		HandleGetRequest(w, r)
+	})
+
+	return r
+}
+
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
 	metricsChan := make(chan []*Metric)
 	println("CollectMetrics serverURL string", serverURL)
