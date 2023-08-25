@@ -18,12 +18,9 @@ func main() {
 
 	storage := internal.NewMemStorage()
 
-	r.Get("/metrics", internal.HandleMetrics(storage))
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandlePostRequest(w, r)
-	})
-	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandleGetRequest(w, r, storage)
+	r.Route("/", func(r chi.Router) {
+
+		r.Mount("/", controller.Route())
 	})
 
 	// Создаем HTTP-сервер с настройками
