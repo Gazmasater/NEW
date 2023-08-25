@@ -15,14 +15,16 @@ import (
 func (mc *HandlerDependencies) Route() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Get("/metrics", HandleMetrics(storage))
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
+	})
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		HandlePostRequest(w, r)
+		mc.HandlePostRequest(w, r)
 	})
 
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		HandleGetRequest(w, r)
+		mc.HandleGetRequest(w, r)
 	})
 
 	return r

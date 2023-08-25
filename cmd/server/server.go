@@ -5,25 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"project.com/internal"
 )
-
-func (mc *HandlerDependencies) Route() *chi.Mux {
-	r := chi.NewRouter()
-
-	r.Get("/metrics", internal.HandleMetrics(mc.Storage))
-
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandlePostRequest(w, r)
-	})
-
-	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		internal.HandleGetRequest(w, r)
-	})
-
-	return r
-}
 
 func main() {
 	// Инициализируем конфигурацию сервера
