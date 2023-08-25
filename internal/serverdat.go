@@ -1,11 +1,12 @@
 package internal
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
 	"sync"
 
-	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func ParseAddr() (string, error) {
@@ -14,6 +15,18 @@ func ParseAddr() (string, error) {
 	flag.Parse()
 
 	return *addr, nil
+}
+
+type HandlerDependencies struct {
+	Storage *MemStorage
+	Logger  *zap.Logger
+}
+
+func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger) *HandlerDependencies {
+	return &HandlerDependencies{
+		Storage: storage,
+		Logger:  logger,
+	}
 }
 
 type Metric struct {
@@ -93,11 +106,14 @@ func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 	return allMetrics
 }
 
-func HandleMetrics(storage *MemStorage) gin.HandlerFunc {
-	return func(c *gin.Context) {
+func HandleMetrics(storage *MemStorage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		allMetrics := storage.GetAllMetrics()
-
+		println("r *http.Request", r)
 		// Формируем JSON с данными о метриках
-		c.JSON(http.StatusOK, allMetrics)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Используем пакет encoding/json для преобразования данных в JSON и записи их в ResponseWriter.
+		json.NewEncoder(w).Encode(allMetrics)
 	}
 }
