@@ -109,7 +109,7 @@ func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
 func HandleMetrics(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allMetrics := storage.GetAllMetrics()
-
+		println("r *http.Request", r)
 		// Формируем JSON с данными о метриках
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

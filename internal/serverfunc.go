@@ -14,7 +14,7 @@ import (
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metric {
 	metricsChan := make(chan []*Metric)
-
+	println("CollectMetrics serverURL string", serverURL)
 	// Переменная для счетчика обновлений метрик
 	pollCount := 0
 
@@ -76,7 +76,7 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func HandlePostRequest(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
+func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
 
 	metricType := chi.URLParam(r, "metricType")
