@@ -5,6 +5,8 @@ import (
 	"flag"
 	"net/http"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 func ParseAddr() (string, error) {
@@ -13,6 +15,18 @@ func ParseAddr() (string, error) {
 	flag.Parse()
 
 	return *addr, nil
+}
+
+type HandlerDependencies struct {
+	Storage *MemStorage
+	Logger  *zap.Logger
+}
+
+func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger) *HandlerDependencies {
+	return &HandlerDependencies{
+		Storage: storage,
+		Logger:  logger,
+	}
 }
 
 type Metric struct {
