@@ -1,21 +1,23 @@
 package internal
 
 import (
-	"go.uber.org/zap"
-
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var logger *zap.Logger
 
 type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`    // имя метрики
+	MType string   `json:"type"`  // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value"` // значение метрики в случае передачи gauge
 }
 
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metrics {
@@ -77,7 +79,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 }
 
 func SendDataToServer(metrics []*Metrics, serverURL string) {
-
 	for _, metric := range metrics {
 		var metricValue interface{}
 		if metric.MType == "counter" {
@@ -86,20 +87,54 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 			metricValue = *metric.Value
 		}
 
-		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
-		logger.Info("Sending metric",
-			zap.String("url", serverURL),
-			zap.String("metric_type", metric.MType),
-			zap.String("metric_id", metric.ID),
-			zap.Any("metric_value", metricValue),
-		)
+		data := map[string]interface{}{
+			"type":  metric.MType,
+			"id":    metric.ID,
+			"value": metricValue,
+		}
 
-		resp, err := http.Post(serverURL, "text/plain", nil)
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			logger.Error("Ошибка при сериализации данных в JSON", zap.Error(err))
+			return
+		}
+		logger.Info("Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
+
+		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
+		println("serverURL Перед отправкой", serverURL)
+		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
+		if err != nil {
+			fmt.Println("Ошибка при создании запроса:", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Ошибка при отправке запроса:", err)
 			return
 		}
 		defer resp.Body.Close()
+		println("СТАТУС ОТВЕТА", resp.StatusCode)
+		if resp.StatusCode == http.StatusOK {
+			// Чтение и обработка ответа
+			var responseMetrics Metrics
+			fmt.Printf("Распечатанные данные из responseMetrics:\n%#v\n", responseMetrics)
 
+			err := json.NewDecoder(resp.Body).Decode(&responseMetrics)
+			if err != nil {
+				fmt.Println("Ошибка при декодировании ответа:", err)
+			} else {
+				// Обновление значения метрики
+				if metric.MType == "counter" {
+					*metric.Delta = *responseMetrics.Delta
+				} else {
+					*metric.Value = *responseMetrics.Value
+				}
+			}
+		} else {
+			fmt.Println("Ошибка при отправке запроса. Код статуса:", resp.StatusCode)
+		}
 	}
 }

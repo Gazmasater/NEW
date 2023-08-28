@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,10 @@ import (
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Use(func(next http.Handler) http.Handler {
+		return LoggingMiddleware(mc.Logger, next)
+	})
 
 	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandleGetRequest(w, r)
@@ -59,26 +64,25 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		}
 
-		if path[4] == "none" {
+		if metricValue == "none" {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 
 		}
 
-		num1, err := strconv.ParseInt(path[4], 10, 64)
+		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 			return
 		}
 
-		if isInteger(path[4]) {
+		if isInteger(metricValue) {
 			fmt.Println("Num1 в ветке POST ", num1)
 
 			fmt.Fprintf(w, "%v", num1)
 
 			mc.Storage.SaveMetric(metricType, metricName, num1)
-
-			return
+			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -91,33 +95,33 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if (len(metricName) > 0) && (path[4] == "") {
+	if (len(metricName) > 0) && (metricValue == "") {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
 	if metricType == "gauge" {
 
-		num, err := strconv.ParseFloat(path[4], 64)
+		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
 
-		if _, err1 := strconv.ParseFloat(path[4], 64); err1 == nil {
+		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			mc.Storage.SaveMetric(path[2], metricName, num)
-			return
+			mc.Storage.SaveMetric(metricType, metricName, num)
+			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 
 		}
 
-		if _, err1 := strconv.ParseInt(path[4], 10, 64); err1 == nil {
+		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
-			mc.Storage.SaveMetric(path[2], path[3], num)
-			return
+			mc.Storage.SaveMetric(metricType, metricName, num)
+			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -130,6 +134,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка GET-запроса
+	metricType := chi.URLParam(r, "metricType")
+	metricName := chi.URLParam(r, "metricName")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 	fmt.Println("http.MethodGet", http.MethodGet)
@@ -139,17 +145,13 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if path[1] != "value" {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
-	if path[2] != "gauge" && path[2] != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
 
-	if path[2] == "counter" {
-		num1, found := mc.Storage.counters[path[3]]
+	if metricType == "counter" {
+		num1, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -158,9 +160,9 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 		fmt.Fprintf(w, "%v", num1)
 
 	}
-	if path[2] == "gauge" {
+	if metricType == "gauge" {
 
-		num1, found := mc.Storage.gauges[path[3]]
+		num1, found := mc.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -174,6 +176,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateLogger()
 		startTime := time.Now()
 
 		recorder := newResponseRecorder(w)
@@ -220,4 +223,56 @@ func Init() {
 		panic("failed to initialize logger")
 	}
 	defer logger.Sync() // flushes buffer, if any
+}
+
+func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType string, num float64) {
+	// Создайте экземпляр структуры с обновленным значением Value
+	updatedMetric := &Metrics{
+		ID:    metricName,
+		MType: metricType,
+		Value: &num,
+	}
+	Init()
+	// Сериализуйте структуру в JSON
+	responseData, err := json.Marshal(updatedMetric)
+	if err != nil {
+		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
+		return
+	}
+	logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
+	// Установите Content-Type и статус код для ответа
+	w.Header().Set("Content-Type", "application/json")
+
+	// Отправьте JSON в теле ответа
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(responseData)
+
+}
+
+func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metricType string, num int64) {
+	// Создайте экземпляр структуры с обновленным значением Value
+	Init()
+	updatedMetric := &Metrics{
+		ID:    metricName,
+		MType: metricType,
+		Delta: &num,
+	}
+
+	// Сериализуйте структуру в JSON
+	responseData, err := json.Marshal(updatedMetric)
+	if err != nil {
+		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
+	// Установите Content-Type и статус код для ответа
+	w.Header().Set("Content-Type", "application/json")
+
+	// Отправьте JSON в теле ответа
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(responseData)
+
 }
