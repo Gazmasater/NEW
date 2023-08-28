@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func ParseAddr() (string, error) {
@@ -46,6 +47,16 @@ func NewMemStorage() *MemStorage {
 		counters: make(map[string]int64),
 		gauges:   make(map[string]float64),
 	}
+}
+
+func CreateLogger() *zap.Logger {
+	// Настройки логгера
+	config := zap.NewProductionConfig()
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+
+	logger, _ := config.Build()
+	return logger
 }
 
 func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue interface{}) {

@@ -3,11 +3,12 @@ package internal
 import (
 	"fmt"
 	"net/http"
-
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
@@ -50,7 +51,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 	if metricType == "counter" {
 		fmt.Println("lengpath path2=counter", lengpath)
-		fmt.Println("path[4]", path[4])
+		fmt.Println("path[4]", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -169,4 +170,54 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 	}
 
+}
+
+func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
+		recorder := newResponseRecorder(w)
+		next.ServeHTTP(recorder, r)
+
+		elapsed := time.Since(startTime)
+		logger.Info("Request processed",
+			zap.String("uri", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.Duration("elapsed_time", elapsed),
+			zap.Int("status_code", recorder.Status()),
+			zap.Int("response_size", recorder.Size()),
+		)
+	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+	size   int
+}
+
+func newResponseRecorder(w http.ResponseWriter) *responseRecorder {
+	return &responseRecorder{ResponseWriter: w}
+}
+func (r *responseRecorder) Write(data []byte) (int, error) {
+	size, err := r.ResponseWriter.Write(data)
+	r.size += size
+	return size, err
+}
+
+func (r *responseRecorder) Status() int {
+	return r.status
+}
+
+func (r *responseRecorder) Size() int {
+	return r.size
+}
+func Init() {
+	// Инициализация логгера
+	var err error
+	logger, err = zap.NewProduction()
+	if err != nil {
+		panic("failed to initialize logger")
+	}
+	defer logger.Sync() // flushes buffer, if any
 }
