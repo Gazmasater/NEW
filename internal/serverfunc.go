@@ -47,7 +47,18 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	metricValue := chi.URLParam(r, "metricValue")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
-	fmt.Println("http.MethodPost:=", http.MethodPost)
+	//__________________________________________________________________________________________
+	//body, err := ioutil.ReadAll(r.Body)
+	// if err != nil {
+	// 	http.Error(w, "Ошибка при чтении тела запроса", http.StatusInternalServerError)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// Преобразование содержимого тела в строку и вывод
+	//	requestBody := string(body)
+	//	fmt.Println("Тело POST-запроса:", requestBody)
+	//__________________________________________________________________________________________________
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -55,8 +66,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	}
 
 	if metricType == "counter" {
-		fmt.Println("lengpath path2=counter", lengpath)
-		fmt.Println("path[4]", metricValue)
+		// fmt.Println("lengpath path2=counter", lengpath)
+		// fmt.Println("path[4]", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -77,9 +88,9 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if isInteger(metricValue) {
-			fmt.Println("Num1 в ветке POST ", num1)
+			// fmt.Println("Num1 в ветке POST ", num1)
 
-			fmt.Fprintf(w, "%v", num1)
+			//	fmt.Fprintf(w, "%v", num1)
 
 			mc.Storage.SaveMetric(metricType, metricName, num1)
 			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
@@ -109,9 +120,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
-			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			//	fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			mc.Storage.SaveMetric(metricType, metricName, num)
-			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -121,12 +131,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
 			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
 			mc.Storage.SaveMetric(metricType, metricName, num)
-			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
+		createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 	}
 
@@ -138,7 +148,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	metricName := chi.URLParam(r, "metricName")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
-	fmt.Println("http.MethodGet", http.MethodGet)
+	//fmt.Println("http.MethodGet", http.MethodGet)
 
 	if lengpath != 4 {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -151,24 +161,24 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 
 	if metricType == "counter" {
-		num1, found := mc.Storage.counters[metricName]
+		_, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
-		fmt.Fprintf(w, "%v", num1)
+		//	fmt.Fprintf(w, "%v", num1)
 
 	}
 	if metricType == "gauge" {
 
-		num1, found := mc.Storage.gauges[metricName]
+		_, found := mc.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
-		fmt.Fprintf(w, "%v", num1)
+		//fmt.Fprintf(w, "%v", num1)
 
 	}
 
@@ -274,5 +284,6 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
+	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }

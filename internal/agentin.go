@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 	"time"
@@ -101,7 +102,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		logger.Info("Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
-		println("serverURL Перед отправкой", serverURL)
+		//	println("serverURL Перед отправкой", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
@@ -116,14 +117,25 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 			return
 		}
 		defer resp.Body.Close()
-		println("СТАТУС ОТВЕТА", resp.StatusCode)
+		//	println("СТАТУС ОТВЕТА", resp.StatusCode)
 		if resp.StatusCode == http.StatusOK {
 			// Чтение и обработка ответа
 			var responseMetrics Metrics
-			fmt.Printf("Распечатанные данные из responseMetrics:\n%#v\n", responseMetrics)
 
-			err := json.NewDecoder(resp.Body).Decode(&responseMetrics)
+			//_________________________________________________________________________________________
+
+			responseBody, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
+				fmt.Println("Ошибка при чтении тела ответа:", err)
+				return
+			}
+
+			// Вывод данных на экран
+			fmt.Println("SendDataToServer  Тело ответа:!!!!!!!!", string(responseBody))
+			//_____________________________________________________________________________________
+
+			err1 := json.Unmarshal(responseBody, &responseMetrics)
+			if err1 != nil {
 				fmt.Println("Ошибка при декодировании ответа:", err)
 			} else {
 				// Обновление значения метрики
