@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"runtime"
 	"time"
@@ -96,13 +96,12 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 
 		jsonData, err := json.Marshal(data)
 		if err != nil {
-			logger.Error("Ошибка при сериализации данных в JSON", zap.Error(err))
+			fmt.Println("Ошибка при сериализации данных в JSON", err)
 			return
 		}
-		logger.Info("Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
+		fmt.Println("Сериализированные данные в JSON:", string(jsonData))
 
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
-		//	println("serverURL Перед отправкой", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
@@ -117,25 +116,31 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 			return
 		}
 		defer resp.Body.Close()
-		//	println("СТАТУС ОТВЕТА", resp.StatusCode)
+
+		var responseBody []byte
+		buf := make([]byte, 1024) // Размер буфера для чтения
+
+		for {
+			n, err := resp.Body.Read(buf)
+			if err != nil && err != io.EOF {
+				fmt.Println("Ошибка при чтении тела ответа:", err)
+				return
+			}
+			if n == 0 {
+				break
+			}
+			responseBody = append(responseBody, buf[:n]...)
+		}
+
+		// Вывод тела ответа на экран
+		fmt.Println("Тело ответа сервера:", string(responseBody))
+
 		if resp.StatusCode == http.StatusOK {
 			// Чтение и обработка ответа
 			var responseMetrics Metrics
 
-			//_________________________________________________________________________________________
-
-			responseBody, err := ioutil.ReadAll(resp.Body)
+			err := json.Unmarshal(responseBody, &responseMetrics)
 			if err != nil {
-				fmt.Println("Ошибка при чтении тела ответа:", err)
-				return
-			}
-
-			// Вывод данных на экран
-			fmt.Println("SendDataToServer  Тело ответа:!!!!!!!!", string(responseBody))
-			//_____________________________________________________________________________________
-
-			err1 := json.Unmarshal(responseBody, &responseMetrics)
-			if err1 != nil {
 				fmt.Println("Ошибка при декодировании ответа:", err)
 			} else {
 				// Обновление значения метрики

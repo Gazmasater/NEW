@@ -2,7 +2,7 @@ package internal
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,18 +47,6 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	metricValue := chi.URLParam(r, "metricValue")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
-	//__________________________________________________________________________________________
-	//body, err := ioutil.ReadAll(r.Body)
-	// if err != nil {
-	// 	http.Error(w, "Ошибка при чтении тела запроса", http.StatusInternalServerError)
-	// 	return
-	// }
-	// defer r.Body.Close()
-
-	// Преобразование содержимого тела в строку и вывод
-	//	requestBody := string(body)
-	//	fmt.Println("Тело POST-запроса:", requestBody)
-	//__________________________________________________________________________________________________
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -66,8 +54,6 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	}
 
 	if metricType == "counter" {
-		// fmt.Println("lengpath path2=counter", lengpath)
-		// fmt.Println("path[4]", metricValue)
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -88,9 +74,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if isInteger(metricValue) {
-			// fmt.Println("Num1 в ветке POST ", num1)
 
-			//	fmt.Fprintf(w, "%v", num1)
+			w.Write([]byte(strconv.FormatInt(num1, 10)))
 
 			mc.Storage.SaveMetric(metricType, metricName, num1)
 			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
@@ -120,7 +105,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
-			//	fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 			mc.Storage.SaveMetric(metricType, metricName, num)
 
 		} else {
@@ -129,7 +114,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
-			fmt.Fprintf(w, "%v", num) // Возвращаем текущее значение метрики в текстовом виде
+			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 			mc.Storage.SaveMetric(metricType, metricName, num)
 
 		} else {
@@ -161,24 +146,24 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 
 	if metricType == "counter" {
-		_, found := mc.Storage.counters[metricName]
+		num1, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
-		//	fmt.Fprintf(w, "%v", num1)
+		w.Write([]byte(strconv.FormatInt(num1, 10)))
 
 	}
 	if metricType == "gauge" {
 
-		_, found := mc.Storage.gauges[metricName]
+		num, found := mc.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 
-		//fmt.Fprintf(w, "%v", num1)
+		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 
 	}
 
