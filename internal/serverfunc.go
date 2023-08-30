@@ -41,6 +41,7 @@ func isInteger(s string) bool {
 
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
+	contentType := r.Header.Get("Content-Type")
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
@@ -74,11 +75,15 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if isInteger(metricValue) {
+			if contentType == "application/json" {
 
-			w.Write([]byte(strconv.FormatInt(num1, 10)))
+				mc.Storage.SaveMetric(metricType, metricName, num1)
+				createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+			} else {
+				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-			mc.Storage.SaveMetric(metricType, metricName, num1)
-			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+				mc.Storage.SaveMetric(metricType, metricName, num1)
+			}
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -105,8 +110,15 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
-			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-			mc.Storage.SaveMetric(metricType, metricName, num)
+
+			if contentType == "application/json" {
+				mc.Storage.SaveMetric(metricType, metricName, num)
+
+			} else {
+				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+				mc.Storage.SaveMetric(metricType, metricName, num)
+
+			}
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -114,8 +126,14 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
-			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-			mc.Storage.SaveMetric(metricType, metricName, num)
+			if contentType == "application/json" {
+				mc.Storage.SaveMetric(metricType, metricName, num)
+
+			} else {
+				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+				mc.Storage.SaveMetric(metricType, metricName, num)
+
+			}
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
