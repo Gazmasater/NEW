@@ -29,13 +29,15 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 
 	var memStats runtime.MemStats
 	go func() {
-		metrics := make([]*Metrics, 0, 25)
+		metrics := make([]*Metrics, 0) // Инициализируем срез
 
 		for {
+			metrics = nil
 			runtime.ReadMemStats(&memStats)
+
 			allocValue := float64(memStats.Alloc)
-			println("allocValue", allocValue)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
+
 			buckHashSysValue := float64(memStats.BuckHashSys)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
 			freesValue := float64(memStats.Frees)
@@ -46,13 +48,20 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
 			heapAllocValue := float64(memStats.HeapAlloc)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapAlloc", Value: &heapAllocValue})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapIdle", Value: float64(memStats.HeapIdle)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapInuse", Value: float64(memStats.HeapInuse)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapObjects", Value: float64(memStats.HeapObjects)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapReleased", Value: float64(memStats.HeapReleased)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapSys", Value: float64(memStats.HeapSys)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "LastGC", Value: float64(memStats.LastGC)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "Lookups", Value: float64(memStats.Lookups)})
+			heapIdleValue := float64(memStats.HeapIdle)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapIdle", Value: &heapIdleValue})
+			heapInuseValue := float64(memStats.HeapInuse)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapInuse", Value: &heapInuseValue})
+			heapObjectsValue := float64(memStats.HeapObjects)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapObjects", Value: &heapObjectsValue})
+			heapReleasedValue := float64(memStats.HeapReleased)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapReleased", Value: &heapReleasedValue})
+			heapSysValue := float64(memStats.HeapSys)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapSys", Value: &heapSysValue})
+			lastGCValue := float64(memStats.LastGC)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "LastGC", Value: &lastGCValue})
+			lookupsValue := float64(memStats.Lookups)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Lookups", Value: &lookupsValue})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheInuse", Value: float64(memStats.MCacheInuse)})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheSys", Value: float64(memStats.MCacheSys)})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "MSpanInuse", Value: float64(memStats.MSpanInuse)})
@@ -80,6 +89,17 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 
 			metricsChan <- metrics
 			time.Sleep(pollInterval)
+			for _, metric := range metrics {
+				var metricValue interface{}
+				if metric.MType == "counter" {
+					metricValue = *metric.Delta
+				} else {
+					metricValue = *metric.Value
+				}
+
+				fmt.Printf("CollectMetrics!!!!!!! MType: %s, ID: %s, Value: %v\n", metric.MType, metric.ID, metricValue)
+			}
+
 		}
 	}()
 
