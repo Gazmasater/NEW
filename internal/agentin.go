@@ -32,7 +32,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 		metrics := make([]*Metrics, 0) // Инициализируем срез
 
 		for {
-			metrics = nil
 			runtime.ReadMemStats(&memStats)
 
 			allocValue := float64(memStats.Alloc)
