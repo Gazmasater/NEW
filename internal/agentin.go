@@ -39,6 +39,7 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
 
 			buckHashSysValue := float64(memStats.BuckHashSys)
+			println("buckHashSysValue", buckHashSysValue)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
 			freesValue := float64(memStats.Frees)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
