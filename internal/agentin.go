@@ -26,19 +26,26 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	println("CollectMetrics serverURL string", serverURL)
 	// Переменная для счетчика обновлений метрик
 	var pollCount int64 = 0
-	var metrics []*Metrics
-	var memStats runtime.MemStats
 
+	var memStats runtime.MemStats
 	go func() {
+		metrics := make([]*Metrics, 0, 25)
+
 		for {
 			runtime.ReadMemStats(&memStats)
 			allocValue := float64(memStats.Alloc)
+			println("allocValue", allocValue)
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: float64(memStats.BuckHashSys)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: float64(memStats.Frees)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCCPUFraction", Value: float64(memStats.GCCPUFraction)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCSys", Value: float64(memStats.GCSys)})
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapAlloc", Value: float64(memStats.HeapAlloc)})
+			buckHashSysValue := float64(memStats.BuckHashSys)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
+			freesValue := float64(memStats.Frees)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
+			gCCPUFractionValue := float64(memStats.GCCPUFraction)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCCPUFraction", Value: &gCCPUFractionValue})
+			gCSysValue := float64(memStats.GCSys)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
+			heapAllocValue := float64(memStats.HeapAlloc)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapAlloc", Value: &heapAllocValue})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapIdle", Value: float64(memStats.HeapIdle)})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapInuse", Value: float64(memStats.HeapInuse)})
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapObjects", Value: float64(memStats.HeapObjects)})

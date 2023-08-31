@@ -63,6 +63,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		}
 
 		if metricValue == "none" {
+			println("metricValuenone")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 
@@ -79,10 +80,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
 				createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
+				return
 			}
 
 		} else {
@@ -105,6 +108,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
+			println("strconv.ParseFloat")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
@@ -117,28 +121,30 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 				mc.Storage.SaveMetric(metricType, metricName, num)
-
+				return
 			}
 
 		} else {
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 
-		}
-
-		if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
-			if contentType == "application/json" {
-				mc.Storage.SaveMetric(metricType, metricName, num)
-
-			} else {
-				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-				mc.Storage.SaveMetric(metricType, metricName, num)
-
-			}
-
-		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
+
+		// if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
+		// 	if contentType == "application/json" {
+		// 		mc.Storage.SaveMetric(metricType, metricName, num)
+
+		// 	} else {
+		// 		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+		// 		mc.Storage.SaveMetric(metricType, metricName, num)
+		// 		return
+		// 	}
+
+		// } else {
+		// 	println("strconv.ParseInt GAUGE")
+		// 	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		// 	return
+		// }
 		createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 	}
