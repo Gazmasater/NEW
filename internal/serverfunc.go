@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	//	"time"
+	"time"
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
@@ -213,19 +213,19 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		CreateLogger()
-		//startTime := time.Now()
+		startTime := time.Now()
 
 		recorder := newResponseRecorder(w)
 		next.ServeHTTP(recorder, r)
 
-		// elapsed := time.Since(startTime)
-		// logger.Info("Request processed",
-		// 	zap.String("uri", r.RequestURI),
-		// 	zap.String("method", r.Method),
-		// 	zap.Duration("elapsed_time", elapsed),
-		// 	zap.Int("status_code", recorder.Status()),
-		// 	zap.Int("response_size", recorder.Size()),
-		// )
+		elapsed := time.Since(startTime)
+		logger.Info("Request processed",
+			zap.String("uri", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.Duration("elapsed_time", elapsed),
+			zap.Int("status_code", recorder.Status()),
+			zap.Int("response_size", recorder.Size()),
+		)
 	})
 }
 

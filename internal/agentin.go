@@ -40,12 +40,12 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			runtime.ReadMemStats(&memStats)
 			mu.Lock() // Захватываем мьютекс перед доступом к metrics
 
-			allocValue := float64(memStats.Alloc)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
+			//allocValue := float64(memStats.Alloc)
+			//metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
 
-			// buckHashSysValue := float64(memStats.BuckHashSys)
-			// fmt.Println("buckHashSysValue", buckHashSysValue)
-			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
+			buckHashSysValue := float64(memStats.BuckHashSys)
+			fmt.Println("buckHashSysValue", buckHashSysValue)
+			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
 			// freesValue := float64(memStats.Frees)
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
 			// gCCPUFractionValue := float64(memStats.GCCPUFraction)
