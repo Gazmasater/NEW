@@ -27,7 +27,7 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	metricsChan := make(chan []*Metrics)
 	println("CollectMetrics serverURL string", serverURL)
 	// Переменная для счетчика обновлений метрик
-	//var pollCount int64 = 0
+	var pollCount int64 = 0
 
 	var memStats runtime.MemStats
 	go func() {
@@ -98,10 +98,10 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			// metrics = append(metrics, &Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
 
 			// // Добавляем метрику PollCount типа counter!!
-			// metrics = append(metrics, &Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
+			metrics = append(metrics, &Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
 
 			// // Увеличиваем счетчик обновлений метр!!!
-			// pollCount++
+			pollCount++
 
 			metricsChan <- metrics
 			time.Sleep(pollInterval)
