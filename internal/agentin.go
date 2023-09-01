@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 
 	//	"math/rand"
 	"net/http"
@@ -14,8 +13,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
-var mu sync.Mutex // Глобальный мьютекс для защиты доступа к metrics
 
 var logger *zap.Logger
 
@@ -38,7 +35,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 
 		for {
 			runtime.ReadMemStats(&memStats)
-			mu.Lock() // Захватываем мьютекс перед доступом к metrics
 
 			//allocValue := float64(memStats.Alloc)
 			//metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
@@ -106,7 +102,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 
 			// // Увеличиваем счетчик обновлений метр!!!
 			// pollCount++
-			mu.Unlock() // Освобождаем мьютекс после обновления metrics
 
 			metricsChan <- metrics
 			time.Sleep(pollInterval)
