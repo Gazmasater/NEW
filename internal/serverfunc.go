@@ -161,7 +161,6 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-	println("HandleGetRequest metricType metricName ", metricType, metricName)
 
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
