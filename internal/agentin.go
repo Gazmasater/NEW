@@ -252,7 +252,7 @@ func SendServerValue(metrics []*Metrics, serverURL string) ([]byte, error) {
 				break
 			}
 
-			// Попробуем декодировать каждый JSON-объект и добавить его в срез
+			// декодировать каждый JSON-объект и добавить его в срез
 			var responseMetric Metrics
 			if err := json.Unmarshal(buf[:n], &responseMetric); err != nil {
 				fmt.Println("Ошибка при декодировании ответа:", err)
@@ -269,7 +269,7 @@ func SendServerValue(metrics []*Metrics, serverURL string) ([]byte, error) {
 		}
 	}
 
-	// Теперь давайте подготовим JSON-ответ с заполненными значениями метрик
+	// JSON-ответ с заполненными значениями метрик
 	jsonResponse, err := json.Marshal(responseMetrics)
 	if err != nil {
 		fmt.Println("Ошибка при сериализации данных в JSON", err)
