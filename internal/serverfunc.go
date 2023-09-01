@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
+
+	//	"time"
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
@@ -25,6 +26,10 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandlePostRequest(w, r)
+	})
+
+	r.Post("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
 	})
 
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
@@ -152,9 +157,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 }
 
 func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
+	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
+	println("HandleGetRequest metricType metricName ", metricType, metricName)
+
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 	//fmt.Println("http.MethodGet", http.MethodGet)
@@ -175,9 +183,14 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
+		if contentType == "application/json" {
+			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+			return
+		} else {
 
-		w.Write([]byte(strconv.FormatInt(num1, 10)))
-
+			w.Write([]byte(strconv.FormatInt(num1, 10)))
+		}
+		return
 	}
 	if metricType == "gauge" {
 
@@ -186,8 +199,13 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
+		if contentType == "application/json" {
+			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
+			return
+		} else {
 
-		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+		}
 
 	}
 
@@ -196,19 +214,19 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		CreateLogger()
-		startTime := time.Now()
+		//startTime := time.Now()
 
 		recorder := newResponseRecorder(w)
 		next.ServeHTTP(recorder, r)
 
-		elapsed := time.Since(startTime)
-		logger.Info("Request processed",
-			zap.String("uri", r.RequestURI),
-			zap.String("method", r.Method),
-			zap.Duration("elapsed_time", elapsed),
-			zap.Int("status_code", recorder.Status()),
-			zap.Int("response_size", recorder.Size()),
-		)
+		// elapsed := time.Since(startTime)
+		// logger.Info("Request processed",
+		// 	zap.String("uri", r.RequestURI),
+		// 	zap.String("method", r.Method),
+		// 	zap.Duration("elapsed_time", elapsed),
+		// 	zap.Int("status_code", recorder.Status()),
+		// 	zap.Int("response_size", recorder.Size()),
+		// )
 	})
 }
 
@@ -258,7 +276,7 @@ func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType st
 		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
 		return
 	}
-	logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
+	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -285,7 +303,7 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 		return
 	}
 
-	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
+	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
