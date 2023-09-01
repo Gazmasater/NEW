@@ -206,9 +206,10 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		}
 	}
 }
-func SendServerValue(metrics []*Metrics, serverURL string) {
-	for _, metric := range metrics {
+func SendServerValue(metrics []*Metrics, serverURL string) ([]byte, error) {
+	var responseMetrics []*Metrics // Создаем срез для хранения данных из ответов
 
+	for _, metric := range metrics {
 		data := map[string]interface{}{
 			"type": metric.MType,
 			"id":   metric.ID,
@@ -217,17 +218,16 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			fmt.Println("Ошибка при сериализации данных в JSON", err)
-			return
+			return nil, err
 		}
 		fmt.Println("SendServerValue Сериализированные данные в JSON:", string(jsonData))
 
-		serverURL := fmt.Sprintf("http://%s/value/%s/%s", serverURL, metric.MType, metric.ID)
+		url := fmt.Sprintf("http://%s/value/%s/%s", serverURL, metric.MType, metric.ID)
 
-		//println("SendServerValue serverURL", serverURL)
-		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
-			return
+			return nil, err
 		}
 		req.Header.Set("Content-Type", "application/json")
 		fmt.Printf("SendServerValue  Запрос:\n%+v\n", req)
@@ -236,45 +236,45 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("SendDataToServer Ошибка при отправке запроса:1", err)
-			return
+			return nil, err
 		}
 		defer resp.Body.Close()
 
-		var responseBody []byte
-		buf := make([]byte, 1024) // Размер буфера для чтения
+		buf := make([]byte, 1024)
 
 		for {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
 				fmt.Println("Ошибка при чтении тела ответа:", err)
-				return
+				return nil, err
 			}
 			if n == 0 {
 				break
 			}
-			responseBody = append(responseBody, buf[:n]...)
+
+			// Попробуем декодировать каждый JSON-объект и добавить его в срез
+			var responseMetric Metrics
+			if err := json.Unmarshal(buf[:n], &responseMetric); err != nil {
+				fmt.Println("Ошибка при декодировании ответа:", err)
+			} else {
+				responseMetrics = append(responseMetrics, &responseMetric)
+			}
 		}
 
 		// Вывод тела ответа на экран
-		fmt.Println(" SendServerValue Тело ответа сервера:", string(responseBody))
+		fmt.Println(" SendServerValue Тело ответа сервера:", string(buf))
 
-		if resp.StatusCode == http.StatusOK {
-			// Чтение и обработка ответа
-			var responseMetrics Metrics
-
-			err := json.Unmarshal(responseBody, &responseMetrics)
-			if err != nil {
-				fmt.Println("Ошибка при декодировании ответа:", err)
-			} else {
-				// Обновление значения метрики
-				if metric.MType == "counter" {
-					*metric.Delta = *responseMetrics.Delta
-				} else {
-					*metric.Value = *responseMetrics.Value
-				}
-			}
-		} else {
-			fmt.Println("SendDataToServer Ошибка при отправке запроса. Код статуса:2", resp.StatusCode)
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("SendDataToServer Ошибка при отправке запроса. Код статуса:", resp.StatusCode)
 		}
 	}
+
+	// Теперь давайте подготовим JSON-ответ с заполненными значениями метрик
+	jsonResponse, err := json.Marshal(responseMetrics)
+	if err != nil {
+		fmt.Println("Ошибка при сериализации данных в JSON", err)
+		return nil, err
+	}
+
+	return jsonResponse, nil // Возвращаем jsonResponse как результат работы функции
 }
