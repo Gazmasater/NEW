@@ -39,4 +39,6 @@ func main() {
 	if err1 != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err1)
 	}
+	defer logger.Sync()
+
 }

@@ -47,6 +47,7 @@ func isInteger(s string) bool {
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 	// Обработка POST-запроса
 	contentType := r.Header.Get("Content-Type")
+	println("HandlePostRequest")
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
@@ -157,6 +158,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 }
 
 func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
+	println("HandleGetRequest")
 	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
@@ -283,6 +285,7 @@ func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType st
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
+	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 }
 
@@ -307,9 +310,20 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправьте JSON в теле ответа
+	logger.Info("createAndSendUpdatedMetricCounter Тело ответа", zap.String("response_body", string(responseData)))
+
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
 	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
+}
+
+func TrimNullBytes(data []byte) []byte {
+	for i := len(data) - 1; i >= 0; i-- {
+		if data[i] != 0 {
+			return data[:i+1]
+		}
+	}
+	return nil
 }
