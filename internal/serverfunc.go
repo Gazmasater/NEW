@@ -310,7 +310,7 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправьте JSON в теле ответа
-	logger.Info("createAndSendUpdatedMetricCounter Тело ответа", zap.String("response_body", string(responseData)))
+	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 	w.WriteHeader(http.StatusOK)
 
