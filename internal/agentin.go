@@ -264,6 +264,14 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 					*metric.Value = *responseMetrics.Value
 				}
 			}
+			fmt.Printf("Response Metrics: %+v\n", responseMetrics)
+
+			if metric.MType == "gauge" {
+				fmt.Printf("Value: %f\n", *responseMetrics.Value)
+			} else if metric.MType == "counter" {
+				fmt.Printf("Delta: %d\n", *responseMetrics.Delta)
+			}
+
 		} else {
 			fmt.Println("Ошибка при отправке запроса. Код статуса:", resp.StatusCode)
 		}
