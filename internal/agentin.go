@@ -26,7 +26,7 @@ type Metrics struct {
 func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metrics {
 	metricsChan := make(chan []*Metrics)
 	println("CollectMetrics serverURL string", serverURL)
-	// Переменная для счетчика обновлений метрик
+
 	var pollCount int64 = 0
 
 	var memStats runtime.MemStats
