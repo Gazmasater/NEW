@@ -41,7 +41,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
 
 			buckHashSysValue := float64(memStats.BuckHashSys)
-			buckHashSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
 
 			freesValue := float64(memStats.Frees)
@@ -49,11 +48,9 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
 
 			gCCPUFractionValue := float64(memStats.GCCPUFraction)
-			gCCPUFractionValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCCPUFraction", Value: &gCCPUFractionValue})
 
 			gCSysValue := float64(memStats.GCSys)
-			gCSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
 
 			heapAllocValue := float64(memStats.HeapAlloc)
@@ -73,35 +70,27 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapObjects", Value: &heapObjectsValue})
 
 			heapReleasedValue := float64(memStats.HeapReleased)
-			heapReleasedValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapReleased", Value: &heapReleasedValue})
 
 			heapSysValue := float64(memStats.HeapSys)
-			heapSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapSys", Value: &heapSysValue})
 
 			lastGCValue := float64(memStats.LastGC)
-			lastGCValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "LastGC", Value: &lastGCValue})
 
 			lookupsValue := float64(memStats.Lookups)
-			lookupsValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Lookups", Value: &lookupsValue})
 
 			mCacheInuseValue := float64(memStats.MCacheInuse)
-			mCacheInuseValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheInuse", Value: &mCacheInuseValue})
 
 			mCacheSysValue := float64(memStats.MCacheSys)
-			mCacheSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheSys", Value: &mCacheSysValue})
 
 			mSpanInuseValue := float64(memStats.MSpanInuse)
-			mSpanInuseValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MSpanInuse", Value: &mSpanInuseValue})
 
 			mSpanSysValue := float64(memStats.MSpanSys)
-			mSpanSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MSpanSys", Value: &mSpanSysValue})
 
 			mallocsValue := float64(memStats.Mallocs)
@@ -109,35 +98,27 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Mallocs", Value: &mallocsValue})
 
 			nextGCValue := float64(memStats.NextGC)
-			nextGCValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NextGC", Value: &nextGCValue})
 
 			numForcedGCValue := float64(memStats.NumForcedGC)
-			numForcedGCValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NumForcedGC", Value: &numForcedGCValue})
 
 			numGCValue := float64(memStats.NumGC)
-			numGCValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NumGC", Value: &numGCValue})
 
 			otherSysValue := float64(memStats.OtherSys)
-			otherSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "OtherSys", Value: &otherSysValue})
 
 			pauseTotalNsValue := float64(memStats.PauseTotalNs)
-			pauseTotalNsValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "PauseTotalNs", Value: &pauseTotalNsValue})
 
 			stackInuseValue := float64(memStats.StackInuse)
-			stackInuseValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "StackInuse", Value: &stackInuseValue})
 
 			stackSysValue := float64(memStats.StackSys)
-			stackSysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "StackSys", Value: &stackSysValue})
 
 			sysValue := float64(memStats.Sys)
-			sysValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Sys", Value: &sysValue})
 
 			totalAllocValue := float64(memStats.TotalAlloc)
