@@ -139,7 +139,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			fmt.Println("Ошибка при сериализации данных в JSON", err)
-			return
+			//	return
 		}
 
 		//fmt.Println("Сериализированные данные в JSON:", string(jsonData))
@@ -150,7 +150,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
-			return
+			//	return
 		}
 		req.Header.Set("Content-Type", "application/json")
 		//logger.Info("SendDataToServer Запрос:", zap.Any("request", req))
@@ -159,7 +159,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Ошибка при отправке запроса:", err)
-			return
+			//	return
 		}
 		defer resp.Body.Close()
 
@@ -170,7 +170,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
 				fmt.Println("Ошибка при чтении тела ответа:", err)
-				return
+				//	return
 			}
 			if n == 0 {
 				break
@@ -211,14 +211,14 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			fmt.Println("Ошибка при сериализации данных в JSON", err)
-			return
+			//	return
 		}
 
 		serverURL := fmt.Sprintf("http://%s/value/%s/%s", serverURL, metric.MType, metric.ID)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
-			return
+			//	return
 		}
 		req.Header.Set("Content-Type", "application/json")
 		logger.Info("SendServerValue Запрос:", zap.Any("request", req))
@@ -227,7 +227,7 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Ошибка при отправке запроса:", err)
-			return
+			//	return
 		}
 		defer resp.Body.Close()
 
@@ -238,7 +238,7 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
 				fmt.Println("Ошибка при чтении тела ответа:", err)
-				return
+				//	return
 			}
 			if n == 0 {
 				break
