@@ -3,10 +3,10 @@ package internal
 import (
 	"encoding/json"
 
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/go-chi/chi"
@@ -22,6 +22,14 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 
 	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandleGetRequest(w, r)
+	})
+
+	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+		mc.updateHandlerJSON(w, r)
+	})
+
+	r.Post("/value", func(w http.ResponseWriter, r *http.Request) {
+		mc.updateHandlerJSONValue(w, r)
 	})
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
@@ -164,14 +172,14 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 
-	path := strings.Split(r.URL.Path, "/")
-	lengpath := len(path)
-	//fmt.Println("http.MethodGet", http.MethodGet)
+	// path := strings.Split(r.URL.Path, "/")
+	// lengpath := len(path)
+	// //fmt.Println("http.MethodGet", http.MethodGet)
 
-	if lengpath != 4 {
-		http.Error(w, "StatusNotFound", http.StatusNotFound)
-		return
-	}
+	// if lengpath != 4 {
+	// 	http.Error(w, "StatusNotFound", http.StatusNotFound)
+	// 	return
+	// }
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -207,6 +215,84 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 		}
+
+	}
+
+}
+
+func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var metric Metrics
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&metric); err != nil {
+		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("updateHandlerJSON Структура metric:")
+	fmt.Println("ID:", metric.ID)
+	fmt.Println("Type:", metric.MType)
+
+	if metric.Delta != nil {
+		fmt.Println("Delta:", *metric.Delta)
+	}
+
+	if metric.Value != nil {
+		fmt.Println("Value:", *metric.Value)
+	}
+
+	if metric.MType == "gauge" && metric.Value != nil {
+		mc.Storage.SaveMetric(metric.MType, metric.ID, *metric.Value)
+		num := mc.Storage.gauges[metric.ID]
+		createAndSendUpdatedMetric(w, metric.ID, metric.MType, num)
+	} else {
+		mc.Storage.SaveMetric(metric.MType, metric.ID, *metric.Delta)
+		num := mc.Storage.counters[metric.ID]
+		println("num перед createAndSendUpdatedMetricCounter!!!! ", num)
+		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, num)
+
+	}
+
+}
+
+func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+	println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!updateHandlerJsonValue")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+	var metric Metrics
+
+	println("updateHandlerJSONValue urla", r.URL.String())
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&metric); err != nil {
+		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
+		return
+	}
+
+	//Проверяем, что поля "id" и "type" заполнены
+	if metric.ID == "" || metric.MType == "" {
+		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
+		return
+	}
+
+	//Создаем объект ответа
+
+	if metric.MType == "gauge" {
+		value, ok := mc.Storage.gauges[metric.ID]
+		createAndSendUpdatedMetric(w, metric.ID, metric.MType, value)
+		println("value1", value, ok)
+
+	} else {
+
+		value1, ok := mc.Storage.counters[metric.ID]
+		println("value1 ok", value1, ok)
+		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, value1)
 
 	}
 
@@ -285,6 +371,7 @@ func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType st
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
 	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 }
@@ -292,11 +379,13 @@ func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType st
 func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
+	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
 	updatedMetric := &Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
 	}
+	println("createAndSendUpdatedMetricCounter num!!!!!", num)
 
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
@@ -315,15 +404,7 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
 	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
-}
-
-func TrimNullBytes(data []byte) []byte {
-	for i := len(data) - 1; i >= 0; i-- {
-		if data[i] != 0 {
-			return data[:i+1]
-		}
-	}
-	return nil
 }
