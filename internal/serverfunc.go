@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 )
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Use(middleware.Compress(5)) // Здесь 5 - это уровень сжатия (0-9), где 0 - без сжатия, а 9 - максимальное сжатие.
 
 	r.Use(func(next http.Handler) http.Handler {
 		return LoggingMiddleware(mc.Logger, next)
