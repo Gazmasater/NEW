@@ -24,11 +24,11 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		mc.HandleGetRequest(w, r)
 	})
 
-	r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/update/", func(w http.ResponseWriter, r *http.Request) {
 		mc.updateHandlerJSON(w, r)
 	})
 
-	r.Post("/value", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/value/", func(w http.ResponseWriter, r *http.Request) {
 		mc.updateHandlerJSONValue(w, r)
 	})
 
