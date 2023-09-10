@@ -47,7 +47,7 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		mc.HandleGetRequest(w, r)
 	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequestHtml(w, r)
+		mc.HandleGetRequestHTML(w, r)
 	})
 
 	return r
@@ -391,7 +391,7 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 
 }
 
-func (mc *HandlerDependencies) HandleGetRequestHtml(w http.ResponseWriter, r *http.Request) {
+func (mc *HandlerDependencies) HandleGetRequestHTML(w http.ResponseWriter, r *http.Request) {
 	println("HandleGetRequestHTML")
 	//contentType := r.Header.Get("Content-Type")
 
