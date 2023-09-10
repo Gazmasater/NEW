@@ -27,11 +27,6 @@ func InitServerConfig() *ServerConfig {
 		restore         bool
 	)
 
-	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
-	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
-	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
-	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
-
 	// Чтение переменных окружения или установка значений по умолчанию
 	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
