@@ -11,7 +11,7 @@ import (
 )
 
 func ParseAddr() (string, error) {
-	// Определение и парсинг флага
+
 	addr := flag.String("a", "localhost:8080", "Адрес HTTP-сервера")
 	flag.Parse()
 
