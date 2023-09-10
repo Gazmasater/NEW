@@ -23,10 +23,6 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		return LoggingMiddleware(mc.Logger, next)
 	})
 
-	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
-
 	r.Post("/update/", func(w http.ResponseWriter, r *http.Request) {
 		mc.updateHandlerJSON(w, r)
 	})
@@ -45,6 +41,13 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 
 	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandleGetRequest(w, r)
+	})
+
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
+	})
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequestHtml(w, r)
 	})
 
 	return r
@@ -147,21 +150,6 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			return
 		}
 
-		// if _, err1 := strconv.ParseInt(metricValue, 10, 64); err1 == nil {
-		// 	if contentType == "application/json" {
-		// 		mc.Storage.SaveMetric(metricType, metricName, num)
-
-		// 	} else {
-		// 		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-		// 		mc.Storage.SaveMetric(metricType, metricName, num)
-		// 		return
-		// 	}
-
-		// } else {
-		// 	println("strconv.ParseInt GAUGE")
-		// 	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		// 	return
-		// }
 		createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
 
 	}
@@ -174,15 +162,6 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
-
-	// path := strings.Split(r.URL.Path, "/")
-	// lengpath := len(path)
-	// //fmt.Println("http.MethodGet", http.MethodGet)
-
-	// if lengpath != 4 {
-	// 	http.Error(w, "StatusNotFound", http.StatusNotFound)
-	// 	return
-	// }
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -410,4 +389,49 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	_, _ = w.Write([]byte("\n"))
 	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
+}
+
+func (mc *HandlerDependencies) HandleGetRequestHtml(w http.ResponseWriter, r *http.Request) {
+	println("HandleGetRequestHTML")
+	//contentType := r.Header.Get("Content-Type")
+
+	// Получить список известных метрик
+	metrics := mc.getKnownMetrics()
+
+	// Генерировать HTML-страницу
+	var htmlPage string
+	for _, metric := range metrics {
+		htmlPage += fmt.Sprintf("<p>%s: %v</p>", metric.Name, metric.Value)
+	}
+
+	// Отправить HTML-страницу как ответ
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(htmlPage))
+}
+
+func (mc *HandlerDependencies) getKnownMetrics() []Metric {
+	// Собрать список известных метрик
+	var metrics []Metric
+
+	for name, counter := range mc.Storage.counters {
+		metrics = append(metrics, Metric{
+			Name:  name,
+			Value: int64(counter),
+		})
+	}
+
+	for name, gauge := range mc.Storage.gauges {
+		metrics = append(metrics, Metric{
+			Name:  name,
+			Value: float64(gauge),
+		})
+	}
+
+	return metrics
+}
+
+type Metric struct {
+	Name  string
+	Value interface{}
 }
