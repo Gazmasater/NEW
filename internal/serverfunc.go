@@ -100,7 +100,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			if contentType == "application/json" {
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
@@ -151,7 +151,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			return
 		}
 
-		createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
+		createAndSendUpdatedMetricTEXT(w, metricName, metricType, float64(num))
 
 	}
 
@@ -176,7 +176,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricCounter(w, metricName, metricType, int64(num1))
+			createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 			return
 		} else {
 
@@ -192,7 +192,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetric(w, metricName, metricType, float64(num))
+			createAndSendUpdatedMetricTEXT(w, metricName, metricType, float64(num))
 			return
 		} else {
 
@@ -280,9 +280,9 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Отправляем значение метрики
 	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
 		if metric.MType == "counter" {
-			createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, *updatedMetric.Delta)
+			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
 		} else if metric.MType == "gauge" {
-			createAndSendUpdatedMetric(w, metric.ID, metric.MType, *updatedMetric.Value)
+			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 		}
 	} else {
 		http.Error(w, "Метрика не найдена", http.StatusNotFound)
@@ -326,14 +326,14 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 			value, ok := mc.Storage.gauges[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetric(w, metric.ID, metric.MType, value)
+				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		} else if metric.MType == "counter" {
 			value, ok := mc.Storage.counters[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, value)
+				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		}
@@ -345,9 +345,9 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 
 	// Отправить значение метрики в ответ
 	if metric.MType == "gauge" {
-		createAndSendUpdatedMetric(w, metric.ID, metric.MType, *metricFromFile.Value)
+		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
 	} else if metric.MType == "counter" {
-		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, *metricFromFile.Delta)
+		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 	}
 }
 
@@ -402,7 +402,7 @@ func Init() {
 	defer logger.Sync() // flushes buffer, if any
 }
 
-func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType string, num float64) {
+func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricType string, num float64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	updatedMetric := &Metrics{
 		ID:    metricName,
@@ -429,7 +429,34 @@ func createAndSendUpdatedMetric(w http.ResponseWriter, metricName, metricType st
 
 }
 
-func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metricType string, num int64) {
+func createAndSendUpdatedMetricTEXT(w http.ResponseWriter, metricName, metricType string, num float64) {
+	// Создайте экземпляр структуры с обновленным значением Value
+	updatedMetric := &Metrics{
+		ID:    metricName,
+		MType: metricType,
+		Value: &num,
+	}
+	Init()
+	// Сериализуйте структуру в JSON
+	responseData, err := json.Marshal(updatedMetric)
+	if err != nil {
+		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
+		return
+	}
+	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
+	// Установите Content-Type и статус код для ответа
+	w.Header().Set("Content-Type", "text/plain")
+
+	// Отправьте JSON в теле ответа
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
+	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
+
+}
+
+func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
 	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
@@ -450,6 +477,39 @@ func createAndSendUpdatedMetricCounter(w http.ResponseWriter, metricName, metric
 	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
+
+	// Отправьте JSON в теле ответа
+	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
+
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
+	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
+
+}
+
+func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
+	// Создайте экземпляр структуры с обновленным значением Value
+	Init()
+	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
+	updatedMetric := &Metrics{
+		ID:    metricName,
+		MType: metricType,
+		Delta: &num,
+	}
+	println("createAndSendUpdatedMetricCounter num!!!!!", num)
+
+	// Сериализуйте структуру в JSON
+	responseData, err := json.Marshal(updatedMetric)
+	if err != nil {
+		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
+		return
+	}
+
+	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
+	// Установите Content-Type и статус код для ответа
+	w.Header().Set("Content-Type", "text/plain")
 
 	// Отправьте JSON в теле ответа
 	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
