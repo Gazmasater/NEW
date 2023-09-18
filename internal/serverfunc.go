@@ -598,7 +598,7 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
 	metricsMap := make(map[string]Metrics)
 
-	file, err := os.Open(mc.Config.FileStoragePath)
+	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		mc.Logger.Error("Ошибка при открытии файла для чтения", zap.Error(err))
 		return metricsMap, err
