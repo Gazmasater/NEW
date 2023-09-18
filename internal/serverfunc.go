@@ -151,7 +151,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			return
 		}
 
-		createAndSendUpdatedMetricTEXT(w, metricName, metricType, float64(num))
+		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 
 	}
 
@@ -419,33 +419,6 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
-
-	// Отправьте JSON в теле ответа
-	w.WriteHeader(http.StatusOK)
-
-	_, _ = w.Write(responseData)
-	_, _ = w.Write([]byte("\n"))
-	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
-
-}
-
-func createAndSendUpdatedMetricTEXT(w http.ResponseWriter, metricName, metricType string, num float64) {
-	// Создайте экземпляр структуры с обновленным значением Value
-	updatedMetric := &Metrics{
-		ID:    metricName,
-		MType: metricType,
-		Value: &num,
-	}
-	Init()
-	// Сериализуйте структуру в JSON
-	responseData, err := json.Marshal(updatedMetric)
-	if err != nil {
-		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
-		return
-	}
-	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
-	// Установите Content-Type и статус код для ответа
-	w.Header().Set("Content-Type", "text/plain")
 
 	// Отправьте JSON в теле ответа
 	w.WriteHeader(http.StatusOK)
