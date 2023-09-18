@@ -176,7 +176,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
+			createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num1))
 			return
 		} else {
 
@@ -192,7 +192,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricTEXT(w, metricName, metricType, float64(num))
+			createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
 			return
 		} else {
 
