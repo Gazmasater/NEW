@@ -496,20 +496,12 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 	// Читаем метрики из файла
 	var metrics []Metrics
 	scanner := bufio.NewScanner(file)
-	var fileEmpty = true // Флаг, указывающий, что файл пустой
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		var existingMetric Metrics
 		if err := json.Unmarshal([]byte(line), &existingMetric); err == nil {
-			if existingMetric.ID == metric.ID {
-				// Если ID метрики совпадает, обновляем значение метрики
-				if metric.MType == "counter" && metric.Delta != nil {
-					existingMetric.Delta = new(int64)
-					*existingMetric.Delta = *metric.Delta + *existingMetric.Delta
-				}
-				fileEmpty = false
-			} else {
+			if existingMetric.ID != metric.ID {
 				// Если ID метрики не совпадает, добавляем ее в список метрик
 				metrics = append(metrics, existingMetric)
 			}
@@ -523,10 +515,8 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 		return err
 	}
 
-	// Если файл пустой, записываем текущую метрику
-	if fileEmpty {
-		metrics = append(metrics, *metric)
-	}
+	// Добавляем новую метрику к уже существующим метрикам
+	metrics = append(metrics, *metric)
 
 	// Перезаписываем файл с обновленными метриками
 	file.Truncate(0)
