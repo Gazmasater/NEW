@@ -1,10 +1,11 @@
 package internal
 
 import (
+	"bufio"
 	"encoding/json"
-
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -59,7 +60,7 @@ func isInteger(s string) bool {
 }
 
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
-	// Обработка POST-запроса
+
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
 
@@ -228,18 +229,65 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		fmt.Println("Value:", *metric.Value)
 	}
 
-	if metric.MType == "gauge" && metric.Value != nil {
-		mc.Storage.SaveMetric(metric.MType, metric.ID, *metric.Value)
-		num := mc.Storage.gauges[metric.ID]
-		createAndSendUpdatedMetric(w, metric.ID, metric.MType, num)
-	} else {
-		mc.Storage.SaveMetric(metric.MType, metric.ID, *metric.Delta)
-		num := mc.Storage.counters[metric.ID]
-		println("num перед createAndSendUpdatedMetricCounter!!!! ", num)
-		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, num)
-
+	// Чтение метрик из файла
+	metricsFromFile, err := mc.readMetricsFromFile()
+	if err != nil {
+		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+		return
 	}
 
+	// Обработка "counter"
+	if metric.MType == "counter" && metric.Delta != nil {
+		currentValue, ok := metricsFromFile[metric.ID]
+		if !ok {
+			// Если метрики не существует в файле, проверяем в хранилище
+			if value, exists := mc.Storage.counters[metric.ID]; exists {
+				currentValue = Metrics{
+					ID:    metric.ID,
+					Delta: new(int64),
+				}
+				*currentValue.Delta = value
+			} else {
+				// Если метрики нет и в файле, и в хранилище, инициализируем ее с нулевым значением
+				currentValue = Metrics{
+					ID:    metric.ID,
+					Delta: new(int64),
+				}
+			}
+		}
+
+		// Обновляем текущее значение метрики
+		*currentValue.Delta += *metric.Delta
+
+		// Обновляем или создаем метрику в слайсе
+		metricsFromFile[metric.ID] = currentValue
+	}
+
+	// Обработка "gauge"
+	if metric.MType == "gauge" && metric.Value != nil {
+		// Обновляем или создаем метрику в слайсе
+		metricsFromFile[metric.ID] = metric
+	}
+
+	// Запись обновленных метрик в файл
+	for _, updatedMetric := range metricsFromFile {
+		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
+			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Отправляем значение метрики
+	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
+		if metric.MType == "counter" {
+			createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, *updatedMetric.Delta)
+		} else if metric.MType == "gauge" {
+			createAndSendUpdatedMetric(w, metric.ID, metric.MType, *updatedMetric.Value)
+		}
+	} else {
+		http.Error(w, "Метрика не найдена", http.StatusNotFound)
+		return
+	}
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
@@ -434,4 +482,119 @@ func (mc *HandlerDependencies) getKnownMetrics() []Metric {
 type Metric struct {
 	Name  string
 	Value interface{}
+}
+
+func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
+	// Открываем файл для чтения и записи
+	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		mc.Logger.Error("Ошибка при открытии файла для записи", zap.Error(err))
+		return err
+	}
+	defer file.Close()
+
+	// Читаем метрики из файла
+	var metrics []Metrics
+	scanner := bufio.NewScanner(file)
+	var fileEmpty = true // Флаг, указывающий, что файл пустой
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		var existingMetric Metrics
+		if err := json.Unmarshal([]byte(line), &existingMetric); err == nil {
+			if existingMetric.ID == metric.ID {
+				// Если ID метрики совпадает, обновляем значение метрики
+				if metric.MType == "counter" && metric.Delta != nil {
+					existingMetric.Delta = new(int64)
+					*existingMetric.Delta = *metric.Delta + *existingMetric.Delta
+				}
+				fileEmpty = false
+			} else {
+				// Если ID метрики не совпадает, добавляем ее в список метрик
+				metrics = append(metrics, existingMetric)
+			}
+		} else {
+			mc.Logger.Error("Ошибка при разборе JSON", zap.Error(err))
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		mc.Logger.Error("Ошибка при чтении файла", zap.Error(err))
+		return err
+	}
+
+	// Если файл пустой, записываем текущую метрику
+	if fileEmpty {
+		metrics = append(metrics, *metric)
+	}
+
+	// Перезаписываем файл с обновленными метриками
+	file.Truncate(0)
+	file.Seek(0, 0)
+	encoder := json.NewEncoder(file)
+	for _, updatedMetric := range metrics {
+		if err := encoder.Encode(updatedMetric); err != nil {
+			mc.Logger.Error("Ошибка при записи метрики в файл", zap.Error(err))
+			return err
+		}
+	}
+
+	println("ПЕЧАТЬ МЕТРИК ПОСЛЕ ЗАПИСИ")
+	printFileContents(mc.Config.FileStoragePath)
+
+	return nil
+}
+
+func printFileContents(filePath string) error {
+	// Открываем файл для чтения
+	fmt.Println("Полный путь к файлу:", filePath) // Добавьте эту строку для печати полного пути к файлу
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Создаем сканер для чтения файла построчно
+	scanner := bufio.NewScanner(file)
+
+	// Построчно выводим содержимое файла
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
+	metricsMap := make(map[string]Metrics)
+
+	file, err := os.Open(mc.Config.FileStoragePath)
+	if err != nil {
+		mc.Logger.Error("Ошибка при открытии файла для чтения", zap.Error(err))
+		return metricsMap, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		var metric Metrics
+		if err := json.Unmarshal([]byte(line), &metric); err == nil {
+			metricsMap[metric.ID] = metric
+		} else {
+			mc.Logger.Error("Ошибка при разборе JSON", zap.Error(err))
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		mc.Logger.Error("Ошибка при чтении файла", zap.Error(err))
+		return metricsMap, err
+	}
+
+	return metricsMap, nil
 }

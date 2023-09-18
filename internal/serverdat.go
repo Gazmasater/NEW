@@ -21,12 +21,15 @@ func ParseAddr() (string, error) {
 type HandlerDependencies struct {
 	Storage *MemStorage
 	Logger  *zap.Logger
+	Config  *ServerConfig // Добавляем поле для ServerConfig
+
 }
 
-func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger) *HandlerDependencies {
+func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger, config *ServerConfig) *HandlerDependencies {
 	return &HandlerDependencies{
 		Storage: storage,
 		Logger:  logger,
+		Config:  config, // Передаем ServerConfig в конструкторе
 	}
 }
 

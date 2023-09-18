@@ -20,7 +20,7 @@ func main() {
 	r := chi.NewRouter()
 
 	storage := internal.NewMemStorage()
-	controller := internal.NewHandlerDependencies(storage, logger)
+	controller := internal.NewHandlerDependencies(storage, logger, serverCfg)
 
 	r.Route("/", func(r chi.Router) {
 

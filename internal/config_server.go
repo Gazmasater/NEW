@@ -10,12 +10,10 @@ import (
 
 // ServerConfig - структура для хранения параметров конфигурации сервера.
 type ServerConfig struct {
-	Address             string
-	StoreInterval       int
-	FileStoragePath     string
-	Restore             bool
-	DefaultStorePath    string
-	DefaultStoreEnabled bool
+	Address         string
+	StoreInterval   int
+	FileStoragePath string
+	Restore         bool
 }
 
 // InitServerConfig - функция для инициализации конфигурации server
@@ -64,11 +62,9 @@ func InitServerConfig() *ServerConfig {
 	flag.Parse()
 
 	return &ServerConfig{
-		Address:             addr,
-		StoreInterval:       storeInterval,
-		FileStoragePath:     fileStoragePath,
-		Restore:             restore,
-		DefaultStorePath:    "/tmp/metrics-db.json",
-		DefaultStoreEnabled: true,
+		Address:         addr,
+		StoreInterval:   storeInterval,
+		FileStoragePath: fileStoragePath,
+		Restore:         restore,
 	}
 }
