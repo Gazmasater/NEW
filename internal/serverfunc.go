@@ -291,41 +291,64 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
-	println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!updateHandlerJsonValue")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
+
 	var metric Metrics
 
-	println("updateHandlerJSONValue urla", r.URL.String())
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
 		return
 	}
 
-	//Проверяем, что поля "id" и "type" заполнены
+	// Проверяем, что поля "id" и "type" заполнены
 	if metric.ID == "" || metric.MType == "" {
 		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
 		return
 	}
 
-	//Создаем объект ответа
-
-	if metric.MType == "gauge" {
-		value, ok := mc.Storage.gauges[metric.ID]
-		createAndSendUpdatedMetric(w, metric.ID, metric.MType, value)
-		println("value1", value, ok)
-
-	} else {
-
-		value1, ok := mc.Storage.counters[metric.ID]
-		println("value1 ok", value1, ok)
-		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, value1)
-
+	// Прочитать метрики из файла
+	metricsFromFile, err := mc.readMetricsFromFile()
+	if err != nil {
+		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+		return
 	}
 
+	// Проверить наличие нужной метрики в файле
+	metricFromFile, exists := metricsFromFile[metric.ID]
+
+	// Если метрика отсутствует в файле, проверьте хранилище
+	if !exists {
+		if metric.MType == "gauge" {
+			value, ok := mc.Storage.gauges[metric.ID]
+			if ok {
+				// Метрика существует в хранилище, используйте значение из хранилища
+				createAndSendUpdatedMetric(w, metric.ID, metric.MType, value)
+				return
+			}
+		} else if metric.MType == "counter" {
+			value, ok := mc.Storage.counters[metric.ID]
+			if ok {
+				// Метрика существует в хранилище, используйте значение из хранилища
+				createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, value)
+				return
+			}
+		}
+
+		// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
+		http.Error(w, "Метрика не найдена", http.StatusNotFound)
+		return
+	}
+
+	// Отправить значение метрики в ответ
+	if metric.MType == "gauge" {
+		createAndSendUpdatedMetric(w, metric.ID, metric.MType, *metricFromFile.Value)
+	} else if metric.MType == "counter" {
+		createAndSendUpdatedMetricCounter(w, metric.ID, metric.MType, *metricFromFile.Delta)
+	}
 }
 
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
@@ -504,6 +527,9 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 			if existingMetric.ID != metric.ID {
 				// Если ID метрики не совпадает, добавляем ее в список метрик
 				metrics = append(metrics, existingMetric)
+			} else {
+				// Если ID совпадает, устанавливаем тип из существующей метрики
+				metric.MType = existingMetric.MType
 			}
 		} else {
 			mc.Logger.Error("Ошибка при разборе JSON", zap.Error(err))
@@ -513,6 +539,11 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 	if err := scanner.Err(); err != nil {
 		mc.Logger.Error("Ошибка при чтении файла", zap.Error(err))
 		return err
+	}
+
+	// Если тип метрики не установлен, устанавливаем его как "counter"
+	if metric.MType == "" {
+		metric.MType = "counter"
 	}
 
 	// Добавляем новую метрику к уже существующим метрикам
@@ -528,36 +559,7 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 			return err
 		}
 	}
-
-	println("ПЕЧАТЬ МЕТРИК ПОСЛЕ ЗАПИСИ")
-	printFileContents(mc.Config.FileStoragePath)
-
-	return nil
-}
-
-func printFileContents(filePath string) error {
-	// Открываем файл для чтения
-	fmt.Println("Полный путь к файлу:", filePath) // Добавьте эту строку для печати полного пути к файлу
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Создаем сканер для чтения файла построчно
-	scanner := bufio.NewScanner(file)
-
-	// Построчно выводим содержимое файла
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
