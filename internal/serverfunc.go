@@ -217,18 +217,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
-	fmt.Println("updateHandlerJSON Структура metric:")
-	fmt.Println("ID:", metric.ID)
-	fmt.Println("Type:", metric.MType)
-
-	if metric.Delta != nil {
-		fmt.Println("Delta:", *metric.Delta)
-	}
-
-	if metric.Value != nil {
-		fmt.Println("Value:", *metric.Value)
-	}
-
 	// Чтение метрик из файла
 	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {

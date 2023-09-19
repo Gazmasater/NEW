@@ -14,6 +14,7 @@ type ServerConfig struct {
 	StoreInterval   int
 	FileStoragePath string
 	Restore         bool
+	DatabaseDSN     string
 }
 
 // InitServerConfig - функция для инициализации конфигурации server
@@ -23,6 +24,7 @@ func InitServerConfig() *ServerConfig {
 		storeInterval   int
 		fileStoragePath string
 		restore         bool
+		databaseDSN     string
 	)
 
 	addrEnv := os.Getenv("ADDRESS")
@@ -59,6 +61,13 @@ func InitServerConfig() *ServerConfig {
 		flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
 	}
 
+	databaseDSNEnv := os.Getenv("DATABASE_DSN")
+	if databaseDSNEnv != "" {
+		databaseDSN = databaseDSNEnv
+	} else {
+		flag.StringVar(&databaseDSN, "d", "default_dsn", "DSN для подключения к базе данных")
+	}
+
 	flag.Parse()
 
 	return &ServerConfig{
@@ -66,5 +75,6 @@ func InitServerConfig() *ServerConfig {
 		StoreInterval:   storeInterval,
 		FileStoragePath: fileStoragePath,
 		Restore:         restore,
+		DatabaseDSN:     databaseDSN,
 	}
 }
