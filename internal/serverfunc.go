@@ -437,7 +437,7 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 		return
 	}
 
-	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
+	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -448,7 +448,7 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
+	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
@@ -481,7 +481,7 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
+	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
