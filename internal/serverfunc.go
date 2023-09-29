@@ -60,7 +60,7 @@ func isInteger(s string) bool {
 }
 
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
-	var metric Metrics
+
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
 
@@ -70,12 +70,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 
-	if metric.MType != "gauge" && metric.MType != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
-	if metric.MType == "counter" {
+	if metricType == "counter" {
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -100,12 +100,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			if contentType == "application/json" {
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				createAndSendUpdatedMetricCounterTEXT(w, metric.ID, metric.MType, int64(num1))
+				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-				mc.Storage.SaveMetric(metric.MType, metric.ID, num1)
+				mc.Storage.SaveMetric(metricType, metricName, num1)
 				return
 			}
 
@@ -137,11 +137,11 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 
 			if contentType == "application/json" {
-				mc.Storage.SaveMetric(metric.MType, metric.ID, num)
+				mc.Storage.SaveMetric(metricType, metricName, num)
 
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-				mc.Storage.SaveMetric(metric.MType, metric.ID, num)
+				mc.Storage.SaveMetric(metricType, metricName, num)
 				return
 			}
 
@@ -161,41 +161,42 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	println("HandleGetRequest")
 	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
+	metricType := chi.URLParam(r, "metricType")
+	metricName := chi.URLParam(r, "metricName")
 
-	var metric Metrics
-	if metric.MType != "gauge" && metric.MType != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
 
-	if metric.MType == "counter" {
-		_, found := mc.Storage.counters[metric.ID]
+	if metricType == "counter" {
+		num1, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metric.Delta)
+			createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num1))
 			return
 		} else {
 
-			w.Write([]byte(strconv.FormatInt(*metric.Delta, 10)))
+			w.Write([]byte(strconv.FormatInt(num1, 10)))
 		}
 		return
 	}
-	if metric.MType == "gauge" {
+	if metricType == "gauge" {
 
-		_, found := mc.Storage.gauges[metric.ID]
+		num, found := mc.Storage.gauges[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
+			createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
 			return
 		} else {
 
-			w.Write([]byte(strconv.FormatFloat(*metric.Value, 'f', -1, 64)))
+			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 		}
 
 	}
@@ -203,20 +204,22 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 }
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
 
 	var metric Metrics
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
-		mc.Logger.Error("Ошибка при разборе JSON", zap.Error(err))
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
 		return
 	}
 
 	// Чтение метрик из файла
-	metricsFromFile, err := mc.readMetricsFromFile(mc.Config.Restore)
+	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {
-		mc.Logger.Error("Ошибка чтения метрик из файла", zap.Error(err))
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
 	}
@@ -257,7 +260,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
 		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
-			mc.Logger.Error("Ошибка записи метрик в файл", zap.Error(err))
 			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
 			return
 		}
@@ -271,7 +273,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 		}
 	} else {
-		mc.Logger.Info("Метрика не найдена")
 		http.Error(w, "Метрика не найдена", http.StatusNotFound)
 		return
 	}
@@ -298,7 +299,7 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	}
 
 	// Прочитать метрики из файла
-	metricsFromFile, err := mc.readMetricsFromFile(mc.Config.Restore)
+	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
@@ -310,17 +311,17 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	// Если метрика отсутствует в файле, проверьте хранилище
 	if !exists {
 		if metric.MType == "gauge" {
-			_, ok := mc.Storage.gauges[metric.ID]
+			value, ok := mc.Storage.gauges[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
+				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		} else if metric.MType == "counter" {
-			_, ok := mc.Storage.counters[metric.ID]
+			value, ok := mc.Storage.counters[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metric.Delta)
+				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		}
@@ -582,13 +583,8 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 	return err
 }
 
-func (mc *HandlerDependencies) readMetricsFromFile(restore bool) (map[string]Metrics, error) {
+func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
 	metricsMap := make(map[string]Metrics)
-
-	if !restore {
-		// Если флаг restore равен false, то просто возвращаем пустую мапу
-		return metricsMap, nil
-	}
 
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
