@@ -204,15 +204,12 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 }
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var metric Metrics
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
+		mc.Logger.Error("Ошибка при разборе JSON", zap.Error(err))
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
 		return
 	}
@@ -220,7 +217,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Чтение метрик из файла
 	metricsFromFile, err := mc.readMetricsFromFile(mc.Config.Restore)
 	if err != nil {
-		println("!!!!!!!!!!!!!!!!!1readMetricsFromFile!!!!!!!!!!!!!!!!")
+		mc.Logger.Error("Ошибка чтения метрик из файла", zap.Error(err))
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
 	}
@@ -261,6 +258,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
 		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
+			mc.Logger.Error("Ошибка записи метрик в файл", zap.Error(err))
 			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
 			return
 		}
@@ -274,6 +272,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 		}
 	} else {
+		mc.Logger.Info("Метрика не найдена")
 		http.Error(w, "Метрика не найдена", http.StatusNotFound)
 		return
 	}
