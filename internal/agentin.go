@@ -296,8 +296,8 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 			return
 		}
 
-		//fmt.Println("Сериализированные данные в JSON:", string(jsonData))
-		//	logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
+		fmt.Println("Сериализированные данные в JSON:", string(jsonData))
+		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
 		//	println("SendDataToServer serverURL", serverURL)
