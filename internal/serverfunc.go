@@ -161,22 +161,21 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	println("HandleGetRequest")
 	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
-	metricType := chi.URLParam(r, "metricType")
-	metricName := chi.URLParam(r, "metricName")
 
-	if metricType != "gauge" && metricType != "counter" {
+	var metric Metrics
+	if metric.MType != "gauge" && metric.MType != "counter" {
 		http.Error(w, "StatusNotFound", http.StatusNotFound)
 		return
 	}
 
-	if metricType == "counter" {
-		num1, found := mc.Storage.counters[metricName]
+	if metric.MType == "counter" {
+		num1, found := mc.Storage.counters[metric.ID]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num1))
+			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metric.Delta)
 			return
 		} else {
 
@@ -184,15 +183,15 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 		}
 		return
 	}
-	if metricType == "gauge" {
+	if metric.MType == "gauge" {
 
-		num, found := mc.Storage.gauges[metricName]
+		num, found := mc.Storage.gauges[metric.ID]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
+			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
 			return
 		} else {
 
@@ -311,17 +310,17 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	// Если метрика отсутствует в файле, проверьте хранилище
 	if !exists {
 		if metric.MType == "gauge" {
-			value, ok := mc.Storage.gauges[metric.ID]
+			_, ok := mc.Storage.gauges[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
+				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
 				return
 			}
 		} else if metric.MType == "counter" {
-			value, ok := mc.Storage.counters[metric.ID]
+			_, ok := mc.Storage.counters[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
+				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metric.Delta)
 				return
 			}
 		}
