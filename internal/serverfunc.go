@@ -63,19 +63,19 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
-	var metric Metrics
+
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 
-	if metric.MType != "gauge" && metric.MType != "counter" {
+	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
-	if metric.MType == "counter" {
+	if metricType == "counter" {
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
