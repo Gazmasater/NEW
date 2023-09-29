@@ -218,7 +218,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	}
 
 	// Чтение метрик из файла
-	metricsFromFile, err := mc.readMetricsFromFile()
+	metricsFromFile, err := mc.readMetricsFromFile(mc.Config.Restore)
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
@@ -299,7 +299,7 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	}
 
 	// Прочитать метрики из файла
-	metricsFromFile, err := mc.readMetricsFromFile()
+	metricsFromFile, err := mc.readMetricsFromFile(mc.Config.Restore)
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
@@ -583,8 +583,13 @@ func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 	return err
 }
 
-func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
+func (mc *HandlerDependencies) readMetricsFromFile(restore bool) (map[string]Metrics, error) {
 	metricsMap := make(map[string]Metrics)
+
+	if !restore {
+		// Если флаг restore равен false, то просто возвращаем пустую мапу
+		return metricsMap, nil
+	}
 
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
