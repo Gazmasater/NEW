@@ -63,7 +63,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
-	var metric Metrics
+
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
@@ -99,7 +99,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		if isInteger(metricValue) {
 			if contentType == "application/json" {
 
-				mc.Storage.SaveMetric(metric.MType, metric.ID, num1)
+				mc.Storage.SaveMetric(metricType, metricName, num1)
 				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
@@ -137,7 +137,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 
 			if contentType == "application/json" {
-				mc.Storage.SaveMetric(metric.MType, metric.ID, num)
+				mc.Storage.SaveMetric(metricType, metricName, num)
 
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
