@@ -60,7 +60,7 @@ func isInteger(s string) bool {
 }
 
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
-
+	var metric Metrics
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
 
@@ -70,12 +70,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	path := strings.Split(r.URL.Path, "/")
 	lengpath := len(path)
 
-	if metricType != "gauge" && metricType != "counter" {
+	if metric.MType != "gauge" && metric.MType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
 
-	if metricType == "counter" {
+	if metric.MType == "counter" {
 
 		if lengpath != 5 {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -100,12 +100,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			if contentType == "application/json" {
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
+				createAndSendUpdatedMetricCounterTEXT(w, metric.ID, metric.MType, int64(num1))
 				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-				mc.Storage.SaveMetric(metricType, metricName, num1)
+				mc.Storage.SaveMetric(metric.MType, metric.ID, num1)
 				return
 			}
 
@@ -137,11 +137,11 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 
 			if contentType == "application/json" {
-				mc.Storage.SaveMetric(metricType, metricName, num)
+				mc.Storage.SaveMetric(metric.MType, metric.ID, num)
 
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
-				mc.Storage.SaveMetric(metricType, metricName, num)
+				mc.Storage.SaveMetric(metric.MType, metric.ID, num)
 				return
 			}
 
