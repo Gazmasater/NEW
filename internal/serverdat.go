@@ -69,6 +69,7 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue inte
 	case "counter":
 		if v, ok := metricValue.(int64); ok {
 			ms.counters[metricName] += v
+			println("SaveMetric", ms.counters[metricName])
 		}
 	}
 }
