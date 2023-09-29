@@ -169,7 +169,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 
 	if metric.MType == "counter" {
-		num1, found := mc.Storage.counters[metric.ID]
+		_, found := mc.Storage.counters[metric.ID]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -179,13 +179,13 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 			return
 		} else {
 
-			w.Write([]byte(strconv.FormatInt(num1, 10)))
+			w.Write([]byte(strconv.FormatInt(*metric.Delta, 10)))
 		}
 		return
 	}
 	if metric.MType == "gauge" {
 
-		num, found := mc.Storage.gauges[metric.ID]
+		_, found := mc.Storage.gauges[metric.ID]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -195,7 +195,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 			return
 		} else {
 
-			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+			w.Write([]byte(strconv.FormatFloat(*metric.Value, 'f', -1, 64)))
 		}
 
 	}
