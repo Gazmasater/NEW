@@ -232,7 +232,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 		currentValue, ok := metricsFromFile[metric.ID]
 
-		if !ok || !mc.Config.Restore {
+		if !ok {
 			// Если метрики не существует в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
