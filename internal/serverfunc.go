@@ -307,12 +307,12 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
 	}
-
+	var metricFromFile Metrics
 	// Проверить наличие нужной метрики в файле
 	metricFromFile, exists := metricsFromFile[metric.ID]
 
 	// Если метрика отсутствует в файле, проверьте хранилище
-	if !exists {
+	if !exists && !mc.Config.Restore {
 		if metric.MType == "gauge" {
 			value, ok := mc.Storage.gauges[metric.ID]
 			if ok {
