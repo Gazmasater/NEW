@@ -206,12 +206,8 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 }
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var metric Metrics
+	var metricsFromFile map[string]Metrics
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
@@ -219,11 +215,14 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Чтение метрик из файла
-	metricsFromFile, err := mc.readMetricsFromFile()
-	if err != nil {
-		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-		return
+	// Чтение метрик из файла, если mc.Config.Restore истинно
+	if mc.Config.Restore {
+		var err error
+		metricsFromFile, err = mc.readMetricsFromFile()
+		if err != nil {
+			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Обработка "counter"
