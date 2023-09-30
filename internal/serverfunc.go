@@ -256,7 +256,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		}
 
 		// Сохраняем обн}овленные метрики в хранилище
-		mc.Storage.counters[metric.ID] = *currentValue.Delta
+		mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
 	}
 
 	// Обработка "gauge"
