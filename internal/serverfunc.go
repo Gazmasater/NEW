@@ -251,9 +251,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 		// Обновляем или создаем метрику в слайсе
 
-		if mc.Config.Restore {
-			metricsFromFile[metric.ID] = currentValue
-		}
+		metricsFromFile[metric.ID] = currentValue
 
 		// Сохраняем обн}овленные метрики в хранилище
 		mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
