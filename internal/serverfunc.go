@@ -230,7 +230,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	if metric.MType == "counter" && metric.Delta != nil {
 		currentValue, ok := metricsFromFile[metric.ID]
 
-		if !ok || !mc.Config.Restore {
+		if !ok && !mc.Config.Restore {
 			// Если метрики нет в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
@@ -251,11 +251,12 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		*currentValue.Delta += *metric.Delta
 
 		// Обновляем или создаем метрику в слайсе
+
 		if mc.Config.Restore {
 			metricsFromFile[metric.ID] = currentValue
 		}
 
-		// Сохраняем обновленные метрики в хранилище
+		// Сохраняем обн}овленные метрики в хранилище
 		mc.Storage.counters[metric.ID] = *currentValue.Delta
 	}
 
