@@ -247,7 +247,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 			}
 		}
 
-		// Обновляем текущее значение метрики
 		*currentValue.Delta += *metric.Delta
 
 		// Обновляем или создаем метрику в слайсе
