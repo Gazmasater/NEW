@@ -2,8 +2,11 @@ package internal
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"net/http"
 	"os"
 	"strconv"
@@ -12,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -49,6 +53,10 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandleGetRequestHTML(w, r)
+	})
+
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		mc.Ping(w, r)
 	})
 
 	return r
@@ -170,8 +178,6 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 
 	if metricType == "counter" {
-		println("HandleGetRequest  counter", mc.Storage.counters[metricName])
-
 		num1, found := mc.Storage.counters[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
@@ -211,6 +217,8 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
+	var db *sql.DB
+
 	var metric Metrics
 
 	decoder := json.NewDecoder(r.Body)
@@ -219,8 +227,19 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Чтение метрик из файла
+	fmt.Println("updateHandlerJSON Структура metric:")
+	fmt.Println("ID:", metric.ID)
+	fmt.Println("Type:", metric.MType)
 
+	if metric.Delta != nil {
+		fmt.Println("Delta:", *metric.Delta)
+	}
+
+	if metric.Value != nil {
+		fmt.Println("Value:", *metric.Value)
+	}
+
+	// Чтение метрик из файла
 	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
@@ -230,7 +249,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
 		currentValue, ok := metricsFromFile[metric.ID]
-		if !ok && !mc.Config.Restore {
+		if !ok {
 			// Если метрики не существует в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
@@ -250,8 +269,64 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		// Обновляем текущее значение метрики
 		*currentValue.Delta += *metric.Delta
 
+		if mc.Config.DatabaseDSN != "" {
+			var err, err1 error
+			db, err = sql.Open("postgres", mc.Config.DatabaseDSN)
+			if err != nil {
+				http.Error(w, "Ошибка при открытии базы данных", http.StatusInternalServerError)
+				return
+			}
+
+			createTableQuery := `
+				CREATE TABLE IF NOT EXISTS metrics (
+					name VARCHAR(255) NOT NULL,
+					type VARCHAR(50) NOT NULL,
+					value DOUBLE PRECISION,
+					delta BIGINT
+				)
+			`
+			_, err1 = db.Exec(createTableQuery)
+			println("err1", err1)
+			if err1 != nil {
+				println("!!!!!!!!!!!!!!!!!!!&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+				log.Println("Ошибка создания таблицы:", err1.Error())
+
+				http.Error(w, "Ошибка создания таблицы", http.StatusInternalServerError)
+				return
+			}
+
+			defer db.Close() // Убедитесь, что база данных будет закрыта при завершении
+		}
+
 		// Обновляем или создаем метрику в слайсе
 		metricsFromFile[metric.ID] = currentValue
+		if mc.Config.DatabaseDSN != "" {
+
+			// Проверяем существование записи метрики в базе данных
+			var count int
+			_ = db.QueryRow("SELECT COUNT(*) FROM metrics WHERE name = $1 AND type = $2", metric.ID, metric.MType).Scan(&count)
+			// if err != nil {
+			// 	http.Error(w, "Ошибка при проверке существования метрики", http.StatusInternalServerError)
+			// 	return
+			// }
+
+			if count > 0 {
+				// Запись метрики уже существует, выполним операцию обновления
+				_, _ = db.Exec("UPDATE metrics SET value = $1, delta = $2 WHERE name = $3 AND type = $4", metric.Value, *currentValue.Delta, metric.ID, metric.MType)
+				// if err != nil {
+				// 	http.Error(w, "Ошибка при обновлении метрики", http.StatusInternalServerError)
+				// 	return
+				// }
+			} else {
+				// Запись метрики не существует, выполним операцию вставки
+				_, _ = db.Exec("INSERT INTO metrics (name, type, value, delta) VALUES ($1, $2, $3, $4)", metric.ID, metric.MType, metric.Value, *currentValue.Delta)
+				// if err != nil {
+				// 	http.Error(w, "Ошибка при вставке метрики", http.StatusInternalServerError)
+				// 	return
+				// }
+			}
+		}
+
 	}
 
 	// Обработка "gauge"
@@ -289,6 +364,16 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 
 	var metric Metrics
 
+	if mc.Config.DatabaseDSN != "" {
+		db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+		if err != nil {
+			http.Error(w, "Ошибка при открытии базы данных", http.StatusInternalServerError)
+			return
+		}
+		defer db.Close() // Убедитесь, что база данных будет закрыта при завершении
+
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
@@ -307,12 +392,12 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
 	}
-	var metricFromFile Metrics
+
 	// Проверить наличие нужной метрики в файле
 	metricFromFile, exists := metricsFromFile[metric.ID]
 
 	// Если метрика отсутствует в файле, проверьте хранилище
-	if !exists && !mc.Config.Restore {
+	if !exists {
 		if metric.MType == "gauge" {
 			value, ok := mc.Storage.gauges[metric.ID]
 			if ok {
@@ -414,8 +499,8 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 	// Отправьте JSON в теле ответа
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(responseData)
-	w.Write([]byte("\n"))
+	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
 	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 }
@@ -438,7 +523,7 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 		return
 	}
 
-	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
+	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -447,9 +532,9 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(responseData)
-	w.Write([]byte("\n"))
-	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
+	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
+	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
@@ -482,7 +567,7 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
+	//	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
@@ -613,4 +698,17 @@ func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error)
 	}
 
 	return metricsMap, nil
+}
+
+func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
+	// Устанавливаем соединение с базой данных
+	db, err := sql.Open("postgres", "user=username dbname=mydb sslmode=require")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Database is working\n")
 }
