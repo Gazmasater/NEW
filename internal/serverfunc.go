@@ -414,8 +414,8 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 	// Отправьте JSON в теле ответа
 	w.WriteHeader(http.StatusOK)
 
-	_, _ = w.Write(responseData)
-	_, _ = w.Write([]byte("\n"))
+	w.Write(responseData)
+	w.Write([]byte("\n"))
 	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 }
@@ -447,8 +447,8 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 
 	w.WriteHeader(http.StatusOK)
 
-	_, _ = w.Write(responseData)
-	_, _ = w.Write([]byte("\n"))
+	w.Write(responseData)
+	w.Write([]byte("\n"))
 	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
@@ -480,8 +480,8 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 
 	w.WriteHeader(http.StatusOK)
 
-	_, _ = w.Write(responseData)
-	_, _ = w.Write([]byte("\n"))
+	w.Write(responseData)
+	w.Write([]byte("\n"))
 	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
