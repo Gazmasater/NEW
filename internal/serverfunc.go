@@ -230,7 +230,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
 		currentValue, ok := metricsFromFile[metric.ID]
-		if !ok {
+		if !ok && !mc.Config.Restore {
 			// Если метрики не существует в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
@@ -480,8 +480,8 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(responseData)
-	w.Write([]byte("\n"))
+	_, _ = w.Write(responseData)
+	_, _ = w.Write([]byte("\n"))
 	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
