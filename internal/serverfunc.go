@@ -220,7 +220,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	}
 
 	// Чтение метрик из файла
-
 	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
@@ -229,11 +228,10 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
-
 		currentValue, ok := metricsFromFile[metric.ID]
 
 		if !ok {
-			// Если метрики не существует в файле, проверяем в хранилище
+			// Если метрики нет в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
 					ID:    metric.ID,
@@ -241,7 +239,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 				}
 				*currentValue.Delta = value
 			} else {
-				// Если метрики нет и в файле, и в хранилище, инициализируем ее с нулевым значением
+				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
 				currentValue = Metrics{
 					ID:    metric.ID,
 					Delta: new(int64),
@@ -254,12 +252,18 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 		// Обновляем или создаем метрику в слайсе
 		metricsFromFile[metric.ID] = currentValue
+
+		// Сохраняем обновленные метрики в хранилище
+		mc.Storage.counters[metric.ID] = *currentValue.Delta
 	}
 
 	// Обработка "gauge"
 	if metric.MType == "gauge" && metric.Value != nil {
 		// Обновляем или создаем метрику в слайсе
 		metricsFromFile[metric.ID] = metric
+
+		// Сохраняем обновленные метрики в хранилище
+		mc.Storage.gauges[metric.ID] = *metric.Value
 	}
 
 	// Запись обновленных метрик в файл
