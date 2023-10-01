@@ -286,6 +286,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
@@ -304,14 +305,13 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
 		return
 	}
-
 	// Прочитать метрики из файла
+
 	metricsFromFile, err := mc.readMetricsFromFile()
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
 	}
-
 	// Проверить наличие нужной метрики в файле
 	metricFromFile, exists := metricsFromFile[metric.ID]
 
