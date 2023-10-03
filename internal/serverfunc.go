@@ -252,28 +252,37 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		*currentValue.Delta += *metric.Delta
 
 		// Обновляем или создаем метрику в слайсе
+		if mc.Config.Restore {
+			metricsFromFile[metric.ID] = currentValue
+		} else {
+			mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
 
-		metricsFromFile[metric.ID] = currentValue
+		}
 		// Сохраняем обн}овленные метрики в хранилище
-		mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
 
 	}
 
 	// Обработка "gauge"
 	if metric.MType == "gauge" && metric.Value != nil {
 		// Обновляем или создаем метрику в слайсе
-		metricsFromFile[metric.ID] = metric
+		if mc.Config.Restore {
+			metricsFromFile[metric.ID] = metric
 
-		// Сохраняем обновленные метрики в хранилище
-		mc.Storage.gauges[metric.ID] = *metric.Value
+		} else {
+			mc.Storage.gauges[metric.ID] = *metric.Value
+		}
+
 	}
 
 	// Запись обновленных метрик в файл
-	for _, updatedMetric := range metricsFromFile {
-		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
-			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
-			return
+	if mc.Config.Restore {
+		for _, updatedMetric := range metricsFromFile {
+			if err := mc.writeMetricToFile(&updatedMetric); err != nil {
+				http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
+				return
+			}
 		}
+
 	}
 
 	// Отправляем значение метрики
