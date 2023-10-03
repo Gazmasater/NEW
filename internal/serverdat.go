@@ -95,22 +95,24 @@ func (ms *MemStorage) PrbocessMetrics(metricType, metricName string, metricValue
 }
 
 // GetAllMetrics retrieves all the metr and their values from the storage.
-func (ms *MemStorage) GetAllMetrics() map[string]map[string]interface{} {
+func (ms *MemStorage) GetAllMetrics() []Metrics {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	allMetrics := make(map[string]map[string]interface{})
+	var allMetrics []Metrics
 	for name, value := range ms.gauges {
-		allMetrics[name] = map[string]interface{}{
-			"type":  "gauge",
-			"value": value,
-		}
+		allMetrics = append(allMetrics, Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: &value,
+		})
 	}
-	for name, value := range ms.counters {
-		allMetrics[name] = map[string]interface{}{
-			"type":  "counter",
-			"value": value,
-		}
+	for name, delta := range ms.counters {
+		allMetrics = append(allMetrics, Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &delta,
+		})
 	}
 	return allMetrics
 }

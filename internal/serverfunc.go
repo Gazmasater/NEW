@@ -270,7 +270,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
-		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
+		if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
 			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
 			return
 		}
@@ -290,11 +290,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var metric Metrics
 
@@ -539,7 +534,7 @@ type Metric struct {
 	Value interface{}
 }
 
-func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
+func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
 	// Открываем файл для чтения и записи
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {

@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"time"
 
+	"github.com/go-chi/chi"
 	"project.com/internal"
 )
 
@@ -40,5 +41,20 @@ func main() {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err1)
 	}
 	defer logger.Sync()
+
+	if serverCfg.StoreInterval > 0 {
+		ticker := time.NewTicker(time.Duration(serverCfg.StoreInterval) * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			metricsToSave := storage.GetAllMetrics()
+			for _, metric := range metricsToSave {
+				if err := controller.WriteMetricToFile(&metric); err != nil {
+					log.Printf("Ошибка при сохранении метрики в файл: %s", err)
+				}
+			}
+		}
+
+	}
 
 }
