@@ -216,12 +216,13 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	}
 
 	// Чтение метрик из файла, если mc.Config.Restore истинно
-
-	var err error
-	metricsFromFile, err = mc.readMetricsFromFile()
-	if err != nil {
-		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-		return
+	if mc.Config.Restore {
+		var err error
+		metricsFromFile, err = mc.readMetricsFromFile()
+		if err != nil {
+			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Обработка "counter"
