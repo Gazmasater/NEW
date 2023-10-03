@@ -207,8 +207,6 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var metric Metrics
-	var currentValue Metrics
-
 	var metricsFromFile map[string]Metrics
 
 	decoder := json.NewDecoder(r.Body)
@@ -216,12 +214,22 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
 		return
 	}
-	println("!!!!!!!!1mc.Config.Restore!!!!!!!!!!!!!!!", mc.Config.Restore)
 
-	if !mc.Config.Restore {
+	// Чтение метрик из файла, если mc.Config.Restore истинно
 
-		if metric.MType == "counter" && metric.Delta != nil {
+	var err error
+	metricsFromFile, err = mc.readMetricsFromFile()
+	if err != nil {
+		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+		return
+	}
 
+	// Обработка "counter"
+	if metric.MType == "counter" && metric.Delta != nil {
+		currentValue, ok := metricsFromFile[metric.ID]
+
+		if !ok {
+			// Если метрики нет в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
 					ID:    metric.ID,
@@ -229,66 +237,60 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 				}
 				*currentValue.Delta = value
 			} else {
+				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
 				currentValue = Metrics{
 					ID:    metric.ID,
 					Delta: new(int64),
 				}
 			}
-			//}
-
-			*currentValue.Delta += *metric.Delta
-
-			mc.Storage.SaveMetric(metric.MType, metric.ID, *metric.Delta)
-
 		}
 
-		if metric.MType == "gauge" && metric.Value != nil {
+		*currentValue.Delta += *metric.Delta
 
-			mc.Storage.gauges[metric.ID] = *metric.Value
+		// Обновляем или создаем метрику в слайсе
+
+		metricsFromFile[metric.ID] = currentValue
+		// Сохраняем обн}овленные метрики в хранилище
+		mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
+
+	}
+
+	// Обработка "gauge"
+	if metric.MType == "gauge" && metric.Value != nil {
+		// Обновляем или создаем метрику в слайсе
+		metricsFromFile[metric.ID] = metric
+
+		// Сохраняем обновленные метрики в хранилище
+		mc.Storage.gauges[metric.ID] = *metric.Value
+	}
+
+	// Запись обновленных метрик в файл
+	for _, updatedMetric := range metricsFromFile {
+		if err := mc.writeMetricToFile(&updatedMetric); err != nil {
+			http.Error(w, "Ошибка записи метрик в файл", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Отправляем значение метрики
+	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
+		if metric.MType == "counter" {
+			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
+		} else if metric.MType == "gauge" {
+			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 		}
 	} else {
-		println("!!!!!!!!!!!!!ФАЙЛ!!!!!!!!!!!1")
-
-		var err error
-		metricsFromFile, err = mc.readMetricsFromFile()
-		if err != nil {
-			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-			return
-		}
-
-		if metric.ID == "" {
-			http.Error(w, "Поле 'id' обязательно для заполнения", http.StatusBadRequest)
-			return
-		}
-
-		if existingMetric, ok := metricsFromFile[metric.ID]; ok {
-			// Метрика уже существует в файле, обновляем ее значение
-			existingMetric.Value = metric.Value // Предполагается, что Value это значение для метрики
-			metricsFromFile[metric.ID] = existingMetric
-		} else {
-			// Метрика отсутствует в файле, создаем новую
-			metricsFromFile[metric.ID] = metric
-		}
-
-		// for key, value := range metricsFromFile {
-		// 	fmt.Printf("Key: %s, Value: %+v\n", key, value)
-		// }
-
+		http.Error(w, "Метрика не найдена", http.StatusNotFound)
+		return
 	}
-
-	//if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
-	if metric.MType == "counter" {
-		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *currentValue.Delta)
-	} else if metric.MType == "gauge" {
-		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
-	}
-	// } else {
-	// 	http.Error(w, "Метрика не найдена", http.StatusNotFound)
-	// 	return
-	//}
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
 
 	var metric Metrics
 
@@ -305,40 +307,42 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	}
 	// Прочитать метрики из файла
 
-	// metricsFromFile, err := mc.readMetricsFromFile()
-	// if err != nil {
-	// 	http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-	// 	return
-	// }
-	// // Проверить наличие нужной метрики в файле
-	// metricFromFile, exists := metricsFromFile[metric.ID]
+	metricsFromFile, err := mc.readMetricsFromFile()
+	if err != nil {
+		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+		return
+	}
+	// Проверить наличие нужной метрики в файле
+	metricFromFile, exists := metricsFromFile[metric.ID]
 
 	// Если метрика отсутствует в файле, проверьте хранилище
-	//if !exists {
-	if metric.MType == "gauge" {
-		value, ok := mc.Storage.gauges[metric.ID]
-		if ok {
-			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
-			return
+	if !exists {
+		if metric.MType == "gauge" {
+			value, ok := mc.Storage.gauges[metric.ID]
+			if ok {
+				// Метрика существует в хранилище, используйте значение из хранилища
+				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
+				return
+			}
+		} else if metric.MType == "counter" {
+			value, ok := mc.Storage.counters[metric.ID]
+			if ok {
+				// Метрика существует в хранилище, используйте значение из хранилища
+				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
+				return
+			}
 		}
-	} else if metric.MType == "counter" {
-		value, ok := mc.Storage.counters[metric.ID]
-		if ok {
-			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
-			return
-		}
-	}
 
-	// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
-	// http.Error(w, "Метрика не найдена", http.StatusNotFound)
-	// return
-	//}
+		// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
+		http.Error(w, "Метрика не найдена", http.StatusNotFound)
+		return
+	}
 
 	// Отправить значение метрики в ответ
 	if metric.MType == "gauge" {
-		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metric.Value)
+		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
 	} else if metric.MType == "counter" {
-		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metric.Delta)
+		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 	}
 }
 
@@ -531,10 +535,8 @@ type Metric struct {
 	Value interface{}
 }
 
-func (mc *HandlerDependencies) writeMetricToFile(metrics []Metrics) error {
+func (mc *HandlerDependencies) writeMetricToFile(metric *Metrics) error {
 	// Открываем файл для чтения и записи
-	var metric Metrics
-
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		mc.Logger.Error("Ошибка при открытии файла для записи", zap.Error(err))
@@ -543,6 +545,7 @@ func (mc *HandlerDependencies) writeMetricToFile(metrics []Metrics) error {
 	defer file.Close()
 
 	// Читаем метрики из файла
+	var metrics []Metrics
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -584,7 +587,7 @@ func (mc *HandlerDependencies) writeMetricToFile(metrics []Metrics) error {
 			return err
 		}
 	}
-	return metrics, err
+	return err
 }
 
 func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
