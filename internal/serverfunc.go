@@ -297,6 +297,7 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	}
 
 	var metric Metrics
+	metricsFromFile := make(map[string]Metrics)
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
@@ -316,7 +317,6 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 			return
 		}
-
 	}
 
 	// Проверить наличие нужной метрики в файле
