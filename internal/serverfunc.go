@@ -318,13 +318,14 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
 		return
 	}
-	var metricsFromFile map[string]Metrics
 	// Прочитать метрики из файла
+	if mc.Config.Restore {
+		metricsFromFile, err := mc.readMetricsFromFile()
+		if err != nil {
+			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+			return
+		}
 
-	metricsFromFile, err := mc.readMetricsFromFile()
-	if err != nil {
-		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-		return
 	}
 
 	// Проверить наличие нужной метрики в файле
