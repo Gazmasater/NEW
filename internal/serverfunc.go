@@ -207,7 +207,8 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var metric Metrics
-	var metricsFromFile map[string]Metrics
+
+	metricsFromFile := make(map[string]Metrics)
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
