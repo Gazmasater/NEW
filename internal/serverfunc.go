@@ -228,6 +228,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
 		currentValue, ok := metricsFromFile[metric.ID]
+		println("!!!!!!!!OK!!!!!!!!!!!!!!", ok)
 
 		if !ok {
 			// Если метрики нет в файле, проверяем в хранилище
