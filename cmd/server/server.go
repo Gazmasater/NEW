@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	internal "project.com/internal/server"
+	"project.com/internal"
 )
 
 func main() {
