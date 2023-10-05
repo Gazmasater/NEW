@@ -216,7 +216,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Чтение метрик из файла, если mc.Config.Restore истинно
 	println("&&&&&&&&&&&mc.Config.Restore&&&&&&&&&&", mc.Config.Restore)
 	if mc.Config.Restore {
 		var err error
