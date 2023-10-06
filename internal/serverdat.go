@@ -36,7 +36,7 @@ func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger, config *Ser
 	return &HandlerDependencies{
 		Storage: storage,
 		Logger:  logger,
-		Config:  config, // Передаем ServerConfig в конструкторе
+		Config:  config,
 	}
 }
 
