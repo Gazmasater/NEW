@@ -251,6 +251,16 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 
 			metricsChan <- metrics
 			time.Sleep(pollInterval)
+			// for _, metric := range metrics {
+			// 	var metricValue interface{}
+			// 	if metric.MType == "counter" {
+			// 		metricValue = *metric.Delta
+			// 	} else {
+			// 		metricValue = *metric.Value
+			// 	}
+
+			// 	fmt.Printf("CollectMetrics!!!!!!! MType: %s, ID: %s, Value: %v\n", metric.MType, metric.ID, metricValue)
+			// }
 
 		}
 	}()
@@ -258,7 +268,7 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 	return metricsChan
 }
 
-func SendDataToServer(metrics []*Metrics, serverURL string) error {
+func SendDataToServer(metrics []*Metrics, serverURL string) {
 	for _, metric := range metrics {
 		var metricValue interface{}
 		if metric.MType == "counter" {
@@ -275,7 +285,8 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 
 		jsonData, err := json.Marshal(data)
 		if err != nil {
-			return fmt.Errorf("ошибка при сериализации данных в JSON:%w", err)
+			fmt.Println("Ошибка при сериализации данных в JSON", err)
+			return
 		}
 
 		fmt.Println("Сериализированные данные в JSON:", string(jsonData))
@@ -286,7 +297,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
-			return fmt.Errorf("ошибка при создании запроса:%w", err)
+			return
 		}
 		req.Header.Set("Content-Type", "application/json")
 		//logger.Info("SendDataToServer Запрос:", zap.Any("request", req))
@@ -295,7 +306,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Ошибка при отправке запроса:", err)
-			return fmt.Errorf("ошибка при отправке запроса:%w", err)
+			return
 		}
 		defer resp.Body.Close()
 
@@ -305,7 +316,8 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		for {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
-				return fmt.Errorf("ошибка при чтении тела ответа:%w", err)
+				fmt.Println("Ошибка при чтении тела ответа:", err)
+				//	return
 			}
 			if n == 0 {
 				break
@@ -322,7 +334,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 
 			err := json.Unmarshal(responseBody, &responseMetrics)
 			if err != nil {
-				return fmt.Errorf("ошибка при декодировании ответа:%w", err)
+				fmt.Println("Ошибка при декодировании ответа:", err)
 			} else {
 				// Обновление значения метрики
 				if metric.MType == "counter" {
@@ -332,10 +344,9 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 				}
 			}
 		} else {
-			return fmt.Errorf("ошибка при отправке запроса. Код статуса:%w", err)
+			fmt.Println("Ошибка при отправке запроса. Код статуса:", resp.StatusCode)
 		}
 	}
-	return nil
 }
 func SendServerValue(metrics []*Metrics, serverURL string) {
 	for _, metric := range metrics {
