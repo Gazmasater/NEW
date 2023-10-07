@@ -293,7 +293,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
 		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
-		//	println("SendDataToServer serverURL", serverURL)
+		println("SendDataToServer serverURL", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			fmt.Println("Ошибка при создании запроса:", err)
