@@ -25,7 +25,7 @@ func main() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
 			internal.SendDataToServer(metrics, config.Address) //post запрос по пути /update/
-			internal.SendServerValue(metrics, config.Address)
+			//	internal.SendServerValue(metrics, config.Address)
 		}
 	}()
 
