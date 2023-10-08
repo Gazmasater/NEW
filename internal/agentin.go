@@ -379,7 +379,7 @@ func SendServerValue(metrics []*Metrics, serverURL string) {
 		defer resp.Body.Close()
 
 		var responseBody []byte
-		buf := make([]byte, 1024) // Размер буфера для чтения
+		buf := make([]byte, 1024)
 
 		for {
 			n, err := resp.Body.Read(buf)
