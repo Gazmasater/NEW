@@ -295,25 +295,27 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	return nil
 }
 
-func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) error {
+func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 
 	var metric Metrics
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
-		return fmt.Errorf("ошибка при разборе JSON %w", err)
+		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
+		return
 	}
 
 	// Проверяем, что поля "id" и "type" заполнены
 	if metric.ID == "" || metric.MType == "" {
-		return fmt.Errorf("поля 'id' и 'type' обязательны для заполнения: %w", fmt.Errorf("HTTP ошибка: %v", http.StatusBadRequest))
+		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
+		return
 	}
-
 	// Прочитать метрики из файла
 
 	metricsFromFile, err := mc.ReadMetricsFromFile()
 	if err != nil {
-		return fmt.Errorf("ошибка чтения метрик из файла:%w", err)
+		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
+		return
 	}
 	// Проверить наличие нужной метрики в файле
 	metricFromFile, exists := metricsFromFile[metric.ID]
@@ -325,19 +327,20 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
-				return nil
+				return
 			}
 		} else if metric.MType == "counter" {
 			value, ok := mc.Storage.counters[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
-				return nil
+				return
 			}
 		}
 
 		// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
-		return fmt.Errorf("метрика не найдена: %w", fmt.Errorf("HTTP ошибка: %v", http.StatusNotFound))
+		http.Error(w, "Метрика не найдена", http.StatusNotFound)
+		return
 	}
 
 	// Отправить значение метрики в ответ
@@ -346,7 +349,6 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	} else if metric.MType == "counter" {
 		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 	}
-	return nil
 }
 
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
