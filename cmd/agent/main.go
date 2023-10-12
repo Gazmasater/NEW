@@ -20,6 +20,8 @@ func main() {
 
 	metricsChan := internal.CollectMetrics(pollInterval, config.Address)
 
+	
+
 	// Горутина отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {

@@ -47,12 +47,18 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			metricsToSave := storage.GetAllMetrics()
-			for _, metric := range metricsToSave {
-				if err := controller.WriteMetricToFile(&metric); err != nil {
-					log.Printf("Ошибка при сохранении метрики в файл: %s", err)
-				}
+			jsonData := storage.GetAllMetricsJSON()
+			if jsonData == "" {
+				log.Println("Ошибка при получении JSON-представления метрик")
+				continue
 			}
+
+			println("!!!!!jsonData!!!!!", jsonData)
+
+			if err := internal.WriteJSONToFile(serverCfg.FileStoragePath, jsonData); err != nil {
+				log.Fatalf("Ошибка при записи в файл: %v", err)
+			}
+
 		}
 
 	}

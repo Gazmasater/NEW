@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"os"
 	"strconv"
 	"strings"
@@ -208,6 +209,8 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var metric Metrics
 
+	println("updateHandlerJSON")
+
 	metricsFromFile := make(map[string]Metrics)
 
 	decoder := json.NewDecoder(r.Body)
@@ -215,11 +218,14 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("Metric: %+v\n", metric)
+
+	// Прочитать тело запроса
 
 	println("&&&&&&&&&&&mc.Config.Restore&&&&&&&&&&", mc.Config.Restore)
 	if mc.Config.Restore {
 		var err error
-		metricsFromFile, err = mc.readMetricsFromFile()
+		metricsFromFile, err = mc.ReadMetricsFromFile()
 		if err != nil {
 			http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 			return
@@ -227,12 +233,13 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	}
 
 	// Обработка "counter"
-	if metric.MType == "counter" && metric.Delta != nil {
+	if metric.MType == "counter" {
 		currentValue, ok := metricsFromFile[metric.ID]
 		println("!!!!!!!!OK!!!!!!!!!!!!!!", ok)
 
 		if !ok {
 			// Если метрики нет в файле, проверяем в хранилище
+			println("!!!!COUNTER!!!!!", metric.ID)
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
 					ID:    metric.ID,
@@ -241,13 +248,19 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 				*currentValue.Delta = value
 			} else {
 				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
+				println("COUNTER НЕТ В ХРАНИЛИЩЕ")
 				currentValue = Metrics{
 					ID:    metric.ID,
 					Delta: new(int64),
 				}
+				*currentValue.Delta = 0
+
 			}
 		}
 
+		println("!!!!!!!!!!!!!!!!!!!$$$$$$$$$$$$$$$$$$$$$$$$$")
+		println("*currentValue.Delta", *currentValue.Delta)
+		println("metric.Delta", metric.Delta)
 		*currentValue.Delta += *metric.Delta
 
 		// Обновляем или создаем метрику в слайсе
@@ -305,7 +318,7 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	}
 	// Прочитать метрики из файла
 
-	metricsFromFile, err := mc.readMetricsFromFile()
+	metricsFromFile, err := mc.ReadMetricsFromFile()
 	if err != nil {
 		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
 		return
@@ -567,11 +580,6 @@ func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
 		return err
 	}
 
-	// Если тип метрики не установлен, устанавливаем его как "counter"
-	if metric.MType == "" {
-		metric.MType = "counter"
-	}
-
 	// Добавляем новую метрику к уже существующим метрикам
 	metrics = append(metrics, *metric)
 
@@ -588,7 +596,24 @@ func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
 	return err
 }
 
-func (mc *HandlerDependencies) readMetricsFromFile() (map[string]Metrics, error) {
+func WriteJSONToFile(fileStoragePath string, jsonData string) error {
+	// Попробуем открыть файл для записи, или создадим его, если он не существует
+	file, err := os.OpenFile(fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Записываем данные JSON в файл
+	_, err = file.WriteString(jsonData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error) {
 	metricsMap := make(map[string]Metrics)
 
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)

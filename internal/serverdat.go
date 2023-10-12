@@ -124,6 +124,37 @@ func (ms *MemStorage) GetAllMetrics() []Metrics {
 	return allMetrics
 }
 
+func (ms *MemStorage) GetAllMetricsJSON() string {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	var allMetrics []Metrics
+	for name, value := range ms.gauges {
+		allMetrics = append(allMetrics, Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: &value,
+		})
+	}
+	for name, delta := range ms.counters {
+		allMetrics = append(allMetrics, Metrics{
+			ID:    name,
+			MType: "counter",
+			Delta: &delta,
+		})
+	}
+
+	// Преобразуем слайс метрик в JSON
+	jsonData, err := json.Marshal(allMetrics)
+	if err != nil {
+		// Обработка ошибки, если не удалось преобразовать в JSON
+		return ""
+	}
+
+	// Преобразуем []byte в строку с помощью string()
+	return string(jsonData)
+}
+
 func HandleMetrics(storage *MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allMetrics := storage.GetAllMetrics()

@@ -142,7 +142,6 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 	println("CollectMetrics serverURL string", serverURL)
 
 	var pollCount int64 = 0
-
 	var memStats runtime.MemStats
 	go func() {
 
@@ -244,6 +243,7 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
 
 			// Добавляем метрику PollCount типа counter!!
+
 			metrics = append(metrics, &Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
 
 			//  Увеличиваем счетчик обновлений метр!!!
@@ -251,16 +251,6 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 
 			metricsChan <- metrics
 			time.Sleep(pollInterval)
-			// for _, metric := range metrics {
-			// 	var metricValue interface{}
-			// 	if metric.MType == "counter" {
-			// 		metricValue = *metric.Delta
-			// 	} else {
-			// 		metricValue = *metric.Value
-			// 	}
-
-			// 	fmt.Printf("CollectMetrics!!!!!!! MType: %s, ID: %s, Value: %v\n", metric.MType, metric.ID, metricValue)
-			// }
 
 		}
 	}()
@@ -278,9 +268,14 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		}
 
 		data := map[string]interface{}{
-			"type":  metric.MType,
-			"id":    metric.ID,
-			"value": metricValue,
+			"type": metric.MType,
+			"id":   metric.ID,
+		}
+
+		if metric.MType == "gauge" {
+			data["value"] = metricValue
+		} else if metric.MType == "counter" {
+			data["delta"] = metricValue
 		}
 
 		jsonData, err := json.Marshal(data)
@@ -292,7 +287,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) {
 		fmt.Println("Сериализированные данные в JSON:", string(jsonData))
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
-		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.MType, metric.ID, metricValue)
+		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
 		println("SendDataToServer serverURL", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
