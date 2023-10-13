@@ -335,7 +335,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 				}
 			}
 		} else {
-			fmt.Println("Ошибка при отправке запроса. Код статуса:", resp.StatusCode)
+			return fmt.Errorf("ошибка при отправке запроса. Код статуса: %d", resp.StatusCode)
 		}
 	}
 	return nil
