@@ -84,12 +84,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		// }
 
-		if metricValue == "none" {
-			println("metricValuenone")
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
+		// if metricValue == "none" {
+		// 	println("metricValuenone")
+		// 	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		// 	return
 
-		}
+		// }
 
 		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
