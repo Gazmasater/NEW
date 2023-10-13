@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -223,7 +224,6 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	// Прочитать тело запроса
 
-	println("&&&&&&&&&&&mc.Config.Restore&&&&&&&&&&", mc.Config.Restore)
 	if mc.Config.Restore {
 		var err error
 		metricsFromFile, err = mc.ReadMetricsFromFile()
@@ -295,27 +295,26 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	return nil
 }
 
-func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) error {
 
 	var metric Metrics
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
 		http.Error(w, "Ошибка при разборе JSON", http.StatusBadRequest)
-		return
+		return fmt.Errorf("ошибка при разборе JSON %w", err)
 	}
 
 	// Проверяем, что поля "id" и "type" заполнены
 	if metric.ID == "" || metric.MType == "" {
-		http.Error(w, "Поля 'id' и 'type' обязательны для заполнения", http.StatusBadRequest)
-		return
+		return fmt.Errorf("поля 'id' и 'type' обязательны для заполнения")
 	}
+
 	// Прочитать метрики из файла
 
 	metricsFromFile, err := mc.ReadMetricsFromFile()
 	if err != nil {
-		http.Error(w, "Ошибка чтения метрик из файла", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("ошибка чтения метрик из файла %w", err)
 	}
 	// Проверить наличие нужной метрики в файле
 	metricFromFile, exists := metricsFromFile[metric.ID]
@@ -327,20 +326,20 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
-				return
+				return nil
 			}
 		} else if metric.MType == "counter" {
 			value, ok := mc.Storage.counters[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
-				return
+				return nil
 			}
 		}
 
 		// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
-		http.Error(w, "Метрика не найдена", http.StatusNotFound)
-		return
+		return fmt.Errorf("метрика не найдена: %w", errors.New(http.StatusText(http.StatusNotFound)))
+
 	}
 
 	// Отправить значение метрики в ответ
@@ -349,6 +348,7 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	} else if metric.MType == "counter" {
 		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 	}
+	return nil
 }
 
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
