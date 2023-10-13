@@ -61,41 +61,31 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
+func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) error {
 
 	contentType := r.Header.Get("Content-Type")
-	println("HandlePostRequest")
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
-	///path := strings.Split(r.URL.Path, "/")
-	//lengpath := len(path)
 
 	if metricType != "gauge" && metricType != "counter" {
-		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		return
+		//	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return fmt.Errorf("неверный тип метрики: %s: %w", metricType, fmt.Errorf("StatusBadRequest"))
 	}
 
 	if metricType == "counter" {
 
-		// if lengpath != 5 {
-		// 	http.Error(w, "StatusNotFound", http.StatusNotFound)
-		// 	return
-
-		// }
-
 		if metricValue == "none" {
-			println("metricValuenone")
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
+			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return fmt.Errorf("StatusBadRequest  %w", fmt.Errorf("StatusBadRequest"))
 
 		}
 
 		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
+			//http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return fmt.Errorf("StatusNotFound %w", fmt.Errorf("StatusNotFound"))
 		}
 
 		if isInteger(metricValue) {
@@ -103,37 +93,36 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
 				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
-				return
+				return nil
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				return
+				return nil
 			}
 
 		} else {
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
+			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 
 		}
 	}
 	if metricName == "" {
-		http.Error(w, "Metric name not provided", http.StatusBadRequest)
-		return
+		//http.Error(w, "Metric name not provided", http.StatusBadRequest)
+		return fmt.Errorf("Metric name not provided %w", fmt.Errorf("StatusBadRequest"))
 	}
 
 	if (len(metricName) > 0) && (metricValue == "") {
-		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		return
+		//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 	}
 
 	if metricType == "gauge" {
 
 		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
-			println("strconv.ParseFloat")
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
+			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
@@ -144,18 +133,19 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 				mc.Storage.SaveMetric(metricType, metricName, num)
-				return
+				return nil
 			}
 
 		} else {
 
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
+			//	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return fmt.Errorf("statusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 		}
 
 		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 
 	}
+	return nil
 
 }
 
