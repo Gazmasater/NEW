@@ -325,7 +325,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 
 			err := json.Unmarshal(responseBody, &responseMetrics)
 			if err != nil {
-				fmt.Println("Ошибка при декодировании ответа:", err)
+				return fmt.Errorf("ошибка при декодировании ответа:%w", err)
 			} else {
 				// Обновление значения метрики
 				if metric.MType == "counter" {
