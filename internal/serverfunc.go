@@ -70,21 +70,21 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	metricValue := chi.URLParam(r, "metricValue")
 
 	if metricType != "gauge" && metricType != "counter" {
-		//	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return fmt.Errorf("неверный тип метрики: %s: %w", metricType, fmt.Errorf("StatusBadRequest"))
 	}
 
 	if metricType == "counter" {
 
 		if metricValue == "none" {
-			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return fmt.Errorf("StatusBadRequest  %w", fmt.Errorf("StatusBadRequest"))
 
 		}
 
 		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
-			//http.Error(w, "StatusNotFound", http.StatusNotFound)
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
 			return fmt.Errorf("StatusNotFound %w", fmt.Errorf("StatusNotFound"))
 		}
 
@@ -102,13 +102,13 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			}
 
 		} else {
-			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 
 		}
 	}
 	if metricName == "" {
-		//http.Error(w, "Metric name not provided", http.StatusBadRequest)
+		http.Error(w, "Metric name not provided", http.StatusBadRequest)
 		return fmt.Errorf("Metric name not provided %w", fmt.Errorf("StatusBadRequest"))
 	}
 
@@ -121,7 +121,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
-			//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 		}
 
@@ -138,7 +138,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		} else {
 
-			//	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return fmt.Errorf("statusBadRequest %w", fmt.Errorf("StatusBadRequest"))
 		}
 
