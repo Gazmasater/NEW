@@ -8,7 +8,8 @@ import (
 
 	"os"
 	"strconv"
-	"strings"
+
+	//"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -68,8 +69,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
-	path := strings.Split(r.URL.Path, "/")
-	lengpath := len(path)
+	///path := strings.Split(r.URL.Path, "/")
+	//lengpath := len(path)
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
@@ -84,12 +85,12 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		// }
 
-		// if metricValue == "none" {
-		// 	println("metricValuenone")
-		// 	http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		// 	return
+		if metricValue == "none" {
+			println("metricValuenone")
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
 
-		// }
+		}
 
 		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
@@ -116,7 +117,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 		}
 	}
-	if lengpath == 4 && metricName == "" {
+	if metricName == "" {
 		http.Error(w, "Metric name not provided", http.StatusBadRequest)
 		return
 	}
