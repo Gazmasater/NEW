@@ -382,9 +382,6 @@ func SendServerValue(metrics []*Metrics, serverURL string) error {
 			responseBody = append(responseBody, buf[:n]...)
 		}
 
-		// Вывод тела ответа на экран
-		fmt.Println("SendServerValue Тело ответа:", string(responseBody))
-
 		if resp.StatusCode == http.StatusOK {
 			// Чтение и обработка ответа
 			var responseMetrics Metrics
@@ -409,38 +406,12 @@ func SendServerValue(metrics []*Metrics, serverURL string) error {
 }
 
 func SendMetricsJSONToServer(url string, data []byte) error {
-	println("!!!!!!!!!!SendMetricsJsonToServer  url ", url)
 	// Распаковываем JSON-тело запроса в структуру Metrics
 	var metricData Metrics
 	if err := json.Unmarshal(data, &metricData); err != nil {
 		return err
 	}
 
-	// fmt.Printf("SendMetricsJsonToServer ID: %s\n", metricData.ID)
-	// fmt.Printf("SendMetricsJsonToServer Type: %s\n", metricData.MType)
-
-	if metricData.Delta != nil {
-		fmt.Printf("Delta: %d\n", *metricData.Delta)
-		//	url = fmt.Sprintf("%s/%s/%s/%v", url, metricData.MType, metricData.ID, *metricData.Delta)
-
-	} else {
-		fmt.Println("Delta: nil")
-	}
-
-	if metricData.Value != nil {
-		fmt.Printf("Value: %f\n", *metricData.Value)
-		//	url = fmt.Sprintf("%s/%s/%s/%v", url, metricData.MType, metricData.ID, *metricData.Value)
-
-	} else {
-		fmt.Println("Value: nil")
-	}
-
-	// Используем значения из JSON-тела для создания URL
-
-	println("????????????????????????sendMetricsJsonToServer url", url)
-
-	//
-	// Создаем запрос POST
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
@@ -472,21 +443,11 @@ func SendMetricsJSONToServerValue(url string, data []byte) error {
 		return err
 	}
 
-	if metricData.Delta != nil {
-		fmt.Printf("SendMetricsJsonToServerValue Delta: %d\n", *metricData.Delta)
-		//	url = fmt.Sprintf("%s/%s/%s/%v", url, metricData.MType, metricData.ID, *metricData.Delta)
-
-	} else {
-		fmt.Println("SendMetricsJsonToServerValue Delta: nil")
-	}
-
-	println("################sendMetricsJsonToServerValue", url)
 	// Создаем запрос POST
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
-	fmt.Println("sendMetricsJsonToServerValue req", req)
 
 	// Устанавливаем заголовки (Content-Type: application/json)
 	req.Header.Set("Content-Type", "application/json")
@@ -509,20 +470,6 @@ func SendMetricsJSONToServerValue(url string, data []byte) error {
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&metricResponse); err != nil {
 		return err
-	}
-
-	fmt.Printf("Received Metrics:\n")
-	fmt.Printf("ID: %s\n", metricResponse.ID)
-	fmt.Printf("Type: %s\n", metricResponse.MType)
-	if metricResponse.Delta != nil {
-		fmt.Printf("Delta: %d\n", *metricResponse.Delta)
-	} else {
-		fmt.Println("Delta: nil")
-	}
-	if metricResponse.Value != nil {
-		fmt.Printf("Value: %f\n", *metricResponse.Value)
-	} else {
-		fmt.Println("Value: nil")
 	}
 
 	return nil
