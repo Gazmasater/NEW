@@ -30,19 +30,28 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		mc.updateHandlerJSON(w, r)
 	})
 
-	r.Post("/value/", mc.updateHandlerJSONValue)
+	r.Post("/value/", func(w http.ResponseWriter, r *http.Request) {
+		mc.updateHandlerJSONValue(w, r)
+	})
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandlePostRequest(w, r)
 	})
 
-	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Post("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
+	})
 
-	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
+	})
 
-	r.Get("/metrics", mc.HandleGetRequest)
-
-	r.Get("/", mc.HandleGetRequestHTML)
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequest(w, r)
+	})
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		mc.HandleGetRequestHTML(w, r)
+	})
 
 	return r
 }
@@ -52,31 +61,41 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
-func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) error {
+func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 	contentType := r.Header.Get("Content-Type")
+	println("HandlePostRequest")
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
+	///path := strings.Split(r.URL.Path, "/")
+	//lengpath := len(path)
 
 	if metricType != "gauge" && metricType != "counter" {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		return fmt.Errorf("неверный тип метрики: %s: %w", metricType, fmt.Errorf("StatusBadRequest"))
+		return
 	}
 
 	if metricType == "counter" {
 
+		// if lengpath != 5 {
+		// 	http.Error(w, "StatusNotFound", http.StatusNotFound)
+		// 	return
+
+		// }
+
 		if metricValue == "none" {
+			println("metricValuenone")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return fmt.Errorf("StatusBadRequest  %w", fmt.Errorf("StatusBadRequest"))
+			return
 
 		}
 
 		num1, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return fmt.Errorf("StatusNotFound %w", fmt.Errorf("StatusNotFound"))
+			return
 		}
 
 		if isInteger(metricValue) {
@@ -84,36 +103,37 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
 				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
-				return nil
+				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				return nil
+				return
 			}
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
+			return
 
 		}
 	}
 	if metricName == "" {
 		http.Error(w, "Metric name not provided", http.StatusBadRequest)
-		return fmt.Errorf("Metric name not provided %w", fmt.Errorf("StatusBadRequest"))
+		return
 	}
 
 	if (len(metricName) > 0) && (metricValue == "") {
-		//http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-		return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return
 	}
 
 	if metricType == "gauge" {
 
 		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
+			println("strconv.ParseFloat")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return fmt.Errorf("StatusBadRequest %w", fmt.Errorf("StatusBadRequest"))
+			return
 		}
 
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
@@ -124,19 +144,18 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			} else {
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 				mc.Storage.SaveMetric(metricType, metricName, num)
-				return nil
+				return
 			}
 
 		} else {
 
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return fmt.Errorf("statusBadRequest %w", fmt.Errorf("StatusBadRequest"))
+			return
 		}
 
 		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 
 	}
-	return nil
 
 }
 
@@ -397,6 +416,7 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
 		return
 	}
+	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -445,11 +465,13 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
+	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
 	updatedMetric := &Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
 	}
+	println("createAndSendUpdatedMetricCounter num!!!!!", num)
 
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
@@ -458,6 +480,7 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 		return
 	}
 
+	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "text/plain")
 
