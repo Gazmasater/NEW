@@ -308,8 +308,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		for {
 			n, err := resp.Body.Read(buf)
 			if err != nil && err != io.EOF {
-				fmt.Println("Ошибка при чтении тела ответа:", err)
-				//	return
+				return fmt.Errorf("ошибка при чтении тела ответа:%w", err)
 			}
 			if n == 0 {
 				break
