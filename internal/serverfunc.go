@@ -30,28 +30,17 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		mc.updateHandlerJSON(w, r)
 	})
 
-	r.Post("/value/", func(w http.ResponseWriter, r *http.Request) {
-		mc.updateHandlerJSONValue(w, r)
-	})
+	r.Post("/value/", mc.updateHandlerJSONValue)
 
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandlePostRequest(w, r)
-	})
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
 
-	r.Post("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
+	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
-	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
+	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
-	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequestHTML(w, r)
-	})
+	r.Get("/metrics", mc.HandleGetRequest)
+
+	r.Get("/", mc.HandleGetRequestHTML)
 
 	return r
 }
@@ -207,7 +196,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 }
 
-func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) error {
+func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var metric Metrics
 
 	println("updateHandlerJSON")
@@ -216,7 +205,8 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
-		return fmt.Errorf("ошибка при разборе JSON: %w", err)
+		_ = fmt.Errorf("ошибка при разборе JSON: %w", err)
+		return
 
 	}
 
@@ -228,7 +218,8 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		var err error
 		metricsFromFile, err = mc.ReadMetricsFromFile()
 		if err != nil {
-			return fmt.Errorf("ошибка чтения метрик из файла:%w", err)
+			_ = fmt.Errorf("ошибка чтения метрик из файла:%w", err)
+			return
 		}
 	}
 
@@ -277,7 +268,8 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
 		if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
-			return fmt.Errorf("ошибка записи метрик в файл:%w", err)
+			_ = fmt.Errorf("ошибка записи метрик в файл:%w", err)
+			return
 		}
 	}
 
@@ -292,7 +284,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		http.Error(w, "Метрика не найдена", http.StatusNotFound)
 
 	}
-	return nil
+
 }
 
 func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
