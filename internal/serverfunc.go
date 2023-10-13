@@ -78,11 +78,11 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 	if metricType == "counter" {
 
-		if lengpath != 5 {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return
+		// if lengpath != 5 {
+		// 	http.Error(w, "StatusNotFound", http.StatusNotFound)
+		// 	return
 
-		}
+		// }
 
 		if metricValue == "none" {
 			println("metricValuenone")
