@@ -283,17 +283,14 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 			return fmt.Errorf("ошибка при сериализации данных в JSON:%w", err)
 		}
 
-		fmt.Println("Сериализированные данные в JSON:", string(jsonData))
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
 		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
-		println("SendDataToServer serverURL", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("ошибка при создании запроса:%w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		//logger.Info("SendDataToServer Запрос:", zap.Any("request", req))
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -317,7 +314,6 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		}
 
 		// Вывод тела ответа на экран
-		fmt.Println("SendDataToServer Тело ответа:", string(responseBody))
 
 		if resp.StatusCode == http.StatusOK {
 			// Чтение и обработка ответа
