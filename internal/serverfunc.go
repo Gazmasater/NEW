@@ -30,28 +30,19 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		mc.updateHandlerJSON(w, r)
 	})
 
-	r.Post("/value/", func(w http.ResponseWriter, r *http.Request) {
-		mc.updateHandlerJSONValue(w, r)
-	})
+	r.Post("/value/", mc.updateHandlerJSONValue)
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", func(w http.ResponseWriter, r *http.Request) {
 		mc.HandlePostRequest(w, r)
 	})
 
-	r.Post("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
+	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
-	r.Get("/value/{metricType}/{metricName}", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
+	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
-	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequest(w, r)
-	})
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		mc.HandleGetRequestHTML(w, r)
-	})
+	r.Get("/metrics", mc.HandleGetRequest)
+
+	r.Get("/", mc.HandleGetRequestHTML)
 
 	return r
 }
@@ -406,7 +397,6 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
 		return
 	}
-	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -455,13 +445,11 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
-	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
 	updatedMetric := &Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
 	}
-	println("createAndSendUpdatedMetricCounter num!!!!!", num)
 
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
@@ -470,7 +458,6 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 		return
 	}
 
-	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "text/plain")
 
