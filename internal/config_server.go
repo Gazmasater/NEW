@@ -64,7 +64,7 @@ func InitServerConfig() *ServerConfig {
 	if databaseDSNEnv != "" {
 		databaseDSN = databaseDSNEnv
 	} else {
-		flag.StringVar(&databaseDSN, "d", "default_dsn", "DSN для подключения к базе данных")
+		flag.StringVar(&databaseDSN, "dbdsn", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
 	}
 
 	flag.Parse()
