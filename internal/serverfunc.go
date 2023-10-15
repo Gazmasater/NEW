@@ -626,7 +626,7 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 
 func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sql.Open("postgres", "user=username dbname=postgres sslmode=require")
+	db, err := sql.Open("postgres", "user=postgres dbname=postgres sslmode=require")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
