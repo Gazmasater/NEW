@@ -625,6 +625,7 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 }
 
 func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
+	println("!!!!!!!!!Ping!!!!!!!!!!!!!")
 
 	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
