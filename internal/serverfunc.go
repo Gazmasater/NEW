@@ -626,13 +626,22 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 
 func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sql.Open("postgres", "user=postgres dbname=postgres sslmode=require")
+	// Попытка открыть соединение с базой данных
+	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
+	// Попытка выполнить запрос к базе данных для проверки соединения
+	if err := db.Ping(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Если успешно, возвращаем HTTP-статус 200 OK
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Database is working\n")
+
 }
