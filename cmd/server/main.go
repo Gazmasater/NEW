@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,8 +21,15 @@ func main() {
 
 	r := chi.NewRouter()
 
+	db, err := sql.Open("postgres", serverCfg.DatabaseDSN)
+	if err != nil {
+		log.Fatalf("Ошибка при открытии соединения с базой данных: %v", err)
+		return
+	}
+	defer db.Close()
+
 	storage := internal.NewMemStorage()
-	controller := internal.NewHandlerDependencies(storage, logger, serverCfg)
+	controller := internal.NewHandlerDependencies(storage, logger, serverCfg, db)
 
 	r.Route("/", func(r chi.Router) {
 

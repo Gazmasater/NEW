@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"os"
@@ -265,9 +266,19 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
+
 		if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
 			_ = fmt.Errorf("ошибка записи метрик в файл:%w", err)
 			return
+		}
+
+	}
+
+	if mc.Config.DatabaseDSN != "" {
+		mc.SetupDatabase()
+		dbErr := mc.WriteMetricToDatabase(metric)
+		if dbErr != nil {
+			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
 		}
 	}
 
@@ -642,4 +653,88 @@ func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Database is working\n")
 
+}
+
+func (mc *HandlerDependencies) SetupDatabase() error {
+	println("SetupDatabase")
+	// Открываем соединение с базой данных
+	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+	if err != nil {
+		log.Println("Ошибка при открытии базы данных", err.Error())
+		return err
+	}
+	defer db.Close()
+
+	// Проверяем соединение
+	if err := db.Ping(); err != nil {
+		log.Println("Ошибка при проверке соединения с базой данных", err.Error())
+		return err
+	}
+
+	// Запрос для создания таблицы
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS metrics (
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            value DOUBLE PRECISION,
+            delta BIGINT
+        )
+    `
+
+	// Выполняем запрос для создания таблицы
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		log.Println("Ошибка при создании таблицы", err.Error())
+		return err
+	}
+
+	// Возвращаем nil, чтобы показать, что всё прошло успешно
+
+	return nil
+}
+
+func (mc *HandlerDependencies) WriteMetricToDatabase(metric Metrics) error {
+	var query string
+	var args []interface{}
+
+	if metric.MType == "gauge" {
+		query = "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3)"
+		args = []interface{}{metric.ID, metric.MType, metric.Value}
+	} else if metric.MType == "counter" {
+		query = "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3)"
+		args = []interface{}{metric.ID, metric.MType, metric.Delta}
+	} else {
+		log.Printf("Неизвестный тип метрики: %s", metric.MType)
+		return fmt.Errorf("неизвестный тип метрики")
+	}
+
+	if mc.DB == nil {
+		log.Println("Ошибка: mc.DB не инициализирован.")
+		return fmt.Errorf("mc.DB не инициализирован")
+	}
+
+	// Проверяем, существует ли метрика с такими же значениями name и type
+	var count int
+	err := mc.DB.QueryRow("SELECT COUNT(*) FROM metrics WHERE name = $1 AND type = $2", metric.ID, metric.MType).Scan(&count)
+	if err != nil {
+		log.Printf("Ошибка при проверке наличия метрики: %s", err)
+		return err
+	}
+
+	if count > 0 {
+		// Метрика с такими значениями name и type существует, удаляем ее
+		_, err := mc.DB.Exec("DELETE FROM metrics WHERE name = $1 AND type = $2", metric.ID, metric.MType)
+		if err != nil {
+			log.Printf("Ошибка при удалении метрики: %s", err)
+			return err
+		}
+	}
+
+	// Теперь выполняем вставку новой метрики
+	_, err = mc.DB.Exec(query, args...)
+	if err != nil {
+		log.Printf("Ошибка при записи метрики в базу данных: %s", err)
+		return err
+	}
+	return nil
 }
