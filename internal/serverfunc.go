@@ -12,6 +12,8 @@ import (
 
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
@@ -626,6 +628,7 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 
 func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 	println("!!!!!!!!!Ping!!!!!!!!!!!!!")
+	println("!!!!!!!!!Ping  Config.DatabaseDSN", mc.Config.DatabaseDSN)
 
 	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
@@ -634,12 +637,6 @@ func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
-	// Попытка выполнить запрос к базе данных для проверки соединения
-	if err := db.Ping(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	// Если успешно, возвращаем HTTP-статус 200 OK
 	w.WriteHeader(http.StatusOK)
