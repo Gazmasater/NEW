@@ -17,7 +17,6 @@ type ServerConfig struct {
 	DatabaseDSN     string
 }
 
-// InitServerConfig - функция для инициализации конфигурации server
 func InitServerConfig() *ServerConfig {
 	var (
 		addr            string
