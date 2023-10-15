@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -40,6 +41,10 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 	r.Get("/metrics", mc.HandleGetRequest)
 
 	r.Get("/", mc.HandleGetRequestHTML)
+
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		mc.Ping(w, r)
+	})
 
 	return r
 }
@@ -617,4 +622,17 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 	}
 
 	return metricsMap, nil
+}
+
+func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
+
+	db, err := sql.Open("postgres", "user=username dbname=mydb sslmode=require")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Database is working\n")
 }
