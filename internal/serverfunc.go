@@ -29,9 +29,7 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 		return LoggingMiddleware(mc.Logger, next)
 	})
 
-	r.Post("/update/", func(w http.ResponseWriter, r *http.Request) {
-		mc.updateHandlerJSON(w, r)
-	})
+	r.Post("/update/", mc.updateHandlerJSON)
 
 	r.Post("/value/", mc.updateHandlerJSONValue)
 
@@ -197,8 +195,6 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	var metric Metrics
-
-	println("updateHandlerJSON")
 
 	metricsFromFile := make(map[string]Metrics)
 
@@ -426,20 +422,17 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 }
 
 func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
-	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
 	updatedMetric := &Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
 	}
-	println("createAndSendUpdatedMetricCounter num!!!!!", num)
 
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
@@ -448,7 +441,6 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 		return
 	}
 
-	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
@@ -459,20 +451,17 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
 func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
 	Init()
-	println("createAndSendUpdatedMetricCounter!!!!!!!!!!!!!!!")
 	updatedMetric := &Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
 	}
-	println("createAndSendUpdatedMetricCounter num!!!!!", num)
 
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
@@ -638,8 +627,6 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 }
 
 func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
-	println("!!!!!!!!!Ping!!!!!!!!!!!!!")
-	println("!!!!!!!!!Ping  Config.DatabaseDSN", mc.Config.DatabaseDSN)
 
 	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
