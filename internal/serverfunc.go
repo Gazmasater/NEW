@@ -675,8 +675,6 @@ func (mc *HandlerDependencies) SetupDatabase() error {
 		return err
 	}
 
-	// Возвращаем nil, чтобы показать, что всё прошло успешно
-
 	return nil
 }
 
