@@ -8,7 +8,6 @@ import (
 	"strconv"
 )
 
-// ServerConfig - структура для хранения параметров конфигурации сервера.
 type ServerConfig struct {
 	Address         string
 	StoreInterval   int
