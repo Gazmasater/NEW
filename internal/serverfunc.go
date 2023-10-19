@@ -633,6 +633,7 @@ func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
 	if err != nil {
+		println("НЕ ОТКРЫЛАСЬ БАЗА!!!!!!!!!!!!!!!!!!!")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
