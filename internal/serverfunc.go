@@ -588,7 +588,6 @@ func WriteJSONToFile(fileStoragePath string, jsonData string) error {
 	}
 	defer file.Close()
 
-	// Записываем данные JSON в файл
 	_, err = file.WriteString(jsonData)
 	if err != nil {
 		return err
