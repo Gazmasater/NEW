@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	// Инициализируем конфигурацию сервера
+
 	serverCfg := internal.InitServerConfig()
 
 	// Создание логгера
