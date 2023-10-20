@@ -219,13 +219,15 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	}
 
 	// Обработка "counter"
-	if metric.MType == "counter" {
+	if metric.MType == "counter" && metric.Delta != nil {
 		currentValue, ok := metricsFromFile[metric.ID]
 
 		if !ok {
 			// Если метрики нет в файле, проверяем в хранилище
 			if value, exists := mc.Storage.counters[metric.ID]; exists {
 				currentValue = Metrics{
+					MType: metric.MType,
+
 					ID:    metric.ID,
 					Delta: new(int64),
 				}
@@ -233,6 +235,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 			} else {
 				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
 				currentValue = Metrics{
+					MType: metric.MType,
 					ID:    metric.ID,
 					Delta: new(int64),
 				}
@@ -242,12 +245,14 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		}
 
 		*currentValue.Delta += *metric.Delta
+		println("currentValue   currentValueИМЯ", currentValue.MType, currentValue.ID, *currentValue.Delta)
 
 		// Обновляем или создаем метрику в слайсе
 
-		metricsFromFile[metric.ID] = currentValue
 		// Сохраняем обн}овленные метрики в хранилище
-		mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
+		//mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
+		mc.Storage.counters[metric.ID] = *currentValue.Delta
+		metricsFromFile[metric.ID] = currentValue
 
 	}
 
@@ -262,20 +267,19 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
+		println("updatedMetric", updatedMetric.MType, updatedMetric.ID)
+		//mc.SetupDatabase()
+		dbErr := mc.WriteMetricToDatabase(updatedMetric)
+		if dbErr != nil {
+			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
+
+		}
 
 		if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
 			_ = fmt.Errorf("ошибка записи метрик в файл:%w", err)
 			return
 		}
 
-	}
-
-	if mc.Config.DatabaseDSN != "" {
-		mc.SetupDatabase()
-		dbErr := mc.WriteMetricToDatabase(metric)
-		if dbErr != nil {
-			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
-		}
 	}
 
 	// Отправляем значение метрики

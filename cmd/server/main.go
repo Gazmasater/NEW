@@ -30,7 +30,7 @@ func main() {
 
 	storage := internal.NewMemStorage()
 	controller := internal.NewHandlerDependencies(storage, logger, serverCfg, db)
-
+	controller.SetupDatabase()
 	r.Route("/", func(r chi.Router) {
 
 		r.Mount("/", controller.Route())
