@@ -2,11 +2,13 @@ package internal
 
 import (
 	"bufio"
+	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"os"
 	"strconv"
@@ -16,14 +18,13 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 )
 
 func (mc *HandlerDependencies) Route() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Compress(5)) // Здесь 5 - это уровень сжатия (0-9), где 0 - без сжатия, а 9 - максимальное сжатие.
+	r.Use(GzipMiddleware)
 
 	r.Use(func(next http.Handler) http.Handler {
 		return LoggingMiddleware(mc.Logger, next)
@@ -725,4 +726,28 @@ func (mc *HandlerDependencies) WriteMetricToDatabase(metric Metrics) error {
 		return err
 	}
 	return nil
+}
+
+func GzipMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			// Определяем, поддерживает ли клиент сжатие Gzip
+			w.Header().Set("Content-Encoding", "gzip")
+			gz := gzip.NewWriter(w)
+			defer gz.Close()
+			gzWriter := GzipResponseWriter{Writer: gz, ResponseWriter: w}
+			next.ServeHTTP(gzWriter, r)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
+type GzipResponseWriter struct {
+	http.ResponseWriter
+	Writer *gzip.Writer
+}
+
+func (grw GzipResponseWriter) Write(b []byte) (int, error) {
+	return grw.Writer.Write(b)
 }
