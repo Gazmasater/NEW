@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
@@ -31,6 +32,7 @@ func (mc *HandlerDependencies) Route() *chi.Mux {
 	})
 
 	r.Post("/update/", mc.updateHandlerJSON)
+	r.Post("/updates/", mc.MetricsHandler)
 
 	r.Post("/value/", mc.updateHandlerJSONValue)
 
@@ -751,4 +753,141 @@ type GzipResponseWriter struct {
 
 func (grw GzipResponseWriter) Write(b []byte) (int, error) {
 	return grw.Writer.Write(b)
+}
+
+func (mc *HandlerDependencies) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+	println("MetricsHandler")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Проверяем, был ли запрос сжат с использованием gzip
+	isGzip := false
+	if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+		isGzip = true
+	}
+
+	// Чтение тела запроса
+	var bodyBuffer bytes.Buffer
+	_, err := bodyBuffer.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Если запрос сжат с использованием gzip, распаковываем его
+	if isGzip {
+		gzipReader, err := gzip.NewReader(&bodyBuffer)
+		if err != nil {
+			http.Error(w, "Failed to unpack gzip data", http.StatusBadRequest)
+			return
+		}
+		defer gzipReader.Close()
+
+		var unpackedBuffer bytes.Buffer
+		_, err = unpackedBuffer.ReadFrom(gzipReader)
+		if err != nil {
+			http.Error(w, "Failed to unpack gzip data", http.StatusBadRequest)
+			return
+		}
+
+		bodyBuffer = unpackedBuffer
+	}
+
+	fmt.Printf("Body Data: %s\n", bodyBuffer.String())
+
+	// Создаем переменную для хранения распакованных метрик
+	var batch []Metrics
+	// Распаковка JSON-тела запроса в объект batch
+	err = json.Unmarshal(bodyBuffer.Bytes(), &batch)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	// Обработка и сохранение полученных метрик
+	if err := mc.updateHandlerJSONforBatch(batch); err != nil {
+		http.Error(w, fmt.Sprintf("Error processing metrics: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Возвращаем успешный статус
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Metrics received and processed successfully")
+}
+
+func (mc *HandlerDependencies) updateHandlerJSONforBatch(metrics []Metrics) error {
+	println("updateHandlerJSONforBatch")
+	// var metricsFromFile map[string]Metrics
+	var err error
+	metricsFromFile := make(map[string]Metrics)
+	if mc.Config.Restore {
+		metricsFromFile, err = mc.ReadMetricsFromFile()
+		if err != nil {
+			return fmt.Errorf("ошибка чтения метрик из файла: %w", err)
+		}
+	}
+
+	for _, metric := range metrics {
+
+		if metric.MType == "counter" && metric.Delta != nil {
+			currentValue, ok := metricsFromFile[metric.ID]
+
+			if !ok {
+				// Если метрики нет в файле, проверяем в хранилище
+				if value, exists := mc.Storage.counters[metric.ID]; exists {
+					currentValue = Metrics{
+						MType: metric.MType,
+						ID:    metric.ID,
+						Delta: new(int64),
+					}
+					*currentValue.Delta = value
+				} else {
+					// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
+					currentValue = Metrics{
+						MType: metric.MType,
+						ID:    metric.ID,
+						Delta: new(int64),
+					}
+					*currentValue.Delta = 0
+				}
+			}
+
+			*currentValue.Delta += *metric.Delta
+			println("currentValue   currentValueИМЯ", currentValue.MType, currentValue.ID, *currentValue.Delta)
+
+			// Обновляем или создаем метрику в слайсе
+
+			// Сохраняем обновленные метрики в хранилище
+			// mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
+			mc.Storage.counters[metric.ID] = *currentValue.Delta
+			metricsFromFile[metric.ID] = currentValue
+		}
+
+		// Обработка "gauge"
+		if metric.MType == "gauge" && metric.Value != nil {
+			// Обновляем или создаем метрику в слайсе
+			metricsFromFile[metric.ID] = metric
+
+			// Сохраняем обновленные метрики в хранилище
+			mc.Storage.gauges[metric.ID] = *metric.Value
+		}
+
+		// Запись обновленных метрик в файл
+		for _, updatedMetric := range metricsFromFile {
+			if mc.Config.DatabaseDSN != "" {
+				dbErr := mc.WriteMetricToDatabase(updatedMetric)
+				if dbErr != nil {
+					log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
+				}
+			}
+
+			if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
+				return fmt.Errorf("ошибка записи метрик в файл:%w", err)
+
+			}
+		}
+	}
+	return nil
 }
