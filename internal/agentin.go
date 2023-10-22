@@ -241,8 +241,6 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 			randomValue := rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
 
-			// Добавляем метрику PollCount типа counter!!
-
 			metrics = append(metrics, &Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
 
 			//  Увеличиваем счетчик обновлений метр!!!
