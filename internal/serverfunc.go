@@ -227,7 +227,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 				}
 				*currentValue.Delta = value
 			} else {
-				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
+				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым знач
 				currentValue = Metrics{
 					ID:    metric.ID,
 					Delta: new(int64),
