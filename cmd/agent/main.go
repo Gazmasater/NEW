@@ -24,7 +24,7 @@ func main() {
 	go func() {
 		for range time.Tick(reportInterval) {
 			bufferedMetrics := <-metricsChan
-			err := internal.SendDataToServer(bufferedMetrics, config.Address) // POST запрос по пути /update/
+			err := internal.SendDataToServer(bufferedMetrics, config.Address)
 			if err != nil {
 				fmt.Println("Ошибка при отправке метрик на сервер:", err)
 			}
