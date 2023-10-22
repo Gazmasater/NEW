@@ -23,8 +23,11 @@ func main() {
 	// Горутина отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {
-			metrics := <-metricsChan
-			internal.SendDataToServer(metrics, config.Address) //post запрос по пути /update/
+			bufferedMetrics := <-metricsChan
+			err := internal.SendDataToServer(bufferedMetrics, config.Address) // POST запрос по пути /update/
+			if err != nil {
+				fmt.Println("Ошибка при отправке метрик на сервер:", err)
+			}
 		}
 	}()
 
