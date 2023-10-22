@@ -238,7 +238,6 @@ func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*
 			totalAllocValue += rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "TotalAlloc", Value: &totalAllocValue})
 
-			// // // // Добавляем метрику RandomValue типа gauge с произвольным значением
 			randomValue := rand.Float64()
 			metrics = append(metrics, &Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
 
@@ -285,7 +284,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
-		serverURL := fmt.Sprintf("http://%s/updates/", serverURL)
+		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("ошибка при создании запроса:%w", err)
