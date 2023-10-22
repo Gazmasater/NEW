@@ -285,7 +285,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
-		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
+		serverURL := fmt.Sprintf("http://%s/updates/", serverURL)
 		req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("ошибка при создании запроса:%w", err)
