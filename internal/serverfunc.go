@@ -590,6 +590,7 @@ func WriteJSONToFile(fileStoragePath string, jsonData string) error {
 	return nil
 }
 
+// Читать из файла
 func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error) {
 	metricsMap := make(map[string]Metrics)
 
