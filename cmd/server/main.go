@@ -37,7 +37,6 @@ func main() {
 		Handler: app.Route(),
 	}
 
-	// Запуск HTTP-сервера через http.ListenAndServe()
 	fmt.Printf("Запуск HTTP-сервера на адресе: %s\n", serverCfg.Address)
 	err1 := server.ListenAndServe()
 	if err1 != nil {
