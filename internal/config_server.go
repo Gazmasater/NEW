@@ -44,7 +44,7 @@ func InitServerConfig() *ServerConfig {
 	} else {
 		flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
 	}
-
+	//флаг путь для файла
 	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
 	if fileStoragePathEnv != "" {
 		fileStoragePath = fileStoragePathEnv
