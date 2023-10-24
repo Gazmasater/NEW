@@ -8,18 +8,18 @@ import (
 
 	"time"
 
-	"github.com/go-chi/chi"
-	"project.com/internal"
+	"project.com/internal/app/server"
+	"project.com/internal/config"
+	"project.com/internal/logger"
+	"project.com/internal/storage"
 )
 
 func main() {
 
-	serverCfg := internal.InitServerConfig()
+	serverCfg := config.InitServerConfig()
 
 	// Создание логгера
-	logger := internal.CreateLogger()
-
-	r := chi.NewRouter()
+	logger := logger.Create()
 
 	db, err := sql.Open("postgres", serverCfg.DatabaseDSN)
 	if err != nil {
@@ -28,18 +28,13 @@ func main() {
 	}
 	defer db.Close()
 
-	storage := internal.NewMemStorage()
-	controller := internal.NewHandlerDependencies(storage, logger, serverCfg, db)
-	controller.SetupDatabase()
-	r.Route("/", func(r chi.Router) {
-
-		r.Mount("/", controller.Route())
-	})
+	mStorage := storage.NewMemStorage()
+	app := server.Init(mStorage, serverCfg, db)
 
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
 		Addr:    serverCfg.Address,
-		Handler: r,
+		Handler: app.Route(),
 	}
 
 	// Запуск HTTP-сервера через http.ListenAndServe()
@@ -55,7 +50,7 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			jsonData := storage.GetAllMetricsJSON()
+			jsonData := mStorage.GetAllMetricsJSON()
 			if jsonData == "" {
 				log.Println("Ошибка при получении JSON-представления метрик")
 				continue
@@ -63,7 +58,7 @@ func main() {
 
 			println("!!!!!jsonData!!!!!", jsonData)
 
-			if err := internal.WriteJSONToFile(serverCfg.FileStoragePath, jsonData); err != nil {
+			if err := app.WriteJSONToFile(serverCfg.FileStoragePath, jsonData); err != nil {
 				log.Fatalf("Ошибка при записи в файл: %v", err)
 			}
 

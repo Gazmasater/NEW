@@ -1,58 +1,25 @@
-package internal
+package server
 
 import (
 	"bufio"
-
+	"bytes"
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
-
 	"os"
 	"strconv"
-
-	_ "github.com/lib/pq"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
+	"project.com/internal/models"
 )
 
-func (mc *HandlerDependencies) Route() *chi.Mux {
-	r := chi.NewRouter()
-
-	r.Use(GzipMiddleware)
-
-	r.Post("/update/", mc.updateHandlerJSON)
-
-	r.Post("/value/", mc.updateHandlerJSONValue)
-
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
-
-	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
-
-	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
-
-	r.Get("/metrics", mc.HandleGetRequest)
-
-	r.Get("/", mc.HandleGetRequestHTML)
-
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		mc.Ping(w, r)
-	})
-
-	return r
-}
-
-func isInteger(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
-}
-
-// хендлер post путь /update/
-func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
+func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 	contentType := r.Header.Get("Content-Type")
 	println("HandlePostRequest")
@@ -85,7 +52,7 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 			if contentType == "application/json" {
 
 				mc.Storage.SaveMetric(metricType, metricName, num1)
-				createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
+				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
@@ -142,7 +109,8 @@ func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.
 
 }
 
-func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
+// Хендлер для Get запроса
+func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	println("HandleGetRequest")
 	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
@@ -155,15 +123,15 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 
 	if metricType == "counter" {
-		println("HandleGetRequest  counter", mc.Storage.counters[metricName])
+		println("HandleGetRequest  counter", mc.Storage.GetCounters()[metricName])
 
-		num1, found := mc.Storage.counters[metricName]
+		num1, found := mc.Storage.GetCounters()[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num1))
+			mc.createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num1))
 			return
 		} else {
 
@@ -173,7 +141,7 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 	}
 	if metricType == "gauge" {
 
-		num, found := mc.Storage.gauges[metricName]
+		num, found := mc.Storage.GetGauges()[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 
@@ -190,10 +158,10 @@ func (mc *HandlerDependencies) HandleGetRequest(w http.ResponseWriter, r *http.R
 
 }
 
-func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
-	var metric Metrics
+func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	var metric models.Metrics
 
-	metricsFromFile := make(map[string]Metrics)
+	metricsFromFile := make(map[string]models.Metrics)
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
@@ -221,8 +189,8 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 		if !ok {
 			// Если метрики нет в файле, проверяем в хранилище
-			if value, exists := mc.Storage.counters[metric.ID]; exists {
-				currentValue = Metrics{
+			if value, exists := mc.Storage.GetCounters()[metric.ID]; exists {
+				currentValue = models.Metrics{
 					MType: metric.MType,
 
 					ID:    metric.ID,
@@ -231,7 +199,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 				*currentValue.Delta = value
 			} else {
 				// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
-				currentValue = Metrics{
+				currentValue = models.Metrics{
 					MType: metric.MType,
 					ID:    metric.ID,
 					Delta: new(int64),
@@ -248,7 +216,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 		// Сохраняем обн}овленные метрики в хранилище
 		//mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
-		mc.Storage.counters[metric.ID] = *currentValue.Delta
+		mc.Storage.GetCounters()[metric.ID] = *currentValue.Delta
 		metricsFromFile[metric.ID] = currentValue
 
 	}
@@ -259,7 +227,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 		metricsFromFile[metric.ID] = metric
 
 		// Сохраняем обновленные метрики в хранилище
-		mc.Storage.gauges[metric.ID] = *metric.Value
+		mc.Storage.GetGauges()[metric.ID] = *metric.Value
 	}
 
 	// Запись обновленных метрик в файл
@@ -282,7 +250,7 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 	// Отправляем значение метрики
 	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
 		if metric.MType == "counter" {
-			createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
+			mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
 		} else if metric.MType == "gauge" {
 			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 		}
@@ -293,9 +261,20 @@ func (mc *HandlerDependencies) updateHandlerJSON(w http.ResponseWriter, r *http.
 
 }
 
-func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
+	var metric models.Metrics
 
-	var metric Metrics
+	// Проверка заголовка Content-Encoding на предмет GZIP
+	if r.Header.Get("Content-Encoding") == "gzip" {
+		// Если данные приходят в GZIP, создаем Reader для распаковки
+		reader, err := gzip.NewReader(r.Body)
+		if err != nil {
+			http.Error(w, "Ошибка при создании GZIP Reader", http.StatusBadRequest)
+			return
+		}
+		defer reader.Close()
+		r.Body = reader
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&metric); err != nil {
@@ -321,17 +300,17 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	// Если метрика отсутствует в файле, проверьте хранилище
 	if !exists {
 		if metric.MType == "gauge" {
-			value, ok := mc.Storage.gauges[metric.ID]
+			value, ok := mc.Storage.GetGauges()[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		} else if metric.MType == "counter" {
-			value, ok := mc.Storage.counters[metric.ID]
+			value, ok := mc.Storage.GetCounters()[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
+				mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		}
@@ -345,28 +324,59 @@ func (mc *HandlerDependencies) updateHandlerJSONValue(w http.ResponseWriter, r *
 	if metric.MType == "gauge" {
 		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
 	} else if metric.MType == "counter" {
-		createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
+		mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 	}
 }
 
-func Init() {
-	// Инициализация логгера
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic("failed to initialize logger")
-	}
-	defer logger.Sync() // flushes buffer, if any
+func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//	logger.Create()
+		startTime := time.Now()
+
+		recorder := newResponseRecorder(w)
+		next.ServeHTTP(recorder, r)
+
+		elapsed := time.Since(startTime)
+		logger.Info("Request processed",
+			zap.String("uri", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.Duration("elapsed_time", elapsed),
+			zap.Int("status_code", recorder.Status()),
+			zap.Int("response_size", recorder.Size()),
+		)
+	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+	size   int
+}
+
+func newResponseRecorder(w http.ResponseWriter) *responseRecorder {
+	return &responseRecorder{ResponseWriter: w}
+}
+func (r *responseRecorder) Write(data []byte) (int, error) {
+	size, err := r.ResponseWriter.Write(data)
+	r.size += size
+	return size, err
+}
+
+func (r *responseRecorder) Status() int {
+	return r.status
+}
+
+func (r *responseRecorder) Size() int {
+	return r.size
 }
 
 func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricType string, num float64) {
 	// Создайте экземпляр структуры с обновленным значением Value
-	updatedMetric := &Metrics{
+	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Value: &num,
 	}
-	Init()
 	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
 	if err != nil {
@@ -385,10 +395,9 @@ func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricTyp
 
 }
 
-func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, metricType string, num int64) {
+func (mc *app) createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
-	Init()
-	updatedMetric := &Metrics{
+	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
@@ -405,7 +414,7 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправьте JSON в теле ответа
-	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
+	//logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 	w.WriteHeader(http.StatusOK)
 
@@ -414,10 +423,9 @@ func createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metricName, me
 
 }
 
-func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
+func (mc *app) createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
 	// Создайте экземпляр структуры с обновленным значением Value
-	Init()
-	updatedMetric := &Metrics{
+	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Delta: &num,
@@ -435,7 +443,7 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 	w.Header().Set("Content-Type", "text/plain")
 
 	// Отправьте JSON в теле ответа
-	logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
+	//logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 	w.WriteHeader(http.StatusOK)
 
@@ -445,7 +453,7 @@ func createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, me
 
 }
 
-func (mc *HandlerDependencies) HandleGetRequestHTML(w http.ResponseWriter, r *http.Request) {
+func (mc *app) HandleGetRequestHTML(w http.ResponseWriter, r *http.Request) {
 	println("HandleGetRequestHTML")
 	//contentType := r.Header.Get("Content-Type")
 
@@ -464,19 +472,19 @@ func (mc *HandlerDependencies) HandleGetRequestHTML(w http.ResponseWriter, r *ht
 	w.Write([]byte(htmlPage))
 }
 
-func (mc *HandlerDependencies) getKnownMetrics() []Metric {
+func (mc *app) getKnownMetrics() []models.Metric {
 	// Собрать список известных метрик
-	var metrics []Metric
+	var metrics []models.Metric
 
-	for name, counter := range mc.Storage.counters {
-		metrics = append(metrics, Metric{
+	for name, counter := range mc.Storage.GetCounters() {
+		metrics = append(metrics, models.Metric{
 			Name:  name,
 			Value: int64(counter),
 		})
 	}
 
-	for name, gauge := range mc.Storage.gauges {
-		metrics = append(metrics, Metric{
+	for name, gauge := range mc.Storage.GetGauges() {
+		metrics = append(metrics, models.Metric{
 			Name:  name,
 			Value: float64(gauge),
 		})
@@ -485,12 +493,7 @@ func (mc *HandlerDependencies) getKnownMetrics() []Metric {
 	return metrics
 }
 
-type Metric struct {
-	Name  string
-	Value interface{}
-}
-
-func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
+func (mc *app) WriteMetricToFile(metric *models.Metrics) error {
 	// Открываем файл для чтения и записи
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -500,12 +503,12 @@ func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
 	defer file.Close()
 
 	// Читаем метрики из файла
-	var metrics []Metrics
+	var metrics []models.Metrics
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		var existingMetric Metrics
+		var existingMetric models.Metrics
 		if err := json.Unmarshal([]byte(line), &existingMetric); err == nil {
 			if existingMetric.ID != metric.ID {
 				// Если ID метрики не совпадает, добавляем ее в список метрик
@@ -540,7 +543,7 @@ func (mc *HandlerDependencies) WriteMetricToFile(metric *Metrics) error {
 	return err
 }
 
-func WriteJSONToFile(fileStoragePath string, jsonData string) error {
+func (mc *app) WriteJSONToFile(fileStoragePath string, jsonData string) error {
 	// Попробуем открыть файл для записи, или создадим его, если он не существует
 	file, err := os.OpenFile(fileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -556,8 +559,8 @@ func WriteJSONToFile(fileStoragePath string, jsonData string) error {
 	return nil
 }
 
-func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error) {
-	metricsMap := make(map[string]Metrics)
+func (mc *app) ReadMetricsFromFile() (map[string]models.Metrics, error) {
+	metricsMap := make(map[string]models.Metrics)
 
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -569,7 +572,7 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		var metric Metrics
+		var metric models.Metrics
 		if err := json.Unmarshal([]byte(line), &metric); err == nil {
 			metricsMap[metric.ID] = metric
 		} else {
@@ -585,7 +588,7 @@ func (mc *HandlerDependencies) ReadMetricsFromFile() (map[string]Metrics, error)
 	return metricsMap, nil
 }
 
-func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
+func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 
 	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
@@ -601,7 +604,43 @@ func (mc *HandlerDependencies) Ping(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (mc *HandlerDependencies) WriteMetricToDatabase(metric Metrics) error {
+func (mc *app) SetupDatabase() error {
+	println("SetupDatabase")
+	// Открываем соединение с базой данных
+	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+	if err != nil {
+		log.Println("Ошибка при открытии базы данных", err.Error())
+		return err
+	}
+	defer db.Close()
+
+	// Проверяем соединение
+	if err := db.Ping(); err != nil {
+		log.Println("Ошибка при проверке соединения с базой данных", err.Error())
+		return err
+	}
+
+	// Запрос для создания таблицы
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS metrics (
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            value DOUBLE PRECISION,
+            delta BIGINT
+        )
+    `
+
+	// Выполняем запрос для создания таблицы
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		log.Println("Ошибка при создании таблицы", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 	var query string
 	var args []interface{}
 
@@ -669,4 +708,143 @@ type GzipResponseWriter struct {
 
 func (grw GzipResponseWriter) Write(b []byte) (int, error) {
 	return grw.Writer.Write(b)
+}
+
+func (mc *app) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+	println("MetricsHandler")
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Проверяем, был ли запрос сжат с использованием gzip
+	isGzip := false
+	if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+		isGzip = true
+	}
+
+	// Чтение тела запроса
+	var bodyBuffer bytes.Buffer
+	_, err := bodyBuffer.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Если запрос сжат с использованием gzip, распаковываем его
+	if isGzip {
+		gzipReader, err := gzip.NewReader(&bodyBuffer)
+		if err != nil {
+			http.Error(w, "Failed to unpack gzip data", http.StatusBadRequest)
+			return
+		}
+		defer gzipReader.Close()
+
+		var unpackedBuffer bytes.Buffer
+		_, err = unpackedBuffer.ReadFrom(gzipReader)
+		if err != nil {
+			http.Error(w, "Failed to unpack gzip data", http.StatusBadRequest)
+			return
+		}
+
+		bodyBuffer = unpackedBuffer
+	}
+
+	fmt.Printf("Body Data: %s\n", bodyBuffer.String())
+
+	// Создаем переменную для хранения распакованных метрик
+	var batch []models.Metrics
+	// Распаковка JSON-тела запроса в объект batch
+	err = json.Unmarshal(bodyBuffer.Bytes(), &batch)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	// Обработка и сохранение полученных метрик
+	if err := mc.updateHandlerJSONforBatch(batch); err != nil {
+		http.Error(w, fmt.Sprintf("Error processing metrics: %v", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("Batch contents: %+v\n", batch)
+
+	// Возвращаем успешный статус
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Metrics received and processed successfully")
+}
+
+func (mc *app) updateHandlerJSONforBatch(metrics []models.Metrics) error {
+	println("updateHandlerJSONforBatch")
+	// var metricsFromFile map[string]Metrics
+	var err error
+	metricsFromFile := make(map[string]models.Metrics)
+	if mc.Config.Restore {
+		metricsFromFile, err = mc.ReadMetricsFromFile()
+		if err != nil {
+			return fmt.Errorf("ошибка чтения метрик из файла: %w", err)
+		}
+	}
+
+	for _, metric := range metrics {
+
+		if metric.MType == "counter" && metric.Delta != nil {
+			currentValue, ok := metricsFromFile[metric.ID]
+
+			if !ok {
+				// Если метрики нет в файле, проверяем в хранилище
+				if value, exists := mc.Storage.GetCounters()[metric.ID]; exists {
+					currentValue = models.Metrics{
+						MType: metric.MType,
+						ID:    metric.ID,
+						Delta: new(int64),
+					}
+					*currentValue.Delta = value
+				} else {
+					// Если метрики нет ни в файле, ни в хранилище, инициализируем ее с нулевым значением
+					currentValue = models.Metrics{
+						MType: metric.MType,
+						ID:    metric.ID,
+						Delta: new(int64),
+					}
+					*currentValue.Delta = 0
+				}
+			}
+
+			*currentValue.Delta += *metric.Delta
+
+			// Сохраняем обновленные метрики в хранилище
+			mc.Storage.GetCounters()[metric.ID] = *currentValue.Delta
+			metricsFromFile[metric.ID] = currentValue
+		}
+
+		// Обработка "gauge"
+		if metric.MType == "gauge" && metric.Value != nil {
+			// Обновляем или создаем метрику в слайсе
+			metricsFromFile[metric.ID] = metric
+
+			// Сохраняем обновленные метрики в хранилище
+			mc.Storage.GetGauges()[metric.ID] = *metric.Value
+		}
+
+		// Запись обновленных метрик в базу
+		for _, updatedMetric := range metricsFromFile {
+			if mc.Config.DatabaseDSN != "" {
+				dbErr := mc.WriteMetricToDatabase(updatedMetric)
+				if dbErr != nil {
+					log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
+				}
+			}
+			// Запись обновленных метрик в файл
+			if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
+				return fmt.Errorf("ошибка записи метрик в файл:%w", err)
+
+			}
+		}
+	}
+	return nil
+}
+
+func isInteger(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
 }
