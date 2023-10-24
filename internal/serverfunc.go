@@ -58,6 +58,7 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
+// хендлер post путь /update/
 func (mc *HandlerDependencies) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 	contentType := r.Header.Get("Content-Type")
