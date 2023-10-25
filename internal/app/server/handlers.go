@@ -233,7 +233,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
 		println("updatedMetric", updatedMetric.MType, updatedMetric.ID)
-		mc.SetupDatabase()
 		dbErr := mc.WriteMetricToDatabase(updatedMetric)
 		if dbErr != nil {
 			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
@@ -590,7 +589,6 @@ func (mc *app) ReadMetricsFromFile() (map[string]models.Metrics, error) {
 
 func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 
-	// Попытка открыть соединение с базой данных
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
