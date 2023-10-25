@@ -29,17 +29,7 @@ type Metrics struct {
 type HandlerDependencies struct {
 	Storage *MemStorage
 	Logger  *zap.Logger
-	Config  *ServerConfig
 	DB      *sql.DB // Добавлено поле для базы данных
-}
-
-func NewHandlerDependencies(storage *MemStorage, logger *zap.Logger, config *ServerConfig, db *sql.DB) *HandlerDependencies {
-	return &HandlerDependencies{
-		Storage: storage,
-		Logger:  logger,
-		Config:  config,
-		DB:      db, // Инициализировано поле для базы данных
-	}
 }
 
 type MemStorage struct {
