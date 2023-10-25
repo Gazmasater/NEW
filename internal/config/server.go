@@ -23,36 +23,37 @@ func InitServerConfig() *ServerConfig {
 		databaseDSN     string
 	)
 
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
+	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
+	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
+	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
+
+	// Проверяем переменные окружения и используем их, если они определены
 	addrEnv := os.Getenv("ADDRESS")
-	if addrEnv == "" {
-		addrEnv = "localhost:8080"
+	if addrEnv != "" {
+		addr = addrEnv
 	}
-	flag.StringVar(&addr, "a", addrEnv, "Адрес HTTP-сервера")
 
 	storeIntervalEnv := os.Getenv("STORE_INTERVAL")
-	if storeIntervalEnv == "" {
-		storeIntervalEnv = "300"
+	if storeIntervalEnv != "" {
+		storeInterval, _ = strconv.Atoi(storeIntervalEnv)
 	}
-	storeInterval, _ = strconv.Atoi(storeIntervalEnv) // Преобразование строки в int
-	flag.IntVar(&storeInterval, "i", storeInterval, "Интервал времени в секундах для сохранения на диск")
 
 	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
-	if fileStoragePathEnv == "" {
-		fileStoragePath = "/tmp/metrics-db.json"
+	if fileStoragePathEnv != "" {
+		fileStoragePath = fileStoragePathEnv
 	}
-	flag.StringVar(&fileStoragePath, "f", fileStoragePath, "Путь к файлу для сохранения текущих значений")
 
 	restoreEnv := os.Getenv("RESTORE")
-	if restoreEnv == "" {
-		restore = true // Присваиваем булевое значение напрямую
+	if restoreEnv != "" {
+		restore, _ = strconv.ParseBool(restoreEnv)
 	}
-	flag.BoolVar(&restore, "r", restore, "Восстановление ранее сохраненных значений")
 
 	databaseDSNEnv := os.Getenv("DATABASE_DSN")
 	if databaseDSNEnv != "" {
-		databaseDSN = "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable"
+		databaseDSN = databaseDSNEnv
 	}
-	flag.StringVar(&databaseDSN, "d", databaseDSNEnv, "Database DSN")
 
 	flag.Parse()
 
