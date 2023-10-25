@@ -30,19 +30,8 @@ func InitServerConfig() *ServerConfig {
 	flag.StringVar(&addr, "a", addrEnv, "Адрес HTTP-сервера")
 
 	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
-
-	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
-	if fileStoragePathEnv == "" {
-		fileStoragePath = "/tmp/metrics-db.json"
-	}
-	flag.StringVar(&fileStoragePath, "f", fileStoragePathEnv, "Путь к файлу для сохранения текущих значений")
-
+	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
 	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
-
-	databaseDSNEnv := os.Getenv("DATABASE_DSN")
-	if databaseDSNEnv == "" {
-		databaseDSN = "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable"
-	}
 	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
 
 	// Проверяем переменные окружения и используем их, если они определены
@@ -52,9 +41,19 @@ func InitServerConfig() *ServerConfig {
 		storeInterval, _ = strconv.Atoi(storeIntervalEnv)
 	}
 
+	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
+	if fileStoragePathEnv != "" {
+		fileStoragePath = fileStoragePathEnv
+	}
+
 	restoreEnv := os.Getenv("RESTORE")
 	if restoreEnv != "" {
 		restore, _ = strconv.ParseBool(restoreEnv)
+	}
+
+	databaseDSNEnv := os.Getenv("DATABASE_DSN")
+	if databaseDSNEnv != "" {
+		databaseDSN = databaseDSNEnv
 	}
 
 	flag.Parse()
