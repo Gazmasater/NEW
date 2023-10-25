@@ -33,7 +33,7 @@ func main() {
 
 	mStorage := storage.NewMemStorage()
 	app := server.Init(mStorage, serverCfg, db)
-
+	app.SetupDatabase()
 	// Создаем HTTP-сервер с настройками
 	server := &http.Server{
 		Addr:    serverCfg.Address,
