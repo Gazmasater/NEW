@@ -25,9 +25,7 @@ func Test_app_Ping(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-	}{
-		// TODO: Add test cases.
-	}
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(_ *testing.T) {
 			mc := &app{
