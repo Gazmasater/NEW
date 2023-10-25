@@ -588,21 +588,26 @@ func (mc *app) ReadMetricsFromFile() (map[string]models.Metrics, error) {
 }
 
 func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
-	println("Ping   DatabaseDSN ", mc.Config.DatabaseDSN)
+	println("PING")
+	println("DatabaseDSN", mc.Config.DatabaseDSN)
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
-
 	if err != nil {
-		println("Ping ошибка")
-
+		mc.Logger.Error("Ping ошибка", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
+	// Проверка на ошибку открытия базы данных
+	if err := db.Ping(); err != nil {
+		mc.Logger.Error("Ping ошибка", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusServiceUnavailable) // Меняем статус на 503 Service Unavailable
+		return
+	}
+
 	// Если успешно, возвращаем HTTP-статус 200 OK
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Database is working\n")
-
 }
 
 func (mc *app) SetupDatabase() error {
