@@ -588,7 +588,7 @@ func (mc *app) ReadMetricsFromFile() (map[string]models.Metrics, error) {
 }
 
 func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
-
+	println("Ping   DatabaseDSN ", mc.Config.DatabaseDSN)
 	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

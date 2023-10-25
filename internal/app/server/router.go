@@ -30,9 +30,7 @@ func (mc *app) Route() *chi.Mux {
 
 	r.Get("/", mc.HandleGetRequestHTML)
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		mc.Ping(w, r)
-	})
+	r.Get("/ping", mc.Ping)
 
 	return r
 }
