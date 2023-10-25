@@ -319,7 +319,6 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Отправить значение метрики в ответ
 	if metric.MType == "gauge" {
 		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
 	} else if metric.MType == "counter" {
@@ -370,20 +369,16 @@ func (r *responseRecorder) Size() int {
 }
 
 func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricType string, num float64) {
-	// Создайте экземпляр структуры с обновленным значением Value
 	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
 		Value: &num,
 	}
-	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
 	if err != nil {
 		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
 		return
 	}
-	//logger.Info("Сериализированные данные в JSON responseData GAUGE", zap.String("json_data", string(responseData)))
-	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
 
 	// Отправьте JSON в теле ответа
@@ -402,18 +397,13 @@ func (mc *app) createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metr
 		Delta: &num,
 	}
 
-	// Сериализуйте структуру в JSON
 	responseData, err := json.Marshal(updatedMetric)
 	if err != nil {
 		http.Error(w, "Ошибка при сериализации данных в JSON", http.StatusInternalServerError)
 		return
 	}
 
-	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "application/json")
-
-	// Отправьте JSON в теле ответа
-	//logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 	w.WriteHeader(http.StatusOK)
 
@@ -437,24 +427,18 @@ func (mc *app) createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metr
 		return
 	}
 
-	//	logger.Info("Сериализированные данные в JSON responseData COUNTER", zap.String("json_data", string(responseData)))
 	// Установите Content-Type и статус код для ответа
 	w.Header().Set("Content-Type", "text/plain")
-
-	// Отправьте JSON в теле ответа
-	//logger.Info("createAndSendUpdatedMetric Тело ответа", zap.String("response_body", string(responseData)))
 
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(responseData)
 	_, _ = w.Write([]byte("\n"))
-	fmt.Println("createAndSendUpdatedMetricCounter Тело ответа:&&&&&&&&&&", string(responseData))
 
 }
 
 func (mc *app) HandleGetRequestHTML(w http.ResponseWriter, r *http.Request) {
 	println("HandleGetRequestHTML")
-	//contentType := r.Header.Get("Content-Type")
 
 	// Получить список известных метрик
 	metrics := mc.getKnownMetrics()
@@ -601,49 +585,13 @@ func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 	// Проверка на ошибку открытия базы данных
 	if err := db.Ping(); err != nil {
 		mc.Logger.Error("Ping ошибка", zap.Error(err))
-		http.Error(w, err.Error(), http.StatusServiceUnavailable) // Меняем статус на 503 Service Unavailable
+		http.Error(w, err.Error(), http.StatusInternalServerError) // Меняем статус на 503 Service Unavailable
 		return
 	}
 
 	// Если успешно, возвращаем HTTP-статус 200 OK
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Database is working\n")
-}
-
-func (mc *app) SetupDatabase() error {
-	println("SetupDatabase")
-	// Открываем соединение с базой данных
-	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
-	if err != nil {
-		log.Println("Ошибка при открытии базы данных", err.Error())
-		return err
-	}
-	defer db.Close()
-
-	// Проверяем соединение
-	if err := db.Ping(); err != nil {
-		log.Println("Ошибка при проверке соединения с базой данных", err.Error())
-		return err
-	}
-
-	// Запрос для создания таблицы
-	createTableQuery := `
-        CREATE TABLE IF NOT EXISTS metrics (
-            name VARCHAR(255) NOT NULL,
-            type VARCHAR(50) NOT NULL,
-            value DOUBLE PRECISION,
-            delta BIGINT
-        )
-    `
-
-	// Выполняем запрос для создания таблицы
-	_, err = db.Exec(createTableQuery)
-	if err != nil {
-		log.Println("Ошибка при создании таблицы", err.Error())
-		return err
-	}
-
-	return nil
 }
 
 func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
@@ -853,4 +801,38 @@ func (mc *app) updateHandlerJSONforBatch(metrics []models.Metrics) error {
 func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
+}
+func (mc *app) SetupDatabase() error {
+	println("SetupDatabase")
+	// Открываем соединение с базой данных
+	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+	if err != nil {
+		log.Println("Ошибка при открытии базы данных", err.Error())
+		return err
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Println("Ошибка при проверке соединения с базой данных", err.Error())
+		return err
+	}
+
+	// Запрос для создания таблицы
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS metrics (
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            value DOUBLE PRECISION,
+            delta BIGINT
+        )
+    `
+
+	// Выполняем запрос для создания таблицы
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		log.Println("Ошибка при создании таблицы", err.Error())
+		return err
+	}
+
+	return nil
 }

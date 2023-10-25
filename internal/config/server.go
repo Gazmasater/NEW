@@ -27,7 +27,7 @@ func InitServerConfig() *ServerConfig {
 	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
 	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
 	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
-	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
+	flag.StringVar(&databaseDSN, "dbdsn", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
 
 	// Проверяем переменные окружения и используем их, если они определены
 	if addrEnv := os.Getenv("ADDRESS"); addrEnv != "" {
