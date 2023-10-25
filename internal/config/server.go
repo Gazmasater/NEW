@@ -29,20 +29,23 @@ func InitServerConfig() *ServerConfig {
 	}
 	flag.StringVar(&addr, "a", addrEnv, "Адрес HTTP-сервера")
 
+	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
+
 	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
 	if fileStoragePathEnv == "" {
 		fileStoragePath = "/tmp/metrics-db.json"
 	}
 	flag.StringVar(&fileStoragePath, "f", fileStoragePathEnv, "Путь к файлу для сохранения текущих значений")
 
+	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
+
 	databaseDSNEnv := os.Getenv("DATABASE_DSN")
 	if databaseDSNEnv == "" {
 		databaseDSN = "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable"
 	}
-	flag.StringVar(&databaseDSN, "d", databaseDSNEnv, "Database DSN")
+	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
 
-	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
-	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
+	// Проверяем переменные окружения и используем их, если они определены
 
 	storeIntervalEnv := os.Getenv("STORE_INTERVAL")
 	if storeIntervalEnv != "" {
