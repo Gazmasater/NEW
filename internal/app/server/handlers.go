@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"project.com/internal/models"
 )
@@ -802,37 +803,62 @@ func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
 }
+
 func (mc *app) SetupDatabase() error {
-	println("SetupDatabase")
-	// Открываем соединение с базой данных
-	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
-	if err != nil {
-		log.Println("Ошибка при открытии базы данных", err.Error())
-		return err
+	// Конфигурация для повторных попыток
+	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
+	maxRetries := len(retryIntervals)
+
+	var lastErr error
+
+	// Выполняем повторные попытки
+	for i := 0; i < maxRetries; i++ {
+		// Открываем соединение с базой данных
+		db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+		if err != nil {
+			log.Printf("Ошибка при открытии базы данных: %v", err)
+			lastErr = err
+			time.Sleep(retryIntervals[i])
+			continue
+		}
+
+		defer db.Close()
+
+		// Проверяем соединение
+		if err := db.Ping(); err != nil {
+			log.Printf("Ошибка при проверке соединения с базой данных: %v", err)
+			lastErr = err
+			time.Sleep(retryIntervals[i])
+			continue
+		}
+
+		// Запрос для создания таблицы
+		createTableQuery := `
+			CREATE TABLE IF NOT EXISTS metrics (
+				name VARCHAR(255) NOT NULL,
+				type VARCHAR(50) NOT NULL,
+				value DOUBLE PRECISION,
+				delta BIGINT
+			)
+		`
+
+		// Выполняем запрос для создания таблицы
+		_, err = db.Exec(createTableQuery)
+		if err != nil {
+			pqErr, isPQError := err.(*pq.Error)
+			if isPQError && pqErr.Code == "23505" {
+				// Код "23505" соответствует ошибке уникального нарушения.
+				log.Printf("Ошибка при создании таблицы: %v (UniqueViolation), повторная попытка через %v", err, retryIntervals[i])
+				lastErr = err
+				time.Sleep(retryIntervals[i])
+				continue
+			}
+			log.Printf("Ошибка при создании таблицы: %v", err)
+			lastErr = err
+			time.Sleep(retryIntervals[i])
+			continue
+		}
 	}
-	defer db.Close()
 
-	if err := db.Ping(); err != nil {
-		log.Println("Ошибка при проверке соединения с базой данных", err.Error())
-		return err
-	}
-
-	// Запрос для создания таблицы
-	createTableQuery := `
-        CREATE TABLE IF NOT EXISTS metrics (
-            name VARCHAR(255) NOT NULL,
-            type VARCHAR(50) NOT NULL,
-            value DOUBLE PRECISION,
-            delta BIGINT
-        )
-    `
-
-	// Выполняем запрос для создания таблицы
-	_, err = db.Exec(createTableQuery)
-	if err != nil {
-		log.Println("Ошибка при создании таблицы", err.Error())
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("исчерпаны все попытки: %v", lastErr)
 }
