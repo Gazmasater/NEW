@@ -14,51 +14,54 @@ type ServerConfig struct {
 	DatabaseDSN     string
 }
 
-func initFlags() (*ServerConfig, *flag.FlagSet) {
-	fs := flag.NewFlagSet("ServerConfig", flag.ExitOnError)
+func InitServerConfig() *ServerConfig {
+	var (
+		addr            string
+		storeInterval   int
+		fileStoragePath string
+		restore         bool
+		databaseDSN     string
+	)
 
-	addr := fs.String("a", "localhost:8080", "Адрес HTTP-сервера")
-	storeInterval := fs.Int("i", 300, "Интервал времени в секундах для сохранения на диск")
-	fileStoragePath := fs.String("f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
-	restore := fs.Bool("r", true, "Восстановление ранее сохраненных значений")
-	databaseDSN := fs.String("d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+	flag.IntVar(&storeInterval, "i", 300, "Интервал времени в секундах для сохранения на диск")
+	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
+	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
+	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
+
+	// Проверяем переменные окружения и используем их, если они определены
+	addrEnv := os.Getenv("ADDRESS")
+	if addrEnv != "" {
+		addr = addrEnv
+	}
+
+	storeIntervalEnv := os.Getenv("STORE_INTERVAL")
+	if storeIntervalEnv != "" {
+		storeInterval, _ = strconv.Atoi(storeIntervalEnv)
+	}
+
+	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
+	if fileStoragePathEnv != "" {
+		fileStoragePath = fileStoragePathEnv
+	}
+
+	restoreEnv := os.Getenv("RESTORE")
+	if restoreEnv != "" {
+		restore, _ = strconv.ParseBool(restoreEnv)
+	}
+
+	databaseDSNEnv := os.Getenv("DATABASE_DSN")
+	if databaseDSNEnv != "" {
+		databaseDSN = databaseDSNEnv
+	}
+
+	flag.Parse()
 
 	return &ServerConfig{
-		Address:         *addr,
-		StoreInterval:   *storeInterval,
-		FileStoragePath: *fileStoragePath,
-		Restore:         *restore,
-		DatabaseDSN:     *databaseDSN,
-	}, fs
-}
-
-func applyEnvOverrides(cfg *ServerConfig) {
-	if addrEnv := os.Getenv("ADDRESS"); addrEnv != "" {
-		cfg.Address = addrEnv
+		Address:         addr,
+		StoreInterval:   storeInterval,
+		FileStoragePath: fileStoragePath,
+		Restore:         restore,
+		DatabaseDSN:     databaseDSN,
 	}
-	if storeIntervalEnv := os.Getenv("STORE_INTERVAL"); storeIntervalEnv != "" {
-		if interval, err := strconv.Atoi(storeIntervalEnv); err == nil {
-			cfg.StoreInterval = interval
-		}
-	}
-	if fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH"); fileStoragePathEnv != "" {
-		cfg.FileStoragePath = fileStoragePathEnv
-	}
-	if restoreEnv := os.Getenv("RESTORE"); restoreEnv != "" {
-		if restore, err := strconv.ParseBool(restoreEnv); err == nil {
-			cfg.Restore = restore
-		}
-	}
-	if databaseDSNEnv := os.Getenv("DATABASE_DSN"); databaseDSNEnv != "" {
-		cfg.DatabaseDSN = databaseDSNEnv
-	}
-}
-
-func InitServerConfig() *ServerConfig {
-	cfg, fs := initFlags()
-	fs.Parse(os.Args[1:]) // Парсим аргументы командной строки
-
-	applyEnvOverrides(cfg) // Применяем переменные окружения
-
-	return cfg
 }
