@@ -69,3 +69,32 @@ func Test_app_HandlePostRequest(t *testing.T) {
 		})
 	}
 }
+
+func Test_app_SetupDatabase(t *testing.T) {
+	type fields struct {
+		Storage *storage.MemStorage
+		Logger  *zap.Logger
+		Config  *config.ServerConfig
+		DB      *sql.DB
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mc := &app{
+				Storage: tt.fields.Storage,
+				Logger:  tt.fields.Logger,
+				Config:  tt.fields.Config,
+				DB:      tt.fields.DB,
+			}
+			if err := mc.SetupDatabase(); (err != nil) != tt.wantErr {
+				t.Errorf("app.SetupDatabase() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
