@@ -804,6 +804,7 @@ func isInteger(s string) bool {
 	return err == nil
 }
 
+// Обоащение к базе с интервалами
 func (mc *app) SetupDatabase() error {
 	// Конфигурация для повторных попыток
 	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
