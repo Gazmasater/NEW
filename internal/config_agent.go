@@ -13,14 +13,17 @@ type AgentConfig struct {
 	Address        string
 	ReportInterval int
 	PollInterval   int
+	Key            string
 }
 
 // InitAgentConfig - функция для инициализации конфигурации агента.
 func InitAgentConfig() *AgentConfig {
+	println("InitAgentConfig internal")
 	var (
 		reportSeconds int
 		pollSeconds   int
 		addr          string
+		key           string
 	)
 
 	// Чтение переменных окружения или установка значений по умолчанию
@@ -59,11 +62,19 @@ func InitAgentConfig() *AgentConfig {
 		}
 	}
 
+	keyEnv := os.Getenv("KEY")
+	if keyEnv != "" {
+		key = keyEnv
+	} else {
+		flag.StringVar(&key, "k", "MyKey", "Ключ для подписи данных")
+	}
+
 	flag.Parse()
 
 	return &AgentConfig{
 		Address:        addr,
 		ReportInterval: reportSeconds,
 		PollInterval:   pollSeconds,
+		Key:            key,
 	}
 }
