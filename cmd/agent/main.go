@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"project.com/internal"
+	"project.com/internal/config"
 )
 
 func main() {
-	config := internal.InitAgentConfig()
+	config := config.InitAgentConfig()
 	if config == nil {
 		return // Если возникли ошибки при инициализации конфигурации, выходим
 	}
