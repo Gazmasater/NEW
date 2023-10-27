@@ -29,12 +29,11 @@ func InitAgentConfig() *AgentConfig {
 	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
 		addr = addrEnv
-	} else {
-		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
-		if _, err := url.Parse(addr); err != nil {
-			fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
-			return nil
-		}
+	}
+	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
+	if _, err := url.Parse(addr); err != nil {
+		fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
+		return nil
 	}
 
 	reportSecondsEnv := os.Getenv("REPORT_INTERVAL")
