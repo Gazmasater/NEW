@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -844,4 +847,44 @@ func (mc *app) SetupDatabase() error {
 	}
 
 	return nil
+}
+
+func KeyHashMiddleware(expectedKey string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Проверка наличия ключа
+		key := r.URL.Query().Get("k")
+
+		if key != "" {
+			if key != expectedKey {
+				http.Error(w, "Несоответствие ключа", http.StatusBadRequest)
+				return
+			}
+
+			// Если ключ существует, выполните хеширование
+			h := sha256.New()
+			h.Write([]byte(r.URL.Path))
+			h.Write([]byte(r.Method))
+			h.Write([]byte(r.Header.Get("Content-Type")))
+
+			// Чтение и хеширование тела запроса
+			body := r.Body
+			defer body.Close()
+			tee := io.TeeReader(body, h)
+
+			// Прочитать JSON из тела запроса, если это JSON
+			var jsonData interface{}
+			decoder := json.NewDecoder(tee)
+			_ = decoder.Decode(&jsonData)
+
+			// Преобразование хеша в строку в шестнадцатеричном формате
+			hash := hex.EncodeToString(h.Sum(nil))
+
+			// Устанавливаем заголовок HashSHA256 в запросе
+			r.Header.Set("HashSHA256", hash)
+		}
+
+		// Продолжаем выполнение следующего обработчика
+		next.ServeHTTP(w, r)
+	})
 }
