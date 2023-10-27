@@ -26,7 +26,6 @@ func InitAgentConfig() *AgentConfig {
 		key           string
 	)
 
-	// Чтение переменных окружения или установка значений по умолчанию
 	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
 		addr = addrEnv
