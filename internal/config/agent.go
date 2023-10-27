@@ -24,10 +24,10 @@ func InitAgentConfig() *AgentConfig {
 	)
 
 	// Чтение переменных окружения или установка значений по умолчанию
-	addrEnv := os.Getenv("ADDRESS")
-	if addrEnv != "" {
-		addr = addrEnv
-	}
+	// addrEnv := os.Getenv("ADDRESS")
+	// if addrEnv != "" {
+	// 	addr = addrEnv
+	// }
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 	if _, err := url.Parse(addr); err != nil {
 		fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
