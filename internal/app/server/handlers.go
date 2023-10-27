@@ -806,60 +806,42 @@ func isInteger(s string) bool {
 
 // Обоащение к базе с интервалами
 func (mc *app) SetupDatabase() error {
-	// Конфигурация для повторных попыток
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-	maxRetries := len(retryIntervals)
+	// Открываем соединение с базой данных
+	db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
+	if err != nil {
+		log.Printf("Ошибка при открытии базы данных: %v", err)
+		return err
+	}
+	defer db.Close()
 
-	var lastErr error
-
-	// Выполняем повторные попытки
-	for i := 0; i < maxRetries; i++ {
-		// Открываем соединение с базой данных
-		db, err := sql.Open("postgres", mc.Config.DatabaseDSN)
-		if err != nil {
-			log.Printf("Ошибка при открытии базы данных: %v", err)
-			lastErr = err
-			time.Sleep(retryIntervals[i])
-			continue
-		}
-
-		defer db.Close()
-
-		// Проверяем соединение
-		if err := db.Ping(); err != nil {
-			log.Printf("Ошибка при проверке соединения с базой данных: %v", err)
-			lastErr = err
-			time.Sleep(retryIntervals[i])
-			continue
-		}
-
-		// Запрос для создания таблицы
-		createTableQuery := `
-			CREATE TABLE IF NOT EXISTS metrics (
-				name VARCHAR(255) NOT NULL,
-				type VARCHAR(50) NOT NULL,
-				value DOUBLE PRECISION,
-				delta BIGINT
-			)
-		`
-
-		// Выполняем запрос для создания таблицы
-		_, err = db.Exec(createTableQuery)
-		if err != nil {
-			pqErr, isPQError := err.(*pq.Error)
-			if isPQError && pqErr.Code == "23505" {
-				// Код "23505" соответствует ошибке уникального нарушения.
-				log.Printf("Ошибка при создании таблицы: %v (UniqueViolation), повторная попытка через %v", err, retryIntervals[i])
-				lastErr = err
-				time.Sleep(retryIntervals[i])
-				continue
-			}
-			log.Printf("Ошибка при создании таблицы: %v", err)
-			lastErr = err
-			time.Sleep(retryIntervals[i])
-			continue
-		}
+	// Проверяем соединение
+	if err := db.Ping(); err != nil {
+		log.Printf("Ошибка при проверке соединения с базой данных: %v", err)
+		return err
 	}
 
-	return fmt.Errorf("исчерпаны все попытки: %v", lastErr)
+	// Запрос для создания таблицы
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS metrics (
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            value DOUBLE PRECISION,
+            delta BIGINT
+        )
+    `
+
+	// Выполняем запрос для создания таблицы
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		pqErr, isPQError := err.(*pq.Error)
+		if isPQError && pqErr.Code == "23505" {
+			// Код "23505" соответствует ошибке уникального нарушения.
+			log.Printf("Ошибка при создании таблицы: %v (UniqueViolation)", err)
+			return err
+		}
+		log.Printf("Ошибка при создании таблицы: %v", err)
+		return err
+	}
+
+	return nil
 }
