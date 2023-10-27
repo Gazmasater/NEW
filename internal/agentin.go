@@ -3,6 +3,9 @@ package internal
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -281,6 +284,9 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 			return fmt.Errorf("ошибка при сериализации данных в JSON:%w", err)
 		}
 
+		// Вычисление хеша данных с использованием ключа
+		hash := computeHash(jsonData, "MyKey")
+
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
 		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
@@ -288,7 +294,10 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		if err != nil {
 			return fmt.Errorf("ошибка при создании запроса:%w", err)
 		}
+
+		// Добавление хеша в заголовок запроса
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("HashSHA256", hash) // Добавление хеша в заголовок запроса
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -333,6 +342,13 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		}
 	}
 	return nil
+}
+
+func computeHash(data []byte, key string) string {
+	mac := hmac.New(sha256.New, []byte(key))
+	mac.Write(data)
+	hash := mac.Sum(nil)
+	return hex.EncodeToString(hash)
 }
 
 func SendDataToServerBatch(metrics []*Metrics, serverURL string) error {

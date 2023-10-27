@@ -851,7 +851,6 @@ func (mc *app) SetupDatabase() error {
 
 func KeyHashMiddleware(expectedKey string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		// Проверка наличия ключа
 		key := r.URL.Query().Get("k")
 
