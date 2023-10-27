@@ -12,6 +12,7 @@ type ServerConfig struct {
 	FileStoragePath string
 	Restore         bool
 	DatabaseDSN     string
+	Key             string // Добавлено поле Key
 }
 
 func InitServerConfig() *ServerConfig {
@@ -21,6 +22,7 @@ func InitServerConfig() *ServerConfig {
 		fileStoragePath string
 		restore         bool
 		databaseDSN     string
+		key             string
 	)
 
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
@@ -28,6 +30,7 @@ func InitServerConfig() *ServerConfig {
 	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
 	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
 	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
+	flag.StringVar(&key, "k", "MyKey", "Ключ для подписи данных") // Добавлен ключ "k"
 
 	// Проверяем переменные окружения и используем их, если они определены
 	addrEnv := os.Getenv("ADDRESS")
@@ -55,6 +58,11 @@ func InitServerConfig() *ServerConfig {
 		databaseDSN = databaseDSNEnv
 	}
 
+	keyEnv := os.Getenv("KEY") // Добавлено чтение ключа из переменной окружения "KEY"
+	if keyEnv != "" {
+		key = keyEnv
+	}
+
 	flag.Parse()
 
 	return &ServerConfig{
@@ -63,5 +71,6 @@ func InitServerConfig() *ServerConfig {
 		FileStoragePath: fileStoragePath,
 		Restore:         restore,
 		DatabaseDSN:     databaseDSN,
+		Key:             key, // Установка ключа
 	}
 }
