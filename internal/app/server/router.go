@@ -8,11 +8,10 @@ import (
 
 func (mc *app) Route() *chi.Mux {
 	r := chi.NewRouter()
-
-	r.Use(GzipMiddleware)
 	r.Use(func(next http.Handler) http.Handler {
 		return KeyHashMiddleware("MyKey", next)
 	})
+	r.Use(GzipMiddleware)
 
 	r.Use(func(next http.Handler) http.Handler {
 		return LoggingMiddleware(mc.Logger, next)

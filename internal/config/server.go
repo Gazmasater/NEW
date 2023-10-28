@@ -32,7 +32,6 @@ func InitServerConfig() *ServerConfig {
 	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
 	flag.StringVar(&key, "k", "MyKey", "Ключ для подписи данных") // Добавлен ключ "k"
 
-	// Проверяем переменные окружения и используем их, если они определены
 	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
 		addr = addrEnv
