@@ -26,8 +26,6 @@ func Init(storage *storage.MemStorage, config *config.ServerConfig, db *sql.DB) 
 	}
 	defer logger.Sync()
 
-	// Ваш код инициализации и других полей структуры app
-
 	return &app{
 		Storage: storage,
 		Logger:  logger,
