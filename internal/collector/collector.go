@@ -111,7 +111,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 			totalAllocValue += rand.Float64()
 			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "TotalAlloc", Value: &totalAllocValue})
 
-			// // // // Добавляем метрику RandomValue типа gauge с произвольным значением
 			randomValue := rand.Float64()
 			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
 
