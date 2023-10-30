@@ -6,19 +6,17 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
-
-	"go.uber.org/zap"
 )
 
-func Init() {
-	// Инициализация логгера
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic("failed to initialize logger")
-	}
-	defer logger.Sync() // flushes buffer, if any
-}
+// func Init() {
+// 	// Инициализация логгера
+// 	var err error
+// 	logger, err = zap.NewProduction()
+// 	if err != nil {
+// 		panic("failed to initialize logger")
+// 	}
+// 	defer logger.Sync() // flushes buffer, if any
+// }
 
 type Metric struct {
 	Name  string

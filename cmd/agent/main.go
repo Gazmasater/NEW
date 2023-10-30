@@ -5,9 +5,10 @@ import (
 
 	"time"
 
-	"project.com/internal"
 	"project.com/internal/collector"
 	"project.com/internal/config"
+	"project.com/internal/logger"
+	"project.com/internal/sender"
 )
 
 func main() {
@@ -15,7 +16,8 @@ func main() {
 	if config == nil {
 		return // Если возникли ошибки при инициализации конфигурации, выходим
 	}
-	internal.Init()
+
+	logger.Create()
 	// Используем параметры из конфигурации
 	pollInterval := time.Duration(config.PollInterval) * time.Second
 	reportInterval := time.Duration(config.ReportInterval) * time.Second
@@ -26,7 +28,7 @@ func main() {
 	go func() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
-			internal.SendDataToServer(metrics, config.Address) //post запрос по пути /update/
+			sender.SendDataToServer(metrics, config.Address) //post запрос по пути /update/
 		}
 	}()
 
