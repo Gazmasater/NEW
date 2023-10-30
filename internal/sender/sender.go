@@ -71,18 +71,10 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 		}
 		defer resp.Body.Close()
 
-		var responseBody []byte
-		buf := make([]byte, 1024) // Размер буфера для чтения
+		responseBody, err := io.ReadAll(resp.Body) // Чтение тела ответа
 
-		for {
-			n, err := resp.Body.Read(buf)
-			if err != nil && err != io.EOF {
-				return fmt.Errorf("ошибка при чтении тела ответа:%w", err)
-			}
-			if n == 0 {
-				break
-			}
-			responseBody = append(responseBody, buf[:n]...)
+		if err != nil {
+			return fmt.Errorf("ошибка при чтении тела ответа:%w", err)
 		}
 
 		// Вывод тела ответа на экран
