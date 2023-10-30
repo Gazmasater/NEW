@@ -30,7 +30,7 @@ func (l *CustomLogger) Info(tmpl string, args ...interface{}) {
 	l.Sugar().Infof(tmpl, args...)
 }
 
-// Sync - метод для синхронизации логгера
+// Sync - метод для синхронизации логгер
 func (l *CustomLogger) Sync() error {
 	if l == nil {
 		return fmt.Errorf("логгер не был создан")
