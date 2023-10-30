@@ -15,7 +15,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 	"go.uber.org/zap"
+	"project.com/internal/models"
 )
 
 var logger *zap.Logger
@@ -27,6 +30,7 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 	var pollCount int64 = 0
 
 	var memStats runtime.MemStats
+
 	go func() {
 
 		for {
@@ -138,128 +142,39 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*Metr
 		}
 	}()
 
+	go collectAdditionalMetrics(metricsChan, pollInterval)
+
 	return metricsChan
 }
 
-func CollectMetricsJSON(pollInterval time.Duration, serverURL string) <-chan []*Metrics {
-	metricsChan := make(chan []*Metrics)
-	println("CollectMetrics serverURL string", serverURL)
+func collectAdditionalMetrics(metricsChan chan<- []*Metrics, pollInterval time.Duration) {
+	for {
+		metrics := make([]*Metrics, 0)
 
-	var pollCount int64 = 0
-	var memStats runtime.MemStats
-	go func() {
+		// Собираем TotalMemory и FreeMemory с использованием gopsutil
+		vm, _ := mem.VirtualMemory()
+		totalMemoryValue := float64(vm.Total)
+		freeMemoryValue := float64(vm.Free)
 
-		for {
-			metrics := make([]*Metrics, 0) // Инициализируем срез
+		metrics = append(metrics, &Metrics{MType: "gauge", ID: "TotalMemory", Value: &totalMemoryValue})
+		metrics = append(metrics, &Metrics{MType: "gauge", ID: "FreeMemory", Value: &freeMemoryValue})
 
-			runtime.ReadMemStats(&memStats)
-
-			allocValue := float64(memStats.Alloc)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
-
-			buckHashSysValue := float64(memStats.BuckHashSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
-
-			freesValue := float64(memStats.Frees)
-			freesValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
-
-			gCCPUFractionValue := float64(memStats.GCCPUFraction)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCCPUFraction", Value: &gCCPUFractionValue})
-
-			gCSysValue := float64(memStats.GCSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
-
-			heapAllocValue := float64(memStats.HeapAlloc)
-			heapAllocValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapAlloc", Value: &heapAllocValue})
-
-			heapIdleValue := float64(memStats.HeapIdle)
-			heapIdleValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapIdle", Value: &heapIdleValue})
-
-			heapInuseValue := float64(memStats.HeapInuse)
-			heapInuseValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapInuse", Value: &heapInuseValue})
-
-			heapObjectsValue := float64(memStats.HeapObjects)
-			heapObjectsValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapObjects", Value: &heapObjectsValue})
-
-			heapReleasedValue := float64(memStats.HeapReleased)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapReleased", Value: &heapReleasedValue})
-
-			heapSysValue := float64(memStats.HeapSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "HeapSys", Value: &heapSysValue})
-
-			lastGCValue := float64(memStats.LastGC)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "LastGC", Value: &lastGCValue})
-
-			lookupsValue := float64(memStats.Lookups)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Lookups", Value: &lookupsValue})
-
-			mCacheInuseValue := float64(memStats.MCacheInuse)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheInuse", Value: &mCacheInuseValue})
-
-			mCacheSysValue := float64(memStats.MCacheSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MCacheSys", Value: &mCacheSysValue})
-
-			mSpanInuseValue := float64(memStats.MSpanInuse)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MSpanInuse", Value: &mSpanInuseValue})
-
-			mSpanSysValue := float64(memStats.MSpanSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "MSpanSys", Value: &mSpanSysValue})
-
-			mallocsValue := float64(memStats.Mallocs)
-			mallocsValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Mallocs", Value: &mallocsValue})
-
-			nextGCValue := float64(memStats.NextGC)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NextGC", Value: &nextGCValue})
-
-			numForcedGCValue := float64(memStats.NumForcedGC)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NumForcedGC", Value: &numForcedGCValue})
-
-			numGCValue := float64(memStats.NumGC)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "NumGC", Value: &numGCValue})
-
-			otherSysValue := float64(memStats.OtherSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "OtherSys", Value: &otherSysValue})
-
-			pauseTotalNsValue := float64(memStats.PauseTotalNs)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "PauseTotalNs", Value: &pauseTotalNsValue})
-
-			stackInuseValue := float64(memStats.StackInuse)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "StackInuse", Value: &stackInuseValue})
-
-			stackSysValue := float64(memStats.StackSys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "StackSys", Value: &stackSysValue})
-
-			sysValue := float64(memStats.Sys)
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "Sys", Value: &sysValue})
-
-			totalAllocValue := float64(memStats.TotalAlloc)
-			totalAllocValue += rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "TotalAlloc", Value: &totalAllocValue})
-
-			randomValue := rand.Float64()
-			metrics = append(metrics, &Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
-
-			metrics = append(metrics, &Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
-
-			//  Увеличиваем счетчик обновлений метр!!!
-			pollCount++
-
-			metricsChan <- metrics
-			time.Sleep(pollInterval)
-
+		// Собираем утилизацию CPU для каждого ядра (по числу CPU, определенному во время выполнения)
+		numCPU := runtime.NumCPU()
+		cpuPercentages, _ := cpu.Percent(time.Second, true)
+		for i := 0; i < numCPU; i++ {
+			if i < len(cpuPercentages) {
+				cpuUsageValue := cpuPercentages[i]
+				metrics = append(metrics, &Metrics{MType: "gauge", ID: fmt.Sprintf("CPUutilization%d", i+1), Value: &cpuUsageValue})
+			}
 		}
-	}()
 
-	return metricsChan
+		metricsChan <- metrics
+		time.Sleep(pollInterval)
+	}
 }
 
-func SendDataToServer(metrics []*Metrics, serverURL string) error {
+func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 	for _, metric := range metrics {
 		var metricValue interface{}
 		if metric.MType == "counter" {
@@ -285,7 +200,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 		}
 
 		// Вычисление хеша данных с использованием ключа
-		hash := computeHash(jsonData, "MyKey")
+		hash := ComputeHash(jsonData, "MyKey")
 
 		logger.Info("SendDataToServer Сериализированные данные в JSON", zap.String("json_data", string(jsonData)))
 
@@ -344,7 +259,7 @@ func SendDataToServer(metrics []*Metrics, serverURL string) error {
 	return nil
 }
 
-func computeHash(data []byte, key string) string {
+func ComputeHash(data []byte, key string) string {
 	mac := hmac.New(sha256.New, []byte(key))
 	mac.Write(data)
 	hash := mac.Sum(nil)

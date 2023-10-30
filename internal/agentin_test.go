@@ -1,10 +1,14 @@
 package internal
 
-import "testing"
+import (
+	"testing"
+
+	"project.com/internal/models"
+)
 
 func TestSendDataToServer(t *testing.T) {
 	type args struct {
-		metrics   []*Metrics
+		metrics   []*models.Metrics
 		serverURL string
 	}
 	tests := []struct {

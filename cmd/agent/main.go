@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"project.com/internal"
+	"project.com/internal/collector"
 	"project.com/internal/config"
 )
 
@@ -19,7 +20,7 @@ func main() {
 	pollInterval := time.Duration(config.PollInterval) * time.Second
 	reportInterval := time.Duration(config.ReportInterval) * time.Second
 
-	metricsChan := internal.CollectMetrics(pollInterval, config.Address)
+	metricsChan := collector.CollectMetrics(pollInterval, config.Address)
 
 	// Горутина отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {

@@ -22,7 +22,12 @@ func main() {
 	serverCfg := config.InitServerConfig()
 
 	// Создание логгера
-	logger := logger.Create()
+	appLogger, err := logger.Create()
+	if err != nil {
+		// Обработка ошибки
+		fmt.Printf("Ошибка при создании логгера: %v", err)
+		return
+	}
 
 	db, err := sql.Open("postgres", serverCfg.DatabaseDSN)
 	if err != nil {
@@ -45,7 +50,7 @@ func main() {
 	if err1 != nil {
 		log.Fatalf("Ошибка при запуске HTTP-сервера: %s", err1)
 	}
-	defer logger.Sync()
+	defer appLogger.Sync()
 
 	if serverCfg.StoreInterval > 0 {
 		ticker := time.NewTicker(time.Duration(serverCfg.StoreInterval) * time.Second)
