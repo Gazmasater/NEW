@@ -87,14 +87,15 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 		err = json.Unmarshal(responseBody, &responseMetrics)
 		if err != nil {
 			return fmt.Errorf("ошибка при декодировании ответа:%w", err)
-		} else {
-			// Обновление значения метрики
-			if metric.MType == "counter" {
-				*metric.Delta = *responseMetrics.Delta
-			} else {
-				*metric.Value = *responseMetrics.Value
-			}
 		}
+
+		// Обновление значения метрики
+		if metric.MType == "counter" {
+			*metric.Delta = *responseMetrics.Delta
+		} else {
+			*metric.Value = *responseMetrics.Value
+		}
+
 	}
 
 	return nil
