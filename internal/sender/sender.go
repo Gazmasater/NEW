@@ -84,8 +84,7 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 		}
 		var responseMetrics models.Metrics
 
-		err = json.Unmarshal(responseBody, &responseMetrics)
-		if err != nil {
+		if err = json.Unmarshal(responseBody, &responseMetrics); err != nil {
 			return fmt.Errorf("ошибка при декодировании ответа:%w", err)
 		}
 
