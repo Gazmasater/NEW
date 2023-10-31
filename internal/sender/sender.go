@@ -79,25 +79,24 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 
 		// Вывод тела ответа на экран
 
-		if resp.StatusCode == http.StatusOK {
-			// Чтение и обработка ответа
-			var responseMetrics models.Metrics
-
-			err := json.Unmarshal(responseBody, &responseMetrics)
-			if err != nil {
-				return fmt.Errorf("ошибка при декодировании ответа:%w", err)
-			} else {
-				// Обновление значения метрики
-				if metric.MType == "counter" {
-					*metric.Delta = *responseMetrics.Delta
-				} else {
-					*metric.Value = *responseMetrics.Value
-				}
-			}
-		} else {
+		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("ошибка при отправке запроса. Код статуса: %d", resp.StatusCode)
 		}
+		var responseMetrics models.Metrics
+
+		err = json.Unmarshal(responseBody, &responseMetrics)
+		if err != nil {
+			return fmt.Errorf("ошибка при декодировании ответа:%w", err)
+		} else {
+			// Обновление значения метрики
+			if metric.MType == "counter" {
+				*metric.Delta = *responseMetrics.Delta
+			} else {
+				*metric.Value = *responseMetrics.Value
+			}
+		}
 	}
+
 	return nil
 }
 
