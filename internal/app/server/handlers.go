@@ -481,7 +481,7 @@ func (mc *app) getKnownMetrics() []models.Metric {
 }
 
 func (mc *app) WriteMetricToFile(metric *models.Metrics) error {
-	// Открываем файл для чтения и записи
+
 	file, err := os.OpenFile(mc.Config.FileStoragePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		mc.Logger.Error("Ошибка при открытии файла для записи", zap.Error(err))
