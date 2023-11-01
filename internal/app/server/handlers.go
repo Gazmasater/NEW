@@ -417,7 +417,7 @@ func (mc *app) createAndSendUpdatedMetricCounterJSON(w http.ResponseWriter, metr
 }
 
 func (mc *app) createAndSendUpdatedMetricCounterTEXT(w http.ResponseWriter, metricName, metricType string, num int64) {
-	// Создайте экземпляр структуры с обновленным значением Value
+
 	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
