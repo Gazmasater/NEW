@@ -15,6 +15,8 @@ type ServerConfig struct {
 	Key             string // Добавлено поле Key
 }
 
+var cfg *ServerConfig
+
 func InitServerConfig() *ServerConfig {
 	var (
 		addr            string
@@ -64,7 +66,7 @@ func InitServerConfig() *ServerConfig {
 
 	flag.Parse()
 
-	return &ServerConfig{
+	cfg = &ServerConfig{
 		Address:         addr,
 		StoreInterval:   storeInterval,
 		FileStoragePath: fileStoragePath,
@@ -72,4 +74,9 @@ func InitServerConfig() *ServerConfig {
 		DatabaseDSN:     databaseDSN,
 		Key:             key, // Установка ключа
 	}
+	return cfg
+}
+
+func GetDatabaseDSN() string {
+	return cfg.DatabaseDSN
 }
