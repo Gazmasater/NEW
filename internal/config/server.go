@@ -80,3 +80,7 @@ func InitServerConfig() *ServerConfig {
 func GetDatabaseDSN() string {
 	return cfg.DatabaseDSN
 }
+
+func GetRestore() bool {
+	return cfg.Restore
+}
