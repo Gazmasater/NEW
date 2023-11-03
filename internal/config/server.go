@@ -72,7 +72,7 @@ func InitServerConfig() *ServerConfig {
 		FileStoragePath: fileStoragePath,
 		Restore:         restore,
 		DatabaseDSN:     databaseDSN,
-		Key:             key, // Установка ключа
+		Key:             key,
 	}
 	return cfg
 }
