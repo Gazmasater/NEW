@@ -81,6 +81,10 @@ func GetDatabaseDSN() string {
 	return cfg.DatabaseDSN
 }
 
+func GetFileStoragePath() string {
+	return cfg.FileStoragePath
+}
+
 func GetRestore() bool {
 	return cfg.Restore
 }

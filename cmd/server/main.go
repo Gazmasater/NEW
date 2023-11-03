@@ -65,7 +65,7 @@ func main() {
 
 			println("!!!!!jsonData!!!!!", jsonData)
 
-			if err := app.WriteJSONToFile(serverCfg.FileStoragePath, jsonData); err != nil {
+			if err := app.WriteJSONToFile(config.GetFileStoragePath(), jsonData); err != nil {
 				log.Fatalf("Ошибка при записи в файл: %v", err)
 			}
 
