@@ -16,7 +16,6 @@ func main() {
 	if config == nil {
 		return // Если возникли ошибки при инициализации конфигурации, выходим
 	}
-
 	logger.Create()
 	// Используем параметры из конфигурации
 	pollInterval := time.Duration(config.PollInterval) * time.Second

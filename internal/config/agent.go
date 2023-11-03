@@ -16,6 +16,8 @@ type AgentConfig struct {
 	Key            string // Новое поле для ключа
 }
 
+var cfga *AgentConfig
+
 // InitAgentConfig - функция для инициализации конфигурации агента.
 func InitAgentConfig() *AgentConfig {
 	var (
@@ -69,10 +71,11 @@ func InitAgentConfig() *AgentConfig {
 
 	flag.Parse()
 
-	return &AgentConfig{
+	cfga = &AgentConfig{
 		Address:        addr,
 		ReportInterval: reportSeconds,
 		PollInterval:   pollSeconds,
 		Key:            key,
 	}
+	return cfga
 }
