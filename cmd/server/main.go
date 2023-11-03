@@ -21,7 +21,6 @@ func main() {
 
 	serverCfg := config.InitServerConfig()
 
-	// Создание логгера
 	appLogger, err := logger.Create()
 	if err != nil {
 		// Обработка ошибки
