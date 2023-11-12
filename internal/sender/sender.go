@@ -159,18 +159,9 @@ func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
 	}
 	defer resp.Body.Close()
 
-	//var responseBody []byte
-	buf := make([]byte, 1024) // Размер буфера для чтения
-
-	for {
-		n, err := resp.Body.Read(buf)
-		if err != nil && err != io.EOF {
-			return fmt.Errorf("ошибка при чтении тела ответа:%w", err)
-		}
-		if n == 0 {
-			break
-		}
-		//responseBody = append(responseBody, buf[:n]...)
+	_, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %w", err)
 	}
 
 	return nil
