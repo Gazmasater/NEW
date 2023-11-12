@@ -108,7 +108,6 @@ func ComputeHash(data []byte, key string) string {
 }
 
 func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
-	// Создаем общий словарь data для всех метрик
 	data := make([]map[string]interface{}, len(metrics))
 
 	for i, metric := range metrics {
