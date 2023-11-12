@@ -15,7 +15,6 @@ import (
 
 	"project.com/internal/logger"
 	"project.com/internal/models"
-	//"project.com/internal/sender"
 )
 
 func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
