@@ -153,9 +153,12 @@ func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+
 	if err != nil {
-		return fmt.Errorf("ошибка при отправке запроса3:%w", err)
+		log.Error("ошибка при отправке запроса3", zap.Error(err))
+
 	}
+
 	defer resp.Body.Close()
 
 	_, err = io.ReadAll(resp.Body)
