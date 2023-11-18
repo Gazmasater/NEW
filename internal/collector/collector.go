@@ -27,13 +27,10 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 			addMetric(&metrics, "Alloc", float64(memStats.Alloc))
 
 			addMetric(&metrics, "BuckHashSys", float64(memStats.Alloc))
-			freesValue := float64(memStats.Frees)
-			freesValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
 
-			gCCPUFractionValue := float64(memStats.GCCPUFraction)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "GCCPUFraction", Value: &gCCPUFractionValue})
+			addMetric(&metrics, "Frees", float64(memStats.Alloc))
 
+			addMetric(&metrics, "GCCPUFraction", float64(memStats.Alloc))
 			gCSysValue := float64(memStats.GCSys)
 			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
 
