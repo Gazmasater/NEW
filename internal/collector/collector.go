@@ -56,7 +56,6 @@ func CollectAdditionalMetrics() (float64, float64, []float64) {
 		return 0, 0, nil
 	}
 
-	// Преобразуйте vmStat.Total в float64
 	totalMemory := float64(vmStat.Total)
 
 	return totalMemory, float64(vmStat.Free), cpuInfo
