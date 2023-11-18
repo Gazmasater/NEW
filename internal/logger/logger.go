@@ -12,7 +12,6 @@ type CustomLogger struct {
 	*zap.Logger
 }
 
-// Create - функция создания логгера
 func Create() (*CustomLogger, error) {
 	// Настройки логгера
 	config := zap.NewProductionConfig()
