@@ -1,8 +1,8 @@
 package collector
 
 import (
-	"fmt"
-	"math/rand"
+	"log"
+
 	"runtime"
 	"time"
 
@@ -27,9 +27,6 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 				addMetric(&metrics, id, getField(&memStats))
 			}
 
-			randomValue := rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
-
 			metrics = append(metrics, &models.Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
 
 			pollCount++
@@ -45,14 +42,14 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 func CollectAdditionalMetrics() (float64, float64, []float64) {
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
-		fmt.Println("Ошибка при получении информации о памяти:", err)
+		log.Println("Ошибка при получении информации о памяти:", err)
 
 		return 0, 0, nil
 	}
 
 	cpuInfo, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		fmt.Println("Ошибка при получении информации о CPU:", err)
+		log.Println("Ошибка при получении информации о CPU:", err)
 		return 0, 0, nil
 	}
 

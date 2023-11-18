@@ -1,6 +1,9 @@
 package collector
 
-import "runtime"
+import (
+	"math/rand"
+	"runtime"
+)
 
 type MetricField func(stats *runtime.MemStats) float64
 
@@ -33,4 +36,5 @@ var MetricFieldMap = map[string]MetricField{
 	"StackSys":     func(stats *runtime.MemStats) float64 { return float64(stats.StackSys) },
 	"Sys":          func(stats *runtime.MemStats) float64 { return float64(stats.Sys) },
 	"TotalAlloc":   func(stats *runtime.MemStats) float64 { return float64(stats.TotalAlloc) },
+	"RandomValue":  func(_ *runtime.MemStats) float64 { return rand.Float64() },
 }
