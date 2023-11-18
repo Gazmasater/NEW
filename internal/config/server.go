@@ -12,7 +12,7 @@ type ServerConfig struct {
 	FileStoragePath string
 	Restore         bool
 	DatabaseDSN     string
-	Key             string // Добавлено поле Key
+	Key             string
 }
 
 var cfg *ServerConfig
