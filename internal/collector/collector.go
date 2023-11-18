@@ -11,7 +11,7 @@ import (
 	"project.com/internal/models"
 )
 
-func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*models.Metrics {
+func CollectMetrics_old(pollInterval time.Duration, serverURL string) <-chan []*models.Metrics {
 	metricsChan := make(chan []*models.Metrics)
 	var pollCount int64 = 0
 	println("CollectMetrics serverURL", serverURL)
@@ -96,6 +96,37 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 	return metricsChan
 }
 
+func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*models.Metrics {
+	metricsChan := make(chan []*models.Metrics)
+	var pollCount int64 = 0
+	println("CollectMetrics serverURL", serverURL)
+	var memStats runtime.MemStats
+
+	go func() {
+		for {
+			metrics := make([]*models.Metrics, 0)
+
+			runtime.ReadMemStats(&memStats)
+
+			for id, getField := range MetricFieldMap {
+				addMetric(&metrics, id, getField(&memStats))
+			}
+
+			randomValue := rand.Float64()
+			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
+
+			metrics = append(metrics, &models.Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
+
+			pollCount++
+
+			metricsChan <- metrics
+			time.Sleep(pollInterval)
+		}
+	}()
+
+	return metricsChan
+}
+
 func CollectAdditionalMetrics() (float64, float64, []float64) {
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
@@ -122,4 +153,37 @@ func addMetric(metrics *[]*models.Metrics, id string, value float64) {
 		ID:    id,
 		Value: &value,
 	})
+}
+
+type MetricField func(stats *runtime.MemStats) float64
+
+var MetricFieldMap = map[string]MetricField{
+	"Alloc":         func(stats *runtime.MemStats) float64 { return float64(stats.Alloc) },
+	"BuckHashSys":   func(stats *runtime.MemStats) float64 { return float64(stats.BuckHashSys) },
+	"Frees":         func(stats *runtime.MemStats) float64 { return float64(stats.Frees) },
+	"GCCPUFraction": func(stats *runtime.MemStats) float64 { return float64(stats.GCCPUFraction) },
+
+	"GCSys":        func(stats *runtime.MemStats) float64 { return float64(stats.GCSys) },
+	"HeapAlloc":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapAlloc) },
+	"HeapIdle":     func(stats *runtime.MemStats) float64 { return float64(stats.HeapIdle) },
+	"HeapInuse":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapInuse) },
+	"HeapObjects":  func(stats *runtime.MemStats) float64 { return float64(stats.HeapObjects) },
+	"HeapReleased": func(stats *runtime.MemStats) float64 { return float64(stats.HeapReleased) },
+	"HeapSys":      func(stats *runtime.MemStats) float64 { return float64(stats.HeapSys) },
+	"LastGC":       func(stats *runtime.MemStats) float64 { return float64(stats.LastGC) },
+	"Lookups":      func(stats *runtime.MemStats) float64 { return float64(stats.Lookups) },
+	"MCacheInuse":  func(stats *runtime.MemStats) float64 { return float64(stats.MCacheInuse) },
+	"MCacheSys":    func(stats *runtime.MemStats) float64 { return float64(stats.MCacheSys) },
+	"MSpanInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.MSpanInuse) },
+	"MSpanSys":     func(stats *runtime.MemStats) float64 { return float64(stats.MSpanSys) },
+	"Mallocs":      func(stats *runtime.MemStats) float64 { return float64(stats.Mallocs) },
+	"NextGC":       func(stats *runtime.MemStats) float64 { return float64(stats.NextGC) },
+	"NumForcedGC":  func(stats *runtime.MemStats) float64 { return float64(stats.NumForcedGC) },
+	"NumGC":        func(stats *runtime.MemStats) float64 { return float64(stats.NumGC) },
+	"OtherSys":     func(stats *runtime.MemStats) float64 { return float64(stats.OtherSys) },
+	"PauseTotalNs": func(stats *runtime.MemStats) float64 { return float64(stats.PauseTotalNs) },
+	"StackInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.StackInuse) },
+	"StackSys":     func(stats *runtime.MemStats) float64 { return float64(stats.StackSys) },
+	"Sys":          func(stats *runtime.MemStats) float64 { return float64(stats.Sys) },
+	"TotalAlloc":   func(stats *runtime.MemStats) float64 { return float64(stats.TotalAlloc) },
 }
