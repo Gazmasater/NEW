@@ -24,12 +24,9 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 
 			runtime.ReadMemStats(&memStats)
 
-			allocValue := float64(memStats.Alloc)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Alloc", Value: &allocValue})
+			addMetric(&metrics, "Alloc", float64(memStats.Alloc))
 
-			buckHashSysValue := float64(memStats.BuckHashSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "BuckHashSys", Value: &buckHashSysValue})
-
+			addMetric(&metrics, "BuckHashSys", float64(memStats.Alloc))
 			freesValue := float64(memStats.Frees)
 			freesValue += rand.Float64()
 			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Frees", Value: &freesValue})
@@ -148,4 +145,12 @@ func CollectAdditionalMetrics() (float64, float64, []float64) {
 	totalMemory := float64(vmStat.Total)
 
 	return totalMemory, float64(vmStat.Free), cpuInfo
+}
+
+func addMetric(metrics *[]*models.Metrics, id string, value float64) {
+	*metrics = append(*metrics, &models.Metrics{
+		MType: "gauge",
+		ID:    id,
+		Value: &value,
+	})
 }
