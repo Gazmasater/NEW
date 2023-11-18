@@ -26,85 +26,57 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 
 			addMetric(&metrics, "Alloc", float64(memStats.Alloc))
 
-			addMetric(&metrics, "BuckHashSys", float64(memStats.Alloc))
+			addMetric(&metrics, "BuckHashSys", float64(memStats.BuckHashSys))
 
-			addMetric(&metrics, "Frees", float64(memStats.Alloc))
+			addMetric(&metrics, "Frees", float64(memStats.Frees))
 
-			addMetric(&metrics, "GCCPUFraction", float64(memStats.Alloc))
-			gCSysValue := float64(memStats.GCSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "GCSys", Value: &gCSysValue})
+			addMetric(&metrics, "GCCPUFraction", float64(memStats.GCCPUFraction))
 
-			heapAllocValue := float64(memStats.HeapAlloc)
-			heapAllocValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapAlloc", Value: &heapAllocValue})
+			addMetric(&metrics, "GCSys", float64(memStats.GCSys))
 
-			heapIdleValue := float64(memStats.HeapIdle)
-			heapIdleValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapIdle", Value: &heapIdleValue})
+			addMetric(&metrics, "HeapAlloc", float64(memStats.HeapAlloc))
 
-			heapInuseValue := float64(memStats.HeapInuse)
-			heapInuseValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapInuse", Value: &heapInuseValue})
+			addMetric(&metrics, "HeapIdle", float64(memStats.HeapIdle))
 
-			heapObjectsValue := float64(memStats.HeapObjects)
-			heapObjectsValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapObjects", Value: &heapObjectsValue})
+			addMetric(&metrics, "HeapInuse", float64(memStats.HeapInuse))
 
-			heapReleasedValue := float64(memStats.HeapReleased)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapReleased", Value: &heapReleasedValue})
+			addMetric(&metrics, "HeapObjects", float64(memStats.HeapObjects))
 
-			heapSysValue := float64(memStats.HeapSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "HeapSys", Value: &heapSysValue})
+			addMetric(&metrics, "HeapReleased", float64(memStats.HeapReleased))
 
-			lastGCValue := float64(memStats.LastGC)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "LastGC", Value: &lastGCValue})
+			addMetric(&metrics, "HeapSys", float64(memStats.HeapSys))
 
-			lookupsValue := float64(memStats.Lookups)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Lookups", Value: &lookupsValue})
+			addMetric(&metrics, "LastGC", float64(memStats.LastGC))
 
-			mCacheInuseValue := float64(memStats.MCacheInuse)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "MCacheInuse", Value: &mCacheInuseValue})
+			addMetric(&metrics, "Lookups", float64(memStats.Lookups))
 
-			mCacheSysValue := float64(memStats.MCacheSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "MCacheSys", Value: &mCacheSysValue})
+			addMetric(&metrics, "MCacheInuse", float64(memStats.MCacheInuse))
 
-			mSpanInuseValue := float64(memStats.MSpanInuse)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "MSpanInuse", Value: &mSpanInuseValue})
+			addMetric(&metrics, "MCacheSys", float64(memStats.MCacheSys))
 
-			mSpanSysValue := float64(memStats.MSpanSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "MSpanSys", Value: &mSpanSysValue})
+			addMetric(&metrics, "MSpanInuse", float64(memStats.MSpanInuse))
 
-			mallocsValue := float64(memStats.Mallocs)
-			mallocsValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Mallocs", Value: &mallocsValue})
+			addMetric(&metrics, "MSpanSys", float64(memStats.MSpanSys))
 
-			nextGCValue := float64(memStats.NextGC)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "NextGC", Value: &nextGCValue})
+			addMetric(&metrics, "Mallocs", float64(memStats.Mallocs))
 
-			numForcedGCValue := float64(memStats.NumForcedGC)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "NumForcedGC", Value: &numForcedGCValue})
+			addMetric(&metrics, "NextGC", float64(memStats.NextGC))
 
-			numGCValue := float64(memStats.NumGC)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "NumGC", Value: &numGCValue})
+			addMetric(&metrics, "NumForcedGC", float64(memStats.NumForcedGC))
 
-			otherSysValue := float64(memStats.OtherSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "OtherSys", Value: &otherSysValue})
+			addMetric(&metrics, "NumGC", float64(memStats.NumGC))
 
-			pauseTotalNsValue := float64(memStats.PauseTotalNs)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "PauseTotalNs", Value: &pauseTotalNsValue})
+			addMetric(&metrics, "OtherSys", float64(memStats.OtherSys))
 
-			stackInuseValue := float64(memStats.StackInuse)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "StackInuse", Value: &stackInuseValue})
+			addMetric(&metrics, "PauseTotalNs", float64(memStats.PauseTotalNs))
 
-			stackSysValue := float64(memStats.StackSys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "StackSys", Value: &stackSysValue})
+			addMetric(&metrics, "StackInuse", float64(memStats.StackInuse))
 
-			sysValue := float64(memStats.Sys)
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "Sys", Value: &sysValue})
+			addMetric(&metrics, "StackSys", float64(memStats.StackSys))
 
-			totalAllocValue := float64(memStats.TotalAlloc)
-			totalAllocValue += rand.Float64()
-			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "TotalAlloc", Value: &totalAllocValue})
+			addMetric(&metrics, "Sys", float64(memStats.Sys))
+
+			addMetric(&metrics, "TotalAlloc", float64(memStats.TotalAlloc))
 
 			randomValue := rand.Float64()
 			metrics = append(metrics, &models.Metrics{MType: "gauge", ID: "RandomValue", Value: &randomValue})
