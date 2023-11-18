@@ -24,8 +24,7 @@ func Create() (*CustomLogger, error) {
 	return &CustomLogger{logger}, nil
 }
 
-// Info - функция для регистрации информационных сообщений
-func (l *CustomLogger) Info(tmpl string, args ...interface{}) {
+func (l *CustomLogger) Info(tmpl string, args ...any) {
 	l.Sugar().Infof(tmpl, args...)
 }
 
