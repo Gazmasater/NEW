@@ -7,27 +7,28 @@ import (
 
 	"project.com/internal/collector"
 	"project.com/internal/config"
-	"project.com/internal/logger"
 	"project.com/internal/sender"
 )
 
 func main() {
-	config, _ := config.New()
-	if config == nil {
-		return // Если возникли ошибки при инициализации конфигурации, выходим
-	}
-	logger.Create()
+	cfg := config.Must(config.New())
+
+	// log, err := logger.New()
+	// if err != nil {
+
+	// 	fmt.Printf("Ошибка при создании логгера: %s\n", err)
+	// 	return
+	// }
 	// Используем параметры из конфигурации
-	pollInterval := time.Duration(config.PollInterval) * time.Second
-	reportInterval := time.Duration(config.ReportInterval) * time.Second
+	pollInterval := time.Duration(cfg.PollInterval) * time.Second
+	reportInterval := time.Duration(cfg.ReportInterval) * time.Second
 
-	metricsChan := collector.CollectMetrics(pollInterval, config.Address)
+	metricsChan := collector.CollectMetrics(pollInterval, cfg.Address)
 
-	// Горутина отправки метрик на сервер с интервалом в reportInterval секунд
 	go func() {
 		for range time.Tick(reportInterval) {
 			metrics := <-metricsChan
-			sender.SendDataToServer(metrics, config.Address) //post запрос по пути /update/
+			sender.SendDataToServer(metrics, cfg.Address) //post запрос по пути /update/
 		}
 	}()
 
