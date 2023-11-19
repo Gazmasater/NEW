@@ -44,7 +44,7 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 
 		// Вычисление хеша данных с использованием ключа
 		hash := ComputeHash(jsonData, "MyKey")
-		log, err := logger.Create()
+		log, err := logger.New()
 		if err != nil {
 			// Обработка ошибки
 			return fmt.Errorf("ошибка при создании логгера: %v", err)

@@ -12,7 +12,8 @@ type CustomLogger struct {
 	*zap.Logger
 }
 
-func Create() (*CustomLogger, error) {
+// Create - функция создания логгера
+func New() (*CustomLogger, error) {
 	// Настройки логгера
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -24,14 +25,13 @@ func Create() (*CustomLogger, error) {
 	return &CustomLogger{logger}, nil
 }
 
-func (l *CustomLogger) Info(tmpl string, args ...any) {
+func (l *CustomLogger) Info(tmpl string, args ...interface{}) {
 	l.Sugar().Infof(tmpl, args...)
 }
 
-// Sync - метод для синхронизации логгер
 func (l *CustomLogger) Sync() error {
 	if l == nil {
 		return fmt.Errorf("логгер не был создан")
 	}
-	return l.Sync()
+	return l.Logger.Sync() // Исправленный вызов метода Sync
 }
