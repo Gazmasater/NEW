@@ -22,7 +22,7 @@ func main() {
 	serverCfg := config.InitServerConfig()
 
 	// Создание логгера
-	appLogger, err := logger.Create()
+	appLogger, err := logger.New()
 	if err != nil {
 		// Обработка ошибки
 		fmt.Printf("Ошибка при создании логгера: %v", err)
