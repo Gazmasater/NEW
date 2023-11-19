@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	config := config.New()
+	config, _ := config.New()
 	if config == nil {
 		return // Если возникли ошибки при инициализации конфигурации, выходим
 	}
