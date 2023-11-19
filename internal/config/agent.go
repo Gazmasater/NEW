@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+
+	"go.uber.org/zap"
+	"project.com/internal/logger"
 )
 
 // AgentConfig - структура для хранения параметров конфигурации агента.
@@ -28,10 +31,13 @@ func New() (*AgentConfig, error) {
 		key           string
 		rateLimit     int
 	)
+	log, _ := logger.New()
 
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 	if _, err := url.Parse(addr); err != nil {
-		return nil, fmt.Errorf("ошибка: неверный формат адреса сервера в модуле агента: %s", addr)
+		log.Error("Ошибка при обработке данных localhost", zap.Error(err))
+
+		return nil, err
 	}
 
 	addrEnv := os.Getenv("ADDRESS")
@@ -42,7 +48,7 @@ func New() (*AgentConfig, error) {
 	flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
 	if reportSeconds <= 0 {
 		flag.Usage()
-		return nil, fmt.Errorf("частота отправки метрик должна быть положительным числом")
+		log.Fatal("частота отправки метрик должна быть положительным числом")
 	}
 
 	reportSecondsEnv := os.Getenv("REPORT_INTERVAL")
@@ -53,7 +59,7 @@ func New() (*AgentConfig, error) {
 	flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
 	if pollSeconds <= 0 {
 		flag.Usage()
-		return nil, fmt.Errorf("частота опроса метрик должна быть положительным числом")
+		log.Fatal("частота опроса метрик должна быть положительным числом")
 	}
 
 	pollSecondsEnv := os.Getenv("POLL_INTERVAL")
@@ -74,7 +80,12 @@ func New() (*AgentConfig, error) {
 	flag.Parse()
 
 	rateLimitStr := strconv.Itoa(rateLimit)
-	rateLimitInt, _ := strconv.Atoi(rateLimitStr)
+	rateLimitInt, err := strconv.Atoi(rateLimitStr)
+	if err != nil {
+
+		fmt.Println("Ошибка при преобразовании строки в число:", err)
+
+	}
 
 	cfga = &AgentConfig{
 		Address:        addr,
