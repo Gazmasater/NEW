@@ -7,18 +7,19 @@ import (
 
 	"project.com/internal/collector"
 	"project.com/internal/config"
+	"project.com/internal/logger"
 	"project.com/internal/sender"
 )
 
 func main() {
 	cfg := config.Must(config.New())
 
-	// log, err := logger.New()
-	// if err != nil {
+	_, err := logger.New()
+	if err != nil {
 
-	// 	fmt.Printf("Ошибка при создании логгера: %s\n", err)
-	// 	return
-	// }
+		fmt.Printf("Ошибка при создании логгера: %s\n", err)
+		return
+	}
 	// Используем параметры из конфигурации
 	pollInterval := time.Duration(cfg.PollInterval) * time.Second
 	reportInterval := time.Duration(cfg.ReportInterval) * time.Second

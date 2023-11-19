@@ -50,7 +50,6 @@ func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
 			return fmt.Errorf("ошибка при создании логгера: %v", err)
 		}
 
-		// Теперь вы можете использовать переменную log (ваш логгер)
 		log.Info("Это информационное сообщение")
 
 		serverURL := fmt.Sprintf("http://%s/update/", serverURL)
