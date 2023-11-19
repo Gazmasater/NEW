@@ -26,7 +26,7 @@ func New() (*AgentConfig, error) {
 		pollSeconds   int
 		addr          string
 		key           string
-		rateLimit     string
+		rateLimit     int
 	)
 
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
@@ -68,16 +68,13 @@ func New() (*AgentConfig, error) {
 		key = keyEnv
 	}
 
-	flag.StringVar(&rateLimit, "l", "", "Rate Limit")
-	flag.StringVar(&rateLimit, "RATE_LIMIT", "", "Rate Limit (переменная окружения)")
+	flag.IntVar(&rateLimit, "l", 0, "Rate Limit")
+	flag.IntVar(&rateLimit, "RATE_LIMIT", 0, "Rate Limit (переменная окружения)")
 
 	flag.Parse()
 
-	rateLimitInt, err := strconv.Atoi(rateLimit)
-	if err != nil {
-		flag.Usage()
-		return nil, fmt.Errorf("rate limit должен быть числовым значением")
-	}
+	rateLimitStr := strconv.Itoa(rateLimit)
+	rateLimitInt, _ := strconv.Atoi(rateLimitStr)
 
 	cfga = &AgentConfig{
 		Address:        addr,
