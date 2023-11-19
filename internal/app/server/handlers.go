@@ -332,7 +332,7 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 
 func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//	logger.Create()
+
 		startTime := time.Now()
 
 		recorder := newResponseRecorder(w)
