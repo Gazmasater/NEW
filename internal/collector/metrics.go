@@ -2,13 +2,14 @@ package collector
 
 import (
 	"math/rand"
+	"reflect"
 	"runtime"
 )
 
 type MetricField func(stats *runtime.MemStats) float64
 
 var MetricFieldMap = map[string]MetricField{
-	"Alloc":         func(stats *runtime.MemStats) float64 { return float64(stats.Alloc) },
+	"Alloc":         getMetricField("Alloc"),
 	"BuckHashSys":   func(stats *runtime.MemStats) float64 { return float64(stats.BuckHashSys) },
 	"Frees":         func(stats *runtime.MemStats) float64 { return float64(stats.Frees) },
 	"GCCPUFraction": func(stats *runtime.MemStats) float64 { return float64(stats.GCCPUFraction) },
@@ -36,5 +37,21 @@ var MetricFieldMap = map[string]MetricField{
 	"StackSys":     func(stats *runtime.MemStats) float64 { return float64(stats.StackSys) },
 	"Sys":          func(stats *runtime.MemStats) float64 { return float64(stats.Sys) },
 	"TotalAlloc":   func(stats *runtime.MemStats) float64 { return float64(stats.TotalAlloc) },
-	"RandomValue":  func(_ *runtime.MemStats) float64 { return rand.Float64() },
+
+	"RandomValue": getMetricField("RandomValue"),
+}
+
+func getMetricField(fieldName string) MetricField {
+	switch fieldName {
+	case "RandomValue":
+		return func(_ *runtime.MemStats) float64 { return rand.Float64() }
+	default:
+		return func(stats *runtime.MemStats) float64 {
+			val := reflect.ValueOf(stats).Elem().FieldByName(fieldName)
+			if val.IsValid() {
+				return float64(val.Uint())
+			}
+			return 0
+		}
+	}
 }
