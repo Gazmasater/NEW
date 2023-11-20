@@ -11,7 +11,7 @@ type MetricField func(stats *runtime.MemStats) float64
 var MetricFieldMap = map[string]MetricField{
 	"Alloc":       getMetricField("Alloc"),
 	"BuckHashSys": getMetricField("BuckHashSys"),
-	"Frees":       func(stats *runtime.MemStats) float64 { return float64(stats.Frees) },
+	"Frees":       getMetricField("Frees"),
 
 	"GCCPUFraction": getMetricField("GCCPUFraction"),
 
