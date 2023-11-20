@@ -11,7 +11,7 @@ type MetricField func(stats *runtime.MemStats) float64
 var MetricFieldMap = map[string]MetricField{
 	"Alloc":       getMetricField("Alloc"),
 	"BuckHashSys": getMetricField("BuckHashSys"),
-	"Frees":       getMetricField("Frees"),
+	"Frees":       func(stats *runtime.MemStats) float64 { return float64(stats.Frees) },
 
 	"GCCPUFraction": func(stats *runtime.MemStats) float64 { return float64(stats.GCCPUFraction) },
 
@@ -23,7 +23,8 @@ var MetricFieldMap = map[string]MetricField{
 	"HeapReleased": func(stats *runtime.MemStats) float64 { return float64(stats.HeapReleased) },
 	"HeapSys":      func(stats *runtime.MemStats) float64 { return float64(stats.HeapSys) },
 	"LastGC":       func(stats *runtime.MemStats) float64 { return float64(stats.LastGC) },
-	"Lookups":      func(stats *runtime.MemStats) float64 { return float64(stats.Lookups) },
+	"Lookups":      getMetricField("Lookups"),
+
 	"MCacheInuse":  func(stats *runtime.MemStats) float64 { return float64(stats.MCacheInuse) },
 	"MCacheSys":    func(stats *runtime.MemStats) float64 { return float64(stats.MCacheSys) },
 	"MSpanInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.MSpanInuse) },
