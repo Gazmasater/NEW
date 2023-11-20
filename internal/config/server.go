@@ -32,7 +32,7 @@ func InitServerConfig() *ServerConfig {
 	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "Путь к файлу для сохранения текущих значений")
 	flag.BoolVar(&restore, "r", true, "Восстановление ранее сохраненных значений")
 	flag.StringVar(&databaseDSN, "d", "postgres://postgres:qwert@localhost:5432/postgres?sslmode=disable", "Database DSN")
-	flag.StringVar(&key, "k", "MyKey", "Ключ для подписи данных") // Добавлен ключ "k"
+	flag.StringVar(&key, "k", "MyKey", "Ключ для подписи данных")
 
 	addrEnv := os.Getenv("ADDRESS")
 	if addrEnv != "" {
