@@ -22,7 +22,6 @@ type AgentConfig struct {
 
 var cfga *AgentConfig
 
-// New - функция для инициализации конфигурации агента.
 func New() (*AgentConfig, error) {
 	var (
 		reportSeconds int
