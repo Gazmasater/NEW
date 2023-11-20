@@ -8,41 +8,6 @@ import (
 
 type MetricField func(stats *runtime.MemStats) float64
 
-var MetricFieldMap = map[string]MetricField{
-	"Alloc":       getMetricField("Alloc"),
-	"BuckHashSys": getMetricField("BuckHashSys"),
-	"Frees":       getMetricField("Frees"),
-
-	"GCCPUFraction": getMetricField("GCCPUFraction"),
-
-	"GCSys":        getMetricField("GCSys"),
-	"HeapAlloc":    getMetricField("HeapAlloc"),
-	"HeapIdle":     getMetricField("HeapIdle"),
-	"HeapInuse":    getMetricField("HeapInuse"),
-	"HeapObjects":  getMetricField("HeapObjects"),
-	"HeapReleased": getMetricField("HeapReleased"),
-	"HeapSys":      getMetricField("HeapSys"),
-	"LastGC":       getMetricField("LastGC"),
-	"Lookups":      getMetricField("Lookups"),
-
-	"MCacheInuse":  getMetricField("MCacheInuse"),
-	"MCacheSys":    getMetricField("MCacheSys"),
-	"MSpanInuse":   getMetricField("MSpanInuse"),
-	"MSpanSys":     getMetricField("MSpanSys"),
-	"Mallocs":      getMetricField("Mallocs"),
-	"NextGC":       getMetricField("NextGC"),
-	"NumForcedGC":  getMetricField("NumForcedGC"),
-	"NumGC":        getMetricField("NumGC"),
-	"OtherSys":     getMetricField("OtherSys"),
-	"PauseTotalNs": getMetricField("PauseTotalNs"),
-	"StackInuse":   getMetricField("StackInuse"),
-	"StackSys":     getMetricField("StackSys"),
-	"Sys":          getMetricField("Sys"),
-	"TotalAlloc":   getMetricField("TotalAlloc"),
-
-	"RandomValue": getMetricField("RandomValue"),
-}
-
 func getMetricField(fieldName string) MetricField {
 	switch fieldName {
 	case "RandomValue":
@@ -59,3 +24,19 @@ func getMetricField(fieldName string) MetricField {
 		}
 	}
 }
+
+func createMetricFieldMap(fieldNames ...string) map[string]MetricField {
+	fieldMap := make(map[string]MetricField)
+	for _, fieldName := range fieldNames {
+		fieldMap[fieldName] = getMetricField(fieldName)
+	}
+	return fieldMap
+}
+
+var MetricFieldMap = createMetricFieldMap(
+	"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc",
+	"HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC",
+	"Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs",
+	"NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse",
+	"StackSys", "Sys", "TotalAlloc", "RandomValue",
+)
