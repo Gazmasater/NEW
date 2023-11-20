@@ -47,6 +47,8 @@ func getMetricField(fieldName string) MetricField {
 	switch fieldName {
 	case "RandomValue":
 		return func(_ *runtime.MemStats) float64 { return rand.Float64() }
+	case "GCCPUFraction":
+		return func(stats *runtime.MemStats) float64 { return stats.GCCPUFraction }
 	default:
 		return func(stats *runtime.MemStats) float64 {
 			val := reflect.ValueOf(stats).Elem().FieldByName(fieldName)
