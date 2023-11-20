@@ -25,9 +25,9 @@ var MetricFieldMap = map[string]MetricField{
 	"LastGC":       func(stats *runtime.MemStats) float64 { return float64(stats.LastGC) },
 	"Lookups":      getMetricField("Lookups"),
 
-	"MCacheInuse":  func(stats *runtime.MemStats) float64 { return float64(stats.MCacheInuse) },
-	"MCacheSys":    func(stats *runtime.MemStats) float64 { return float64(stats.MCacheSys) },
-	"MSpanInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.MSpanInuse) },
+	"MCacheInuse":  getMetricField("MCacheInuse"),
+	"MCacheSys":    getMetricField("MCacheSys"),
+	"MSpanInuse":   getMetricField("MSpanInuse"),
 	"MSpanSys":     func(stats *runtime.MemStats) float64 { return float64(stats.MSpanSys) },
 	"Mallocs":      func(stats *runtime.MemStats) float64 { return float64(stats.Mallocs) },
 	"NextGC":       func(stats *runtime.MemStats) float64 { return float64(stats.NextGC) },
