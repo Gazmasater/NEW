@@ -15,10 +15,10 @@ var MetricFieldMap = map[string]MetricField{
 
 	"GCCPUFraction": func(stats *runtime.MemStats) float64 { return float64(stats.GCCPUFraction) },
 
-	"GCSys":        func(stats *runtime.MemStats) float64 { return float64(stats.GCSys) },
-	"HeapAlloc":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapAlloc) },
-	"HeapIdle":     func(stats *runtime.MemStats) float64 { return float64(stats.HeapIdle) },
-	"HeapInuse":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapInuse) },
+	"GCSys":        getMetricField("GCSys"),
+	"HeapAlloc":    getMetricField("HeapAlloc"),
+	"HeapIdle":     getMetricField("HeapIdle"),
+	"HeapInuse":    getMetricField("HeapInuse"),
 	"HeapObjects":  getMetricField("HeapObjects"),
 	"HeapReleased": getMetricField("HeapReleased"),
 	"HeapSys":      getMetricField("HeapSys"),
