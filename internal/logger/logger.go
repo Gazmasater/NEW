@@ -33,5 +33,5 @@ func (l *CustomLogger) Sync() error {
 	if l == nil {
 		return fmt.Errorf("логгер не был создан")
 	}
-	return l.Logger.Sync() // Исправленный вызов метода Sync
+	return l.Logger.Sync()
 }

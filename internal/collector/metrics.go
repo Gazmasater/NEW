@@ -4,19 +4,9 @@ import (
 	"math/rand"
 	"reflect"
 	"runtime"
-	"sync"
 )
 
 type MetricField func(stats *runtime.MemStats) float64
-
-var pollCountMutex sync.Mutex
-var pollCount = 0
-
-func incrementPollCount() {
-	pollCountMutex.Lock()
-	defer pollCountMutex.Unlock()
-	pollCount++
-}
 
 func getMetricField(fieldName string) MetricField {
 	switch fieldName {
@@ -24,13 +14,6 @@ func getMetricField(fieldName string) MetricField {
 		return func(_ *runtime.MemStats) float64 { return rand.Float64() }
 	case "GCCPUFraction":
 		return func(stats *runtime.MemStats) float64 { return stats.GCCPUFraction }
-	case "PollCount":
-		return func(_ *runtime.MemStats) float64 {
-			incrementPollCount()
-			pollCountMutex.Lock()
-			defer pollCountMutex.Unlock()
-			return float64(pollCount)
-		}
 	default:
 		return func(stats *runtime.MemStats) float64 {
 			val := reflect.ValueOf(stats).Elem().FieldByName(fieldName)
@@ -47,7 +30,6 @@ func createMetricFieldMap(fieldNames ...string) map[string]MetricField {
 	for _, fieldName := range fieldNames {
 		fieldMap[fieldName] = getMetricField(fieldName)
 	}
-	fieldMap["PollCount"] = getMetricField("PollCount") // Добавляем PollCount в MetricFieldMap
 	return fieldMap
 }
 
