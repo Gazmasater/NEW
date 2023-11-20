@@ -14,6 +14,8 @@ import (
 func main() {
 	cfg := config.Must(config.New())
 
+	collector.Init()
+
 	_, err := logger.New()
 	if err != nil {
 

@@ -2,39 +2,41 @@ package collector
 
 import (
 	"math/rand"
+	"reflect"
 	"runtime"
 )
 
 type MetricField func(stats *runtime.MemStats) float64
 
-var MetricFieldMap = map[string]MetricField{
-	"Alloc":         func(stats *runtime.MemStats) float64 { return float64(stats.Alloc) },
-	"BuckHashSys":   func(stats *runtime.MemStats) float64 { return float64(stats.BuckHashSys) },
-	"Frees":         func(stats *runtime.MemStats) float64 { return float64(stats.Frees) },
-	"GCCPUFraction": func(stats *runtime.MemStats) float64 { return float64(stats.GCCPUFraction) },
+var MetricFieldMap = map[string]MetricField{}
 
-	"GCSys":        func(stats *runtime.MemStats) float64 { return float64(stats.GCSys) },
-	"HeapAlloc":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapAlloc) },
-	"HeapIdle":     func(stats *runtime.MemStats) float64 { return float64(stats.HeapIdle) },
-	"HeapInuse":    func(stats *runtime.MemStats) float64 { return float64(stats.HeapInuse) },
-	"HeapObjects":  func(stats *runtime.MemStats) float64 { return float64(stats.HeapObjects) },
-	"HeapReleased": func(stats *runtime.MemStats) float64 { return float64(stats.HeapReleased) },
-	"HeapSys":      func(stats *runtime.MemStats) float64 { return float64(stats.HeapSys) },
-	"LastGC":       func(stats *runtime.MemStats) float64 { return float64(stats.LastGC) },
-	"Lookups":      func(stats *runtime.MemStats) float64 { return float64(stats.Lookups) },
-	"MCacheInuse":  func(stats *runtime.MemStats) float64 { return float64(stats.MCacheInuse) },
-	"MCacheSys":    func(stats *runtime.MemStats) float64 { return float64(stats.MCacheSys) },
-	"MSpanInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.MSpanInuse) },
-	"MSpanSys":     func(stats *runtime.MemStats) float64 { return float64(stats.MSpanSys) },
-	"Mallocs":      func(stats *runtime.MemStats) float64 { return float64(stats.Mallocs) },
-	"NextGC":       func(stats *runtime.MemStats) float64 { return float64(stats.NextGC) },
-	"NumForcedGC":  func(stats *runtime.MemStats) float64 { return float64(stats.NumForcedGC) },
-	"NumGC":        func(stats *runtime.MemStats) float64 { return float64(stats.NumGC) },
-	"OtherSys":     func(stats *runtime.MemStats) float64 { return float64(stats.OtherSys) },
-	"PauseTotalNs": func(stats *runtime.MemStats) float64 { return float64(stats.PauseTotalNs) },
-	"StackInuse":   func(stats *runtime.MemStats) float64 { return float64(stats.StackInuse) },
-	"StackSys":     func(stats *runtime.MemStats) float64 { return float64(stats.StackSys) },
-	"Sys":          func(stats *runtime.MemStats) float64 { return float64(stats.Sys) },
-	"TotalAlloc":   func(stats *runtime.MemStats) float64 { return float64(stats.TotalAlloc) },
-	"RandomValue":  func(_ *runtime.MemStats) float64 { return rand.Float64() },
+// generateFieldFunc generates a function for the specified field in MemStats
+func generateFieldFunc(fieldName string) MetricField {
+	return func(stats *runtime.MemStats) float64 {
+		val := reflect.ValueOf(*stats)
+		field := val.FieldByName(fieldName)
+		return float64(reflect.Indirect(field).Uint()) // Assuming the fields are uintegers, adjust as needed
+	}
+}
+
+// initializeMetricFieldMap initializes the MetricFieldMap with field names and corresponding functions
+func initializeMetricFieldMap() {
+	fields := []string{
+		"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc",
+		"HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys",
+		"LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys",
+		"Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs",
+		"StackInuse", "StackSys", "Sys", "TotalAlloc",
+	}
+
+	for _, field := range fields {
+		MetricFieldMap[field] = generateFieldFunc(field)
+	}
+
+	// Adding RandomValue to MetricFieldMap
+	MetricFieldMap["RandomValue"] = func(_ *runtime.MemStats) float64 { return rand.Float64() }
+}
+
+func Init() {
+	initializeMetricFieldMap()
 }

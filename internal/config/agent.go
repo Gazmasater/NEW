@@ -31,7 +31,10 @@ func New() (*AgentConfig, error) {
 		key           string
 		rateLimit     int
 	)
-	log, _ := logger.New()
+	log, err := logger.New()
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания логгера: %w", err)
+	}
 
 	flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
 	if _, err := url.Parse(addr); err != nil {
@@ -84,6 +87,7 @@ func New() (*AgentConfig, error) {
 	if err != nil {
 
 		fmt.Println("Ошибка при преобразовании строки в число:", err)
+		return nil, err
 
 	}
 
