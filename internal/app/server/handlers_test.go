@@ -2,99 +2,23 @@ package server
 
 import (
 	"database/sql"
-	"net/http"
 	"testing"
 
-	"go.uber.org/zap"
-	"project.com/internal/config"
-	"project.com/internal/storage"
+	_ "github.com/denisenkom/go-mssqldb" // Вам нужно использовать драйвер вашей базы данных
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func Test_app_Ping(t *testing.T) {
-	type fields struct {
-		Storage *storage.MemStorage
-		Logger  *zap.Logger
-		Config  *config.ServerConfig
-		DB      *sql.DB
+func TestDBConnection(t *testing.T) {
+	// Создание временной базы данных SQLite для тестирования подключения
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatalf("error '%s' was not expected when opening a database connection", err)
 	}
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			mc := &app{
-				Storage: tt.fields.Storage,
-				Logger:  tt.fields.Logger,
-				Config:  tt.fields.Config,
-				DB:      tt.fields.DB,
-			}
-			mc.Ping(tt.args.w, tt.args.r)
-		})
-	}
-}
+	defer db.Close()
 
-func Test_app_HandlePostRequest(t *testing.T) {
-	type fields struct {
-		Storage *storage.MemStorage
-		Logger  *zap.Logger
-		Config  *config.ServerConfig
-		DB      *sql.DB
-	}
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
-			mc := &app{
-				Storage: tt.fields.Storage,
-				Logger:  tt.fields.Logger,
-				Config:  tt.fields.Config,
-				DB:      tt.fields.DB,
-			}
-			mc.HandlePostRequest(tt.args.w, tt.args.r)
-		})
-	}
-}
-
-func Test_app_SetupDatabase(t *testing.T) {
-	type fields struct {
-		Storage *storage.MemStorage
-		Logger  *zap.Logger
-		Config  *config.ServerConfig
-		DB      *sql.DB
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mc := &app{
-				Storage: tt.fields.Storage,
-				Logger:  tt.fields.Logger,
-				Config:  tt.fields.Config,
-				DB:      tt.fields.DB,
-			}
-			if err := mc.SetupDatabase(); (err != nil) != tt.wantErr {
-				t.Errorf("app.SetupDatabase() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	// Проверка подключения к базе данных
+	err = db.Ping()
+	if err != nil {
+		t.Fatalf("error connecting to the database: %s", err)
 	}
 }

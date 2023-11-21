@@ -167,3 +167,20 @@ func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
 
 	return nil
 }
+
+func SendSysMetricsToServer(metrics models.SysMetrics, address string) {
+	metricsList := []*models.Metrics{
+		{
+			ID:    "TotalMemory",
+			MType: "gauge",
+			Value: &metrics.TotalMemory,
+		},
+		{
+			ID:    "FreeMemory",
+			MType: "gauge",
+			Value: &metrics.FreeMemory,
+		},
+	}
+
+	SendDataToServer(metricsList, address)
+}
