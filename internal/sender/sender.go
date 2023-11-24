@@ -20,7 +20,7 @@ import (
 func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 	for _, metric := range metrics {
 
-		data := getMetricData(metric)
+		data := GetMetricData(metric)
 
 		jsonData, err := json.Marshal(data)
 		if err != nil {
@@ -71,26 +71,11 @@ func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 			return fmt.Errorf("ошибка при декодировании ответа:%w", err)
 		}
 
-		getMetricData(responseMetrics)
+		GetMetricData(responseMetrics)
 
 	}
 
 	return nil
-}
-
-func getMetricData(metric models.Metrics) any {
-	data := map[string]any{
-		"type": metric.MType,
-		"id":   metric.ID,
-	}
-
-	if metric.MType == "counter" {
-		data["delta"] = *metric.Delta
-	} else {
-		data["value"] = *metric.Value
-	}
-
-	return data
 }
 
 func ComputeHash(data []byte, key string) string {
