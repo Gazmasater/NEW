@@ -63,6 +63,6 @@ func addMetric(metrics *[]models.Metrics, id string, value float64) {
 	*metrics = append(*metrics, models.Metrics{
 		MType: "gauge",
 		ID:    id,
-		Value: newValue, // Передача указателя в поле Value
+		Value: newValue,
 	})
 }
