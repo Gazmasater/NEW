@@ -318,7 +318,6 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Если метрика отсутствует и в файле, и в хранилище, отправьте статус "Not Found"
 		http.Error(w, "Метрика не найдена", http.StatusNotFound)
 		return
 	}
@@ -600,14 +599,14 @@ func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 
 func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 	var query string
-	var args []interface{}
+	var args []any
 
 	if metric.MType == "gauge" {
 		query = "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3)"
-		args = []interface{}{metric.ID, metric.MType, metric.Value}
+		args = []any{metric.ID, metric.MType, metric.Value}
 	} else if metric.MType == "counter" {
 		query = "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3)"
-		args = []interface{}{metric.ID, metric.MType, metric.Delta}
+		args = []any{metric.ID, metric.MType, metric.Delta}
 	} else {
 		log.Printf("Неизвестный тип метрики: %s", metric.MType)
 		return fmt.Errorf("неизвестный тип метрики")
@@ -872,7 +871,7 @@ func KeyHashMiddleware(expectedKey string, next http.Handler) http.Handler {
 			tee := io.TeeReader(body, h)
 
 			// Прочитать JSON из тела запроса, если это JSON
-			var jsonData interface{}
+			var jsonData any
 			decoder := json.NewDecoder(tee)
 			_ = decoder.Decode(&jsonData)
 

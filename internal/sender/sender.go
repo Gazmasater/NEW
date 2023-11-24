@@ -89,17 +89,9 @@ func SendDataToServerBatch(metrics []models.Metrics, serverURL string) error {
 	data := make([]map[string]any, len(metrics))
 
 	for i, metric := range metrics {
-		metricData := make(map[string]any)
-		metricData["id"] = metric.ID
-		metricData["type"] = metric.MType
 
-		if metric.MType == "counter" {
-			metricData["delta"] = *metric.Delta
-		} else {
-			metricData["value"] = *metric.Value
-		}
+		data[i] = GetMetricData(metric).(map[string]any)
 
-		data[i] = metricData
 	}
 
 	jsonData, err := json.Marshal(data)
