@@ -71,12 +71,7 @@ func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 			return fmt.Errorf("ошибка при декодировании ответа:%w", err)
 		}
 
-		// Обновление значения метрики
-		if metric.MType == "counter" {
-			*metric.Delta = *responseMetrics.Delta
-		} else {
-			*metric.Value = *responseMetrics.Value
-		}
+		getMetricData(responseMetrics)
 
 	}
 
