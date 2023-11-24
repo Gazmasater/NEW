@@ -1,6 +1,6 @@
 module project.com
 
-go 1.20
+go 1.21.4
 
 require (
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -8,7 +8,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 )
 
 require (
@@ -20,5 +20,5 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 )
