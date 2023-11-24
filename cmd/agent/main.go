@@ -1,91 +1,67 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"net/http"
-	"net/url"
-	"os"
-	"strconv"
+
 	"time"
 
-	"project.com/internal"
+	"project.com/internal/collector"
+	"project.com/internal/config"
+	"project.com/internal/logger"
+	"project.com/internal/models"
+	"project.com/internal/sender"
 )
 
-func sendDataToServer(metrics []*internal.Metric, serverURL string) {
-
-	for _, metric := range metrics {
-		serverURL := fmt.Sprintf("http://%s/update/%s/%s/%v", serverURL, metric.Type, metric.Name, metric.Value)
-		println("serverURL sendDataToServer  ", serverURL)
-		//Отправка POST-запроса
-		resp, err := http.Post(serverURL, "text/plain", nil)
-		if err != nil {
-			fmt.Println("Ошибка при отправке запроса:", err)
-			return
-		}
-		defer resp.Body.Close()
-
-	}
-}
-
 func main() {
+	cfg := config.Must(config.New())
 
-	var (
-		reportSeconds int
-		pollSeconds   int
-		addr          string
-	)
+	log, err := logger.New()
+	if err != nil {
 
-	// Чтение переменных окружения или установка значений по умолчанию
-	addrEnv := os.Getenv("ADDRESS")
-	if addrEnv != "" {
-		addr = addrEnv
-	} else {
-		flag.StringVar(&addr, "a", "localhost:8080", "Адрес HTTP-сервера")
-		if _, err := url.Parse(addr); err != nil {
-			fmt.Printf("Ошибка: неверный формат адреса сервера в модуле агента: %s\n", addr)
-			return
-		}
-	}
-	// Проверка валидности адреса
-
-	reportSecondsEnv := os.Getenv("REPORT_INTERVAL")
-	if reportSecondsEnv != "" {
-		reportSeconds, _ = strconv.Atoi(reportSecondsEnv)
-	} else {
-		flag.IntVar(&reportSeconds, "r", 10, "Частота отправки метрик на сервер (в секундах)")
-		if reportSeconds <= 0 {
-			fmt.Println("Частота отправки метрик должна быть положительным числом.")
-			flag.Usage()
-			os.Exit(1)
-		}
-
+		fmt.Printf("Ошибка при создании логгера: %s\n", err)
+		return
 	}
 
-	pollSecondsEnv := os.Getenv("POLL_INTERVAL")
-	if pollSecondsEnv != "" {
-		pollSeconds, _ = strconv.Atoi(pollSecondsEnv)
-	} else {
-		flag.IntVar(&pollSeconds, "p", 2, "Частота опроса метрик из пакета runtime (в секундах)")
-		if pollSeconds <= 0 {
-			fmt.Println("Частота опроса метрик должна быть положительным числом.")
-			flag.Usage()
-			os.Exit(1)
-		}
-	}
+	pollInterval := time.Duration(cfg.PollInterval) * time.Second
+	reportInterval := time.Duration(cfg.ReportInterval) * time.Second
 
-	flag.Parse()
+	metricsChan := collector.CollectMetrics(pollInterval, cfg.Address)
+	metricsChanTotal := make(chan models.SysMetrics)
 
-	pollInterval := time.Duration(pollSeconds) * time.Second
-	reportInterval := time.Duration(reportSeconds) * time.Second
+	requestChannel := make(chan struct{}, cfg.RateLimit)
 
-	metricsChan := internal.CollectMetrics(pollInterval, addr)
-
-	// Горутина  отправки метрик на сервер с интервалом в reportInterval секунд
+	// Горутина отправки метрик на сервер
 	go func() {
 		for range time.Tick(reportInterval) {
-			metrics := <-metricsChan
-			sendDataToServer(metrics, addr)
+			select {
+			case metrics := <-metricsChan:
+
+				select {
+				case requestChannel <- struct{}{}:
+					go func() {
+						sender.SendDataToServer(metrics, cfg.Address) // POST-запрос по пути /update/
+						<-requestChannel
+					}()
+				default:
+
+					log.Info("Превышен лимит одновременных запросов, метрика будет отправлена в следующем цикле.")
+				}
+			case metrics := <-metricsChanTotal:
+				sender.SendSysMetricsToServer(metrics, cfg.Address)
+			}
+		}
+	}()
+
+	go func() {
+		for range time.Tick(pollInterval) {
+			totalMemory, freeMemory, cpuUtilization := collector.CollectAdditionalMetrics()
+			metrics := models.SysMetrics{
+				TotalMemory:    totalMemory,
+				FreeMemory:     freeMemory,
+				CPUUtilization: cpuUtilization,
+			}
+
+			metricsChanTotal <- metrics
 		}
 	}()
 
