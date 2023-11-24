@@ -19,22 +19,16 @@ import (
 
 func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 	for _, metric := range metrics {
-		var metricValue any
-		if metric.MType == "counter" {
-			metricValue = *metric.Delta
-		} else {
-			metricValue = *metric.Value
-		}
 
 		data := map[string]any{
 			"type": metric.MType,
 			"id":   metric.ID,
 		}
 
-		if metric.MType == "gauge" {
-			data["value"] = metricValue
-		} else if metric.MType == "counter" {
-			data["delta"] = metricValue
+		if metric.MType == "counter" {
+			data["delta"] = *metric.Delta
+		} else {
+			data["value"] = *metric.Value
 		}
 
 		jsonData, err := json.Marshal(data)
