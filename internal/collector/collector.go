@@ -11,15 +11,15 @@ import (
 	"project.com/internal/models"
 )
 
-func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*models.Metrics {
-	metricsChan := make(chan []*models.Metrics)
+func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []models.Metrics {
+	metricsChan := make(chan []models.Metrics)
 	var pollCount int64 = 0
 	println("CollectMetrics serverURL", serverURL)
 	var memStats runtime.MemStats
 
 	go func() {
 		for {
-			metrics := make([]*models.Metrics, 0)
+			metrics := make([]models.Metrics, 0)
 
 			runtime.ReadMemStats(&memStats)
 
@@ -27,7 +27,7 @@ func CollectMetrics(pollInterval time.Duration, serverURL string) <-chan []*mode
 				addMetric(&metrics, id, getField(&memStats))
 			}
 
-			metrics = append(metrics, &models.Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
+			metrics = append(metrics, models.Metrics{MType: "counter", ID: "PollCount", Delta: &pollCount})
 
 			pollCount++
 
@@ -58,10 +58,11 @@ func CollectAdditionalMetrics() (float64, float64, []float64) {
 	return totalMemory, float64(vmStat.Free), cpuInfo
 }
 
-func addMetric(metrics *[]*models.Metrics, id string, value float64) {
-	*metrics = append(*metrics, &models.Metrics{
+func addMetric(metrics *[]models.Metrics, id string, value float64) {
+	newValue := &value // Получение указателя на значение float64
+	*metrics = append(*metrics, models.Metrics{
 		MType: "gauge",
 		ID:    id,
-		Value: &value,
+		Value: newValue, // Передача указателя в поле Value
 	})
 }
