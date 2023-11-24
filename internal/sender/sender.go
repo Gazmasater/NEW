@@ -17,7 +17,7 @@ import (
 	"project.com/internal/models"
 )
 
-func SendDataToServer(metrics []*models.Metrics, serverURL string) error {
+func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 	for _, metric := range metrics {
 		var metricValue any
 		if metric.MType == "counter" {
@@ -105,7 +105,7 @@ func ComputeHash(data []byte, key string) string {
 	return hex.EncodeToString(hash)
 }
 
-func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
+func SendDataToServerBatch(metrics []models.Metrics, serverURL string) error {
 	data := make([]map[string]interface{}, len(metrics))
 
 	for i, metric := range metrics {
@@ -169,7 +169,7 @@ func SendDataToServerBatch(metrics []*models.Metrics, serverURL string) error {
 }
 
 func SendSysMetricsToServer(metrics models.SysMetrics, address string) {
-	metricsList := []*models.Metrics{
+	metricsList := []models.Metrics{
 		{
 			ID:    "TotalMemory",
 			MType: "gauge",
