@@ -106,10 +106,10 @@ func ComputeHash(data []byte, key string) string {
 }
 
 func SendDataToServerBatch(metrics []models.Metrics, serverURL string) error {
-	data := make([]map[string]interface{}, len(metrics))
+	data := make([]map[string]any, len(metrics))
 
 	for i, metric := range metrics {
-		metricData := make(map[string]interface{})
+		metricData := make(map[string]any)
 		metricData["id"] = metric.ID
 		metricData["type"] = metric.MType
 
@@ -148,7 +148,7 @@ func SendDataToServerBatch(metrics []models.Metrics, serverURL string) error {
 		return fmt.Errorf("ошибка при создании запроса:%w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Encoding", "gzip") // Указываем кодирование gzip
+	req.Header.Set("Content-Encoding", "gzip")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
