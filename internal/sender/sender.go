@@ -20,7 +20,7 @@ import (
 func SendDataToServer(metrics []models.Metrics, serverURL string) error {
 	for _, metric := range metrics {
 
-		data := GetMetricData(metric)
+		data := GetMetricData(metric) //Получение значения метрик в зависимости от типа
 
 		jsonData, err := json.Marshal(data)
 		if err != nil {

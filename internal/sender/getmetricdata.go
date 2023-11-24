@@ -2,7 +2,8 @@ package sender
 
 import "project.com/internal/models"
 
-func getMetricData(metric models.Metrics) any {
+// Получение значения метрик в зависимости от типа
+func GetMetricData(metric models.Metrics) any {
 	data := map[string]any{
 		"type": metric.MType,
 		"id":   metric.ID,
