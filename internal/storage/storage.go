@@ -53,6 +53,14 @@ func (ms *MemStorage) SaveGauge(metricType, metricName string, metricValue float
 
 }
 
+func (ms *MemStorage) SaveCounter(metricType, metricName string, metricValue int64) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	ms.counters[metricName] = metricValue
+
+}
+
 func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, bool) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
