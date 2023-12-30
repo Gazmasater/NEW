@@ -76,11 +76,6 @@ func (ms *MemStorage) GetMetric(metricType, metricName string) (interface{}, boo
 	}
 }
 
-func (ms *MemStorage) PrbocessMetrics(metricType, metricName string, metricValue interface{}) {
-	// Сохраняем метрики в хранил.
-	ms.SaveMetric(metricType, metricName, metricValue)
-}
-
 func (ms *MemStorage) GetAllMetrics() []models.Metrics {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
