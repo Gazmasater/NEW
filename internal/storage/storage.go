@@ -57,7 +57,7 @@ func (ms *MemStorage) SaveCounter(metricType, metricName string, metricValue int
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
-	ms.counters[metricName] = metricValue
+	ms.counters[metricName] += metricValue
 
 }
 
