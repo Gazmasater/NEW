@@ -304,19 +304,21 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 
 	// Если метрика отсутствует в файле, проверьте хранилище
 	if !exists {
-		if metric.MType == "gauge" {
+		switch metric.MType {
+		case "gauge":
 			value, ok := mc.Storage.GetGauges()[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
 				return
 			}
-		} else if metric.MType == "counter" {
+		case "counter":
 			value, ok := mc.Storage.GetCounters()[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
 				mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, value)
 				return
+
 			}
 		}
 
