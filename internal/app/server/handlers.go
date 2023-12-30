@@ -325,10 +325,12 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if metric.MType == "gauge" {
+	switch metric.MType {
+	case "gauge":
 		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
-	} else if metric.MType == "counter" {
+	case "counter":
 		mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
+
 	}
 }
 
