@@ -126,15 +126,9 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 
 	if metricType == "counter" {
 
-		if metricValue == "none" {
-			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
-			return
-
-		}
-
 		num, err := strconv.ParseInt(metricValue, 10, 64)
-		if err != nil {
-			http.Error(w, "StatusNotFound", http.StatusNotFound)
+		if metricValue == "none" || err != nil {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
 
