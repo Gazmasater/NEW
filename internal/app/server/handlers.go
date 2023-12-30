@@ -602,17 +602,18 @@ func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 	var query string
 	var args []interface{}
 
-	if metric.MType == "gauge" {
+	switch metric.MType {
+	case "gauge":
 		query = "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3)"
 		args = []interface{}{metric.ID, metric.MType, metric.Value}
-	} else if metric.MType == "counter" {
+	case "counter":
 		query = "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3)"
 		args = []interface{}{metric.ID, metric.MType, metric.Delta}
-	} else {
+	default:
 		log.Printf("Неизвестный тип метрики: %s", metric.MType)
 		return fmt.Errorf("неизвестный тип метрики")
-	}
 
+	}
 	if mc.DB == nil {
 		log.Println("Ошибка: mc.DB не инициализирован.")
 		return fmt.Errorf("mc.DB не инициализирован")
