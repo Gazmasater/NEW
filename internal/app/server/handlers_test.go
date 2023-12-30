@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/denisenkom/go-mssqldb" // Вам нужно использовать драйвер вашей базы данных
+	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/mattn/go-sqlite3"
 )
 
