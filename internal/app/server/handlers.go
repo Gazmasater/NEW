@@ -150,12 +150,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 
 		}
 	}
-	if metricName == "" {
-		http.Error(w, "Metric name not provided", http.StatusBadRequest)
-		return
-	}
-
-	if (len(metricName) > 0) && (metricValue == "") {
+	if metricName == "" || (len(metricName) > 0 && metricValue == "") {
 		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 		return
 	}
