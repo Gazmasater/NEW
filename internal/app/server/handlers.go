@@ -149,7 +149,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 			} else {
 				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-				mc.Storage.SaveMetric(metricType, metricName, num1)
+				mc.Storage.SaveCounter(metricType, metricName, num1)
 				return
 			}
 
