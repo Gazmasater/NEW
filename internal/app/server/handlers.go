@@ -113,6 +113,83 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) {
+
+	contentType := r.Header.Get("Content-Type")
+
+	metricType := chi.URLParam(r, "metricType")
+	metricName := chi.URLParam(r, "metricName")
+	metricValue := chi.URLParam(r, "metricValue")
+
+	if metricType != "gauge" && metricType != "counter" {
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return
+	}
+
+	if metricType == "counter" {
+
+		if metricValue == "none" {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
+
+		}
+
+		num1, err := strconv.ParseInt(metricValue, 10, 64)
+		if err != nil {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return
+		}
+
+		if isInteger(metricValue) {
+			if contentType == "application/json" {
+
+				mc.Storage.SaveMetric(metricType, metricName, num1)
+				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
+				return
+			} else {
+				w.Write([]byte(strconv.FormatInt(num1, 10)))
+
+				mc.Storage.SaveMetric(metricType, metricName, num1)
+				return
+			}
+
+		} else {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
+
+		}
+	}
+	if metricName == "" {
+		http.Error(w, "Metric name not provided", http.StatusBadRequest)
+		return
+	}
+
+	if (len(metricName) > 0) && (metricValue == "") {
+		http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+		return
+	}
+
+	if metricType == "gauge" {
+		num, err := strconv.ParseFloat(metricValue, 64)
+		if err != nil {
+			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
+			return
+		}
+
+		if contentType == "application/json" {
+			mc.Storage.SaveMetric(metricType, metricName, num)
+		} else {
+			responseData := []byte(strconv.FormatFloat(num, 'f', -1, 64))
+			w.Write(responseData)
+			mc.Storage.SaveMetric(metricType, metricName, num)
+			return
+		}
+
+		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+	}
+
+}
+
 // Хендлер для Get запроса
 func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	println("HandleGetRequest")
