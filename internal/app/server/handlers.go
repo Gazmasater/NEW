@@ -132,7 +132,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 
 		}
 
-		num1, err := strconv.ParseInt(metricValue, 10, 64)
+		num, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
 			return
@@ -140,9 +140,9 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 
 		if isInteger(metricValue) {
 
-			w.Write([]byte(strconv.FormatInt(num1, 10)))
+			w.Write([]byte(strconv.FormatInt(num, 10)))
 
-			mc.Storage.SaveCounter(metricType, metricName, num1)
+			mc.Storage.SaveCounter(metricType, metricName, num)
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
