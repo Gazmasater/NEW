@@ -143,7 +143,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 		if isInteger(metricValue) {
 			if contentType == "application/json" {
 
-				mc.Storage.SaveMetric(metricType, metricName, num1)
+				mc.Storage.SaveCounter(metricType, metricName, num1)
 				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
