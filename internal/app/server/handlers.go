@@ -141,17 +141,10 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if isInteger(metricValue) {
-			if contentType == "application/json" {
 
-				mc.Storage.SaveCounter(metricType, metricName, num1)
-				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
-				return
-			} else {
-				w.Write([]byte(strconv.FormatInt(num1, 10)))
+			w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-				mc.Storage.SaveCounter(metricType, metricName, num1)
-				return
-			}
+			mc.Storage.SaveCounter(metricType, metricName, num1)
 
 		} else {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
