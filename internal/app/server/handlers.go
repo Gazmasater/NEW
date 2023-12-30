@@ -115,8 +115,6 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) {
 
-	contentType := r.Header.Get("Content-Type")
-
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
 	metricValue := chi.URLParam(r, "metricValue")
@@ -169,16 +167,11 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		if contentType == "application/json" {
-			mc.Storage.SaveGauge(metricType, metricName, num)
-		} else {
-			responseData := []byte(strconv.FormatFloat(num, 'f', -1, 64))
-			w.Write(responseData)
-			mc.Storage.SaveGauge(metricType, metricName, num)
-			return
-		}
+		mc.Storage.SaveGauge(metricType, metricName, num)
 
-		w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+		responseData := []byte(strconv.FormatFloat(num, 'f', -1, 64))
+		w.Write(responseData)
+
 	}
 
 }
