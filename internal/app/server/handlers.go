@@ -177,11 +177,11 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if contentType == "application/json" {
-			mc.Storage.SaveMetric(metricType, metricName, num)
+			mc.Storage.SaveGauge(metricType, metricName, num)
 		} else {
 			responseData := []byte(strconv.FormatFloat(num, 'f', -1, 64))
 			w.Write(responseData)
-			mc.Storage.SaveMetric(metricType, metricName, num)
+			mc.Storage.SaveGauge(metricType, metricName, num)
 			return
 		}
 
