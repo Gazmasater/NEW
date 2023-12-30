@@ -252,14 +252,16 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	// Отправляем значение метрики
 	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
-		if metric.MType == "counter" {
+		switch metric.MType {
+		case "counter":
 			mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
-		} else if metric.MType == "gauge" {
+		case "gauge":
 			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
-		}
-	} else {
-		http.Error(w, "Метрика не найдена", http.StatusNotFound)
 
+		default:
+			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+
+		}
 	}
 
 }
