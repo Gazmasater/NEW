@@ -26,7 +26,6 @@ import (
 func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 	contentType := r.Header.Get("Content-Type")
-	println("HandlePostRequest")
 
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
@@ -40,7 +39,6 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 	if metricType == "counter" {
 
 		if metricValue == "none" {
-			println("metricValuenone")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 
@@ -85,7 +83,6 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 		num, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
-			println("strconv.ParseFloat")
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
@@ -127,7 +124,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 	if metricType == "counter" {
 
 		num, err := strconv.ParseInt(metricValue, 10, 64)
-		if metricValue == "none" || err != nil {
+		if err != nil {
 			http.Error(w, "StatusBadRequest", http.StatusBadRequest)
 			return
 		}
@@ -268,10 +265,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		*currentValue.Delta += *metric.Delta
 		println("currentValue   currentValueИМЯ", currentValue.MType, currentValue.ID, *currentValue.Delta)
 
-		// Обновляем или создаем метрику в слайсе
-
-		// Сохраняем обн}овленные метрики в хранилище
-		//mc.Storage.SaveMetric(metric.MType, metric.ID, *currentValue.Delta)
 		mc.Storage.GetCounters()[metric.ID] = *currentValue.Delta
 		metricsFromFile[metric.ID] = currentValue
 
