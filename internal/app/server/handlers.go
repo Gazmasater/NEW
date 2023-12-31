@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/lib/pq"
@@ -379,25 +378,6 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 		mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 
 	}
-}
-
-func LoggingMiddleware(logger *zap.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		startTime := time.Now()
-
-		recorder := newResponseRecorder(w)
-		next.ServeHTTP(recorder, r)
-
-		elapsed := time.Since(startTime)
-		logger.Info("Request processed",
-			zap.String("uri", r.RequestURI),
-			zap.String("method", r.Method),
-			zap.Duration("elapsed_time", elapsed),
-			zap.Int("status_code", recorder.Status()),
-			zap.Int("response_size", recorder.Size()),
-		)
-	})
 }
 
 type responseRecorder struct {
