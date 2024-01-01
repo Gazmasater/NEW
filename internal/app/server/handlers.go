@@ -614,7 +614,7 @@ func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 			return err
 		}
 	}
-	// Теперь выполняем вставку новой метрики
+
 	// Теперь выполняем вставку новой метрики
 	_, err = mc.DB.Exec(query, args...)
 	if err != nil {
