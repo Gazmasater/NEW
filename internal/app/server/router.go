@@ -13,9 +13,6 @@ func (mc *app) Route() *chi.Mux {
 	})
 	r.Use(GzipMiddleware)
 
-	// r.Use(func(next http.Handler) http.Handler {
-	// 	return LoggingMiddleware(mc.Logger, next)
-	// })
 	r.Use(LoggerMiddleware)
 	r.Post("/update/", mc.updateHandlerJSON)
 	r.Post("/updates/", mc.MetricsHandler)
