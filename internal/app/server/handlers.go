@@ -614,7 +614,7 @@ func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 			return err
 		}
 	}
-
+	// Теперь выполняем вставку новой метрики
 	// Теперь выполняем вставку новой метрики
 	_, err = mc.DB.Exec(query, args...)
 	if err != nil {
@@ -622,21 +622,6 @@ func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 		return err
 	}
 	return nil
-}
-
-func GzipMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			// Определяем, поддерживает ли клиент сжатие Gzip
-			w.Header().Set("Content-Encoding", "gzip")
-			gz := gzip.NewWriter(w)
-			defer gz.Close()
-			gzWriter := GzipResponseWriter{Writer: gz, ResponseWriter: w}
-			next.ServeHTTP(gzWriter, r)
-		} else {
-			next.ServeHTTP(w, r)
-		}
-	})
 }
 
 type GzipResponseWriter struct {
