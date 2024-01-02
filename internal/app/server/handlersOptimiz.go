@@ -58,3 +58,40 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 	}
 
 }
+
+func (mc *app) HandleGetRequestOptimiz(w http.ResponseWriter, r *http.Request) {
+
+	// Обработка GET-запроса
+	metricType := chi.URLParam(r, "metricType")
+	metricName := chi.URLParam(r, "metricName")
+
+	if metricType != "gauge" && metricType != "counter" {
+		http.Error(w, "StatusNotFound", http.StatusNotFound)
+		return
+	}
+
+	switch metricType {
+
+	case "counter":
+
+		_, found := mc.Storage.GetCounters()[metricName]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return // Add return statement here
+
+		}
+		// Handle counter case response here
+
+	case "gauge":
+
+		num, found := mc.Storage.GetGauges()[metricName]
+		if !found {
+			http.Error(w, "StatusNotFound", http.StatusNotFound)
+			return // Add return statement here
+
+		} else {
+			// Handle gauge case response here
+			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+		}
+	}
+}
