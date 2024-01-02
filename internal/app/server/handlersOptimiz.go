@@ -60,7 +60,7 @@ func (mc *app) HandlePostRequestOptimiz(w http.ResponseWriter, r *http.Request) 
 }
 
 func (mc *app) HandleGetRequestOptimiz(w http.ResponseWriter, r *http.Request) {
-
+	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
 	metricName := chi.URLParam(r, "metricName")
@@ -71,27 +71,36 @@ func (mc *app) HandleGetRequestOptimiz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch metricType {
-
 	case "counter":
-
-		_, found := mc.Storage.GetCounters()[metricName]
+		num, found := mc.Storage.GetCounters()[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return // Add return statement here
 
 		}
-		// Handle counter case response here
+		if contentType == "application/json" {
+			mc.createAndSendUpdatedMetricCounterJSON(w, metricName, metricType, int64(num))
+			return
+		} else {
+
+			w.Write([]byte(strconv.FormatInt(num, 10)))
+		}
+		return
 
 	case "gauge":
 
 		num, found := mc.Storage.GetGauges()[metricName]
 		if !found {
 			http.Error(w, "StatusNotFound", http.StatusNotFound)
-			return // Add return statement here
 
+		}
+		if contentType == "application/json" {
+			mc.createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
+			return
 		} else {
-			// Handle gauge case response here
+
 			w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 		}
+
 	}
+
 }
