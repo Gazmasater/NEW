@@ -147,7 +147,7 @@ func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 
 		}
 		if contentType == "application/json" {
-			createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
+			mc.createAndSendUpdatedMetricJSON(w, metricName, metricType, float64(num))
 			return
 		} else {
 
@@ -248,7 +248,7 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		case "counter":
 			mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *updatedMetric.Delta)
 		case "gauge":
-			createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
+			mc.createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *updatedMetric.Value)
 
 		default:
 			http.Error(w, "Метрика не найдена", http.StatusNotFound)
@@ -301,7 +301,7 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 			value, ok := mc.Storage.GetGauges()[metric.ID]
 			if ok {
 				// Метрика существует в хранилище, используйте значение из хранилища
-				createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
+				mc.createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, value)
 				return
 			}
 		case "counter":
@@ -321,7 +321,7 @@ func (mc *app) updateHandlerJSONValue(w http.ResponseWriter, r *http.Request) {
 
 	switch metric.MType {
 	case "gauge":
-		createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
+		mc.createAndSendUpdatedMetricJSON(w, metric.ID, metric.MType, *metricFromFile.Value)
 	case "counter":
 		mc.createAndSendUpdatedMetricCounterJSON(w, metric.ID, metric.MType, *metricFromFile.Delta)
 
@@ -351,7 +351,7 @@ func (r *responseRecorder) Size() int {
 	return r.size
 }
 
-func createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricType string, num float64) {
+func (mc *app) createAndSendUpdatedMetricJSON(w http.ResponseWriter, metricName, metricType string, num float64) {
 	updatedMetric := &models.Metrics{
 		ID:    metricName,
 		MType: metricType,
