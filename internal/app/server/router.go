@@ -21,9 +21,9 @@ func (mc *app) Route() *chi.Mux {
 
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequestOptimiz)
 
-	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequestOptimiz)
 
-	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequestOptimiz)
 
 	r.Get("/metrics", mc.HandleGetRequest)
 
