@@ -19,11 +19,11 @@ func (mc *app) Route() *chi.Mux {
 
 	r.Post("/value/", mc.updateHandlerJSONValue)
 
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequestOptimiz)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
 
-	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Post("/value/{metricType}/{metricName}", mc.HandleGetRequestOptimiz)
 
-	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequestOptimiz)
 
 	r.Get("/metrics", mc.HandleGetRequest)
 
