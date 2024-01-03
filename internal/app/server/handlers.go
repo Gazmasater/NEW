@@ -217,7 +217,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	// Обработка "gauge"
 	if metric.MType == "gauge" && metric.Value != nil {
 		// Обновляем или создаем метрику в слайсе
 		metricsFromFile[metric.ID] = metric
