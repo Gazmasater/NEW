@@ -111,7 +111,7 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
 // Хендлер для Get запроса
 func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
-	println("HandleGetRequest")
+
 	contentType := r.Header.Get("Content-Type")
 	// Обработка GET-запроса
 	metricType := chi.URLParam(r, "metricType")
@@ -123,7 +123,6 @@ func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if metricType == "counter" {
-		println("HandleGetRequest  counter", mc.Storage.GetCounters()[metricName])
 
 		num1, found := mc.Storage.GetCounters()[metricName]
 		if !found {
