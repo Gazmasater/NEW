@@ -158,6 +158,9 @@ func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
+
+	println("updateHandlerJSON!!!!!!!")
+
 	var metric models.Metrics
 
 	metricsFromFile := make(map[string]models.Metrics)
@@ -695,6 +698,7 @@ func (mc *app) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (mc *app) updateHandlerJSONforBatch(metrics []models.Metrics) error {
+
 	println("updateHandlerJSONforBatch")
 	// var metricsFromFile map[string]Metrics
 	var err error
