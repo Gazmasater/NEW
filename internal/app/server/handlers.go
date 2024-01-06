@@ -169,10 +169,14 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	if err := decoder.Decode(&metric); err != nil {
 		_ = fmt.Errorf("ошибка при разборе JSON: %w", err)
 		return
-
 	}
 
-	fmt.Printf("Metric: %+v\n", metric)
+	fmt.Printf("Metric ID: %s\n", metric.ID)
+	fmt.Printf("Metric Type: %s\n", metric.MType)
+	fmt.Printf("Metric Delta: %v\n", metric.Delta)
+	fmt.Printf("Metric Value: %v\n", metric.Value)
+
+	//fmt.Printf("Metric: %+v\n", metric)
 
 	// Прочитать тело запроса
 
@@ -184,6 +188,7 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	println("updateHandlerJSON  metric.MType ", metric.MType)
 
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
