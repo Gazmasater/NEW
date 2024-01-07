@@ -52,13 +52,14 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 		if isInteger(metricValue) {
 			if contentType == "application/json" {
 
-				mc.Storage.SaveMetric(metricType, metricName, num1)
+				mc.Storage.SaveCounter("counter", metricName, num1)
 				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
 
-				savedValue := mc.Storage.SaveMetric(metricType, metricName, num1)
-				w.Write([]byte(strconv.FormatInt(savedValue.(int64), 10)))
+				savedValue := mc.Storage.SaveCounter("counter", metricName, num1)
+				w.Write([]byte(strconv.FormatInt(savedValue, 10)))
+
 				return
 			}
 
@@ -89,11 +90,11 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 		if _, err1 := strconv.ParseFloat(metricValue, 64); err1 == nil {
 
 			if contentType == "application/json" {
-				mc.Storage.SaveMetric(metricType, metricName, num)
+				mc.Storage.SaveGauge("gauge", metricName, num)
 
 			} else {
 
-				mc.Storage.SaveMetric(metricType, metricName, num)
+				mc.Storage.SaveGauge("gauge", metricName, num)
 				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 				return
 			}

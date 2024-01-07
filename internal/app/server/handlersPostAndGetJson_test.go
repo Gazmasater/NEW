@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -160,8 +161,8 @@ func TestHandlePostandGetRequestGaugeJson(t *testing.T) {
 		expectedGet string // Ожидаемое содержимое GET запроса
 	}{
 		{
-			url:         fmt.Sprintf("/update/gauge/test1/%s", randomValueString),
-			reqBody:     []byte(fmt.Sprintf(`{"MType":"gauge","ID":"test1","Value":%s}`, randomValueString)),
+			url:         "/update/",
+			reqBody:     []byte(fmt.Sprintf(`{"Type":"gauge","ID":"test1","Value":%s}`, randomValueString)),
 			contentType: "application/json",
 			expected:    http.StatusOK,
 			expectedGet: randomValueString,
@@ -181,11 +182,16 @@ func TestHandlePostandGetRequestGaugeJson(t *testing.T) {
 	r.Post("/update/", mc.updateHandlerJSON)
 	r.Post("/value/", mc.updateHandlerJSONValue)
 
+	// Создаем тестовый сервер
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("URL: %s", tt.url), func(t *testing.T) {
 
 			// Формируем полный URL для тPOST-запроса
 			url := ts.URL + tt.url
+			println("FULL url для POST", url)
 
 			fmt.Println("POST Request Body:", string(tt.reqBody))
 			// Создаем тестовый запрос
@@ -208,8 +214,10 @@ func TestHandlePostandGetRequestGaugeJson(t *testing.T) {
 			}
 
 			// Создаем GET запрос
-			getURL := "http://localhost:8080" + "/value/gauge/test1"
-			getReq, err := http.NewRequest("GET", getURL, nil)
+			getURL := ts.URL + "/value/gauge/test1"
+			println("FULL url для GET", getURL)
+
+			getReq, err := http.NewRequest("POST", getURL, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
