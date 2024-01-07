@@ -43,7 +43,7 @@ func (ms *MemStorage) SaveCounter(metricType, metricName string, metricValue int
 	ms.counters[metricName] += metricValue
 
 }
-func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue any) {
+func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue any) any {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
@@ -51,10 +51,13 @@ func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue any)
 	case float64:
 		// Если metricValue - float64, сохраняем как Gauge
 		ms.gauges[metricName] = v
+		return ms.gauges[metricName] // Возвращаем значение Gauge (float64)
 	case int64:
 		// Если metricValue - int64, сохраняем как Counter
 		ms.counters[metricName] += v
-
+		return ms.counters[metricName] // Возвращаем значение Counter
+	default:
+		return nil // Возвращаем nil в случае неизвестного типа
 	}
 }
 
