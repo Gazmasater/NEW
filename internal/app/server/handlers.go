@@ -56,9 +56,9 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 				mc.createAndSendUpdatedMetricCounterTEXT(w, metricName, metricType, int64(num1))
 				return
 			} else {
-				w.Write([]byte(strconv.FormatInt(num1, 10)))
 
-				mc.Storage.SaveMetric(metricType, metricName, num1)
+				savedValue := mc.Storage.SaveMetric(metricType, metricName, num1)
+				w.Write([]byte(strconv.FormatInt(savedValue.(int64), 10)))
 				return
 			}
 
@@ -92,8 +92,9 @@ func (mc *app) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 				mc.Storage.SaveMetric(metricType, metricName, num)
 
 			} else {
-				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
+
 				mc.Storage.SaveMetric(metricType, metricName, num)
+				w.Write([]byte(strconv.FormatFloat(num, 'f', -1, 64)))
 				return
 			}
 
