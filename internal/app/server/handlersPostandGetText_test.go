@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
@@ -52,12 +53,16 @@ func TestHandlePostandGetRequestGaugeText(t *testing.T) {
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
 	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
+	// Создаем тестовый сервер
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("URL: %s", tt.url), func(t *testing.T) {
 			// Создаем тестовый сервер с использованием маршрутизатора Chi
 
 			// Формируем полный URL для тестирования POST-запроса
-			url := "http://localhost:8080" + tt.url
+			url := ts.URL + tt.url
 			// Создаем тестовый запрос
 			req, err := http.NewRequest("POST", url, bytes.NewBuffer(tt.reqBody))
 			if err != nil {
@@ -78,7 +83,7 @@ func TestHandlePostandGetRequestGaugeText(t *testing.T) {
 			}
 
 			// Создаем GET запрос
-			getURL := "http://localhost:8080" + fmt.Sprintf("/value/gauge/%s", randomMetrisstring)
+			getURL := ts.URL + fmt.Sprintf("/value/gauge/%s", randomMetrisstring)
 			getReq, err := http.NewRequest("GET", getURL, nil)
 			if err != nil {
 				t.Fatal(err)
@@ -180,11 +185,15 @@ func TestHandlePostandGetRequestCounterText(t *testing.T) {
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
 	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
 
+	// Создаем тестовый сервер
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("URL: %s", tt.url), func(t *testing.T) {
 
 			// Формируем полный URL для тестирования POST-запроса
-			url := "http://localhost:8080" + tt.url
+			url := ts.URL + tt.url
 
 			// Создаем тестовый запрос
 			req, err := http.NewRequest("POST", url, bytes.NewBuffer(tt.reqBody))
@@ -215,7 +224,7 @@ func TestHandlePostandGetRequestCounterText(t *testing.T) {
 			sum += value
 
 			// Создаем GET запрос
-			getURL := "http://localhost:8080" + "/value/counter/" + tt.metricName
+			getURL := ts.URL + "/value/counter/" + tt.metricName
 
 			getReq, err := http.NewRequest("GET", getURL, nil)
 			if err != nil {
