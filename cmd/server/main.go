@@ -37,6 +37,7 @@ func main() {
 	defer db.Close()
 
 	mStorage := storage.NewMemStorage()
+
 	app := server.Init(mStorage, serverCfg, db)
 	app.SetupDatabase()
 

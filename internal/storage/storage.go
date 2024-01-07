@@ -28,24 +28,6 @@ func (ms *MemStorage) GetGauges() map[string]float64 {
 	return ms.gauges
 }
 
-// func (ms *MemStorage) SaveMetric(metricType, metricName string, metricValue any) any {
-// 	ms.mu.Lock()
-// 	defer ms.mu.Unlock()
-
-// 	switch v := metricValue.(type) {
-// 	case float64:
-// 		// Если metricValue - float64, сохраняем как Gauge
-// 		ms.gauges[metricName] = v
-// 		return ms.gauges[metricName] // Возвращаем значение Gauge (float64)
-// 	case int64:
-// 		// Если metricValue - int64, сохраняем как Counter
-// 		ms.counters[metricName] += v
-// 		return ms.counters[metricName] // Возвращаем значение Counter
-// 	default:
-// 		return nil // Возвращаем nil в случае неизвестного типа
-// 	}
-// }
-
 func (ms *MemStorage) SaveGauge(metricType string, metricName string, metricValue float64) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
