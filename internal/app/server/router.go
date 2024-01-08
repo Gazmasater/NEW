@@ -14,7 +14,7 @@ func (mc *app) Route() *chi.Mux {
 	r.Use(GzipMiddleware)
 
 	r.Use(LoggerMiddleware)
-	r.Post("/update/", mc.updateHandlerJSON)
+	r.Post("/update/", mc.updateHandlerJSONOptimiz)
 	r.Post("/updates/", mc.MetricsHandler)
 
 	r.Post("/value/", mc.updateHandlerJSONValue)

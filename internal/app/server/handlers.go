@@ -161,8 +161,6 @@ func (mc *app) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 
 func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
-	println("updateHandlerJSON!!!!!!!")
-
 	var metric models.Metrics
 
 	metricsFromFile := make(map[string]models.Metrics)
@@ -173,15 +171,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Metric ID: %s\n", metric.ID)
-	fmt.Printf("Metric Type: %s\n", metric.MType)
-	fmt.Printf("Metric Delta: %v\n", metric.Delta)
-	fmt.Printf("Metric Value: %v\n", metric.Value)
-
-	//fmt.Printf("Metric: %+v\n", metric)
-
-	// Прочитать тело запроса
-
 	if mc.Config.Restore {
 		var err error
 		metricsFromFile, err = mc.ReadMetricsFromFile()
@@ -190,7 +179,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	println("updateHandlerJSON  metric.MType ", metric.MType)
 
 	// Обработка "counter"
 	if metric.MType == "counter" && metric.Delta != nil {
@@ -219,7 +207,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		}
 
 		*currentValue.Delta += *metric.Delta
-		println("currentValue   currentValueИМЯ", currentValue.MType, currentValue.ID, *currentValue.Delta)
 
 		mc.Storage.GetCounters()[metric.ID] = *currentValue.Delta
 		metricsFromFile[metric.ID] = currentValue
@@ -236,7 +223,6 @@ func (mc *app) updateHandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	// Запись обновленных метрик в файл
 	for _, updatedMetric := range metricsFromFile {
-		println("updatedMetric", updatedMetric.MType, updatedMetric.ID)
 		dbErr := mc.WriteMetricToDatabase(updatedMetric)
 		if dbErr != nil {
 			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)

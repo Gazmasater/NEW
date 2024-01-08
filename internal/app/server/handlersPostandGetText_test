@@ -16,6 +16,7 @@ import (
 )
 
 func TestHandlePostandGetRequestGaugeText(t *testing.T) {
+	println("TestHandlePostandGetRequestGaugeText")
 	source := rand.NewSource(time.Now().UnixNano())
 	rand := rand.New(source)
 
@@ -50,8 +51,8 @@ func TestHandlePostandGetRequestGaugeText(t *testing.T) {
 	}
 
 	// Привязываем обработчик к маршруту
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequest)
-	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequest)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", mc.HandlePostRequestOptimiz)
+	r.Get("/value/{metricType}/{metricName}", mc.HandleGetRequestOptimiz)
 
 	// Создаем тестовый сервер
 	ts := httptest.NewServer(r)
@@ -119,6 +120,8 @@ func TestHandlePostandGetRequestGaugeText(t *testing.T) {
 }
 
 func TestHandlePostandGetRequestCounterText(t *testing.T) {
+	println("TestHandlePostandGetRequestCounterText")
+
 	source := rand.NewSource(time.Now().UnixNano())
 
 	rand := rand.New(source)
@@ -214,7 +217,6 @@ func TestHandlePostandGetRequestCounterText(t *testing.T) {
 				t.Errorf("Expected status %d; got %d", tt.expected, res.StatusCode)
 			}
 
-			// Парсим значение из ответа на пост-запрос
 			value, err := strconv.Atoi(tt.expectedGet)
 			if err != nil {
 				t.Fatal(err)
