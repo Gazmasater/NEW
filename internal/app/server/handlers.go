@@ -777,12 +777,6 @@ func (mc *app) SetupDatabase() error {
 	}
 	defer db.Close()
 
-	// Проверяем соединение
-	if err := db.Ping(); err != nil {
-		log.Printf("Ошибка при проверке соединения с базой данных: %v", err)
-		return err
-	}
-
 	// Запрос для создания таблицы
 	createTableQuery := `
         CREATE TABLE IF NOT EXISTS metrics (
