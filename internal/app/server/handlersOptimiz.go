@@ -275,7 +275,7 @@ func (mc *app) updateHandlerJSONValueOptimiz(w http.ResponseWriter, r *http.Requ
 
 func (mc *app) WriteMetricToDatabaseOptimiz(metric models.Metrics) error {
 	var query string
-	var args []interface{}
+	var args []any
 
 	switch metric.MType {
 	case "gauge":

@@ -573,7 +573,7 @@ func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 
 func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
 	var query string
-	var args []interface{}
+	var args []any
 
 	switch metric.MType {
 	case "gauge":
@@ -747,7 +747,7 @@ func (mc *app) updateHandlerJSONforBatch(metrics []models.Metrics) error {
 		// Запись обновленных метрик в базу
 		for _, updatedMetric := range metricsFromFile {
 			if mc.Config.DatabaseDSN != "" {
-				dbErr := mc.WriteMetricToDatabase(updatedMetric)
+				dbErr := mc.WriteMetricToDatabaseOptimiz(updatedMetric)
 				if dbErr != nil {
 					log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
 				}
