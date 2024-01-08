@@ -777,6 +777,14 @@ func (mc *app) SetupDatabase() error {
 	}
 	defer db.Close()
 
+	mc.DB = db
+
+	// Отложенное закрытие соединения с базой данных
+	defer func() {
+		if err := mc.DB.Close(); err != nil {
+			log.Printf("Ошибка при закрытии базы данных: %v", err)
+		}
+	}()
 	// Запрос для создания таблицы
 	createTableQuery := `
         CREATE TABLE IF NOT EXISTS metrics (
