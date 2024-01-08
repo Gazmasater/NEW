@@ -294,10 +294,47 @@ func (mc *app) WriteMetricToDatabaseOptimiz(metric models.Metrics) error {
 		return fmt.Errorf("mc.DB не инициализирован")
 	}
 
+	// Проверяем существование таблицы metrics
+	if err := mc.checkTableExistence("metrics"); err != nil {
+		log.Printf("Ошибка при проверке существования таблицы: %s", err)
+		return err
+	}
+
+	// Создаем уникальный индекс для столбца name
+	if err := mc.createUniqueIndex("metrics", "name"); err != nil {
+		log.Printf("Ошибка при создании уникального индекса: %s", err)
+		return err
+	}
+
 	// Теперь выполняем вставку новой метрики или обновление существующей
 	_, err := mc.DB.Exec(query, args...)
 	if err != nil {
 		log.Printf("Ошибка при записи метрики в базу данных: %s", err)
+		return err
+	}
+	return nil
+}
+
+// Функция для проверки существования таблицы в базе данных
+func (mc *app) checkTableExistence(tableName string) error {
+	var tableExists bool
+	query := "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1)"
+	err := mc.DB.QueryRow(query, tableName).Scan(&tableExists)
+	if err != nil {
+		return err
+	}
+	if !tableExists {
+		return fmt.Errorf("таблица %s не существует", tableName)
+	}
+	return nil
+}
+
+// Функция для создания уникального индекса для заданного столбца в указанной таблице
+func (mc *app) createUniqueIndex(tableName string, columnName string) error {
+	indexName := fmt.Sprintf("idx_%s_%s", tableName, columnName)
+	query := fmt.Sprintf("CREATE UNIQUE INDEX IF NOT EXISTS %s ON %s (%s)", indexName, tableName, columnName)
+	_, err := mc.DB.Exec(query)
+	if err != nil {
 		return err
 	}
 	return nil
