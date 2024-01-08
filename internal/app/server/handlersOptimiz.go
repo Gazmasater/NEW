@@ -176,7 +176,7 @@ func (mc *app) updateHandlerJSONOptimiz(w http.ResponseWriter, r *http.Request) 
 	for _, updatedMetric := range metricsFromFile {
 		dbErr := mc.WriteMetricToDatabase(updatedMetric)
 		if dbErr != nil {
-			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
+			log.Printf("ЦИКЛ WbrkОшибка при записи метрики в базу данных: %s", dbErr)
 
 		}
 
