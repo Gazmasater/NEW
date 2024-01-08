@@ -187,7 +187,6 @@ func (mc *app) updateHandlerJSONOptimiz(w http.ResponseWriter, r *http.Request) 
 
 	}
 
-	// Отправляем значение метрики
 	if updatedMetric, ok := metricsFromFile[metric.ID]; ok {
 		switch metric.MType {
 		case "counter":
@@ -206,7 +205,6 @@ func (mc *app) updateHandlerJSONOptimiz(w http.ResponseWriter, r *http.Request) 
 func (mc *app) updateHandlerJSONValueOptimiz(w http.ResponseWriter, r *http.Request) {
 	var metric models.Metrics
 
-	// Проверка заголовка Content-Encoding на предмет GZIP
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		// Если данные приходят в GZIP, создаем Reader для распаковки
 		reader, err := gzip.NewReader(r.Body)
