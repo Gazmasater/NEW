@@ -174,7 +174,7 @@ func (mc *app) updateHandlerJSONOptimiz(w http.ResponseWriter, r *http.Request) 
 
 	// Запись обновленных метрик в базу
 	for _, updatedMetric := range metricsFromFile {
-		dbErr := mc.WriteMetricToDatabaseOptimiz(updatedMetric)
+		dbErr := mc.WriteMetricToDatabase(updatedMetric)
 		if dbErr != nil {
 			log.Printf("Ошибка при записи метрики в базу данных: %s", dbErr)
 
@@ -275,7 +275,7 @@ func (mc *app) updateHandlerJSONValueOptimiz(w http.ResponseWriter, r *http.Requ
 
 func (mc *app) WriteMetricToDatabaseOptimiz(metric models.Metrics) error {
 	var query string
-	var args []any
+	var args []interface{}
 
 	switch metric.MType {
 	case "gauge":
