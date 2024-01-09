@@ -705,6 +705,7 @@ func (mc *app) updateHandlerJSONforBatch(metrics []models.Metrics) error {
 				}
 			}
 			// Запись обновленных метрик в файл
+			// Запись обновленных метрик в файл
 			if err := mc.WriteMetricToFile(&updatedMetric); err != nil {
 				return fmt.Errorf("ошибка записи метрик в файл:%w", err)
 
