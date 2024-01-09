@@ -570,53 +570,6 @@ func (mc *app) Ping(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Database is working\n")
 }
 
-func (mc *app) WriteMetricToDatabase(metric models.Metrics) error {
-	var query string
-	var args []any
-
-	switch metric.MType {
-	case "gauge":
-		query = "INSERT INTO metrics (name, type, value) VALUES ($1, $2, $3)"
-		args = []interface{}{metric.ID, metric.MType, metric.Value}
-	case "counter":
-		query = "INSERT INTO metrics (name, type, delta) VALUES ($1, $2, $3)"
-		args = []interface{}{metric.ID, metric.MType, metric.Delta}
-	default:
-		log.Printf("Неизвестный тип метрики: %s", metric.MType)
-		return fmt.Errorf("неизвестный тип метрики")
-
-	}
-	if mc.DB == nil {
-		log.Println("Ошибка: mc.DB не инициализирован.")
-		return fmt.Errorf("mc.DB не инициализирован")
-	}
-
-	// Проверяем, существует ли метрика с такими же значениями name и type
-	var count int
-	err := mc.DB.QueryRow("SELECT COUNT(*) FROM metrics WHERE name = $1 AND type = $2", metric.ID, metric.MType).Scan(&count)
-	if err != nil {
-		log.Printf("Ошибка при проверке наличия метрики: %s", err)
-		return err
-	}
-
-	if count > 0 {
-		// Метрика с такими значениями name и type существует, удаляем ее
-		_, err := mc.DB.Exec("DELETE FROM metrics WHERE name = $1 AND type = $2", metric.ID, metric.MType)
-		if err != nil {
-			log.Printf("Ошибка при удалении метрики: %s", err)
-			return err
-		}
-	}
-
-	// Теперь выполняем вставку новой метрики
-	_, err = mc.DB.Exec(query, args...)
-	if err != nil {
-		log.Printf("Ошибка при записи метрики в базу данных: %s", err)
-		return err
-	}
-	return nil
-}
-
 type GzipResponseWriter struct {
 	http.ResponseWriter
 	Writer *gzip.Writer
